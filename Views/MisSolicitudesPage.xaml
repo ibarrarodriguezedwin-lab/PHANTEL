@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.MisSolicitudesPage"
+             Title="Gestión de Citas">
+
+    <Grid Padding="15">
+        <CollectionView x:Name="listSolicitudes">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Stroke="#6200EE" Margin="0,5" Padding="12">
+                        <VerticalStackLayout Spacing="5">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}" FontAttributes="Bold" TextColor="#007ACC"/>
+                                <Label Grid.Column="1" Text="{Binding TarifaTraslado, StringFormat='${0:F2}'}" FontAttributes="Bold" TextColor="Green"/>
+                            </Grid>
+
+                            <Label Text="{Binding DescripcionFalla}" FontAttributes="Italic"/>
+                            <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" TextColor="Gray"/>
+
+                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
+                                <Button Grid.Column="0" Text="Aceptar / Finalizar" 
+                                        Clicked="OnActualizarEstadoClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#28A745"/>
+                                <Button Grid.Column="1" Text="Cancelar / Eliminar" 
+                                        Clicked="OnEliminarCitaClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#DC3545"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

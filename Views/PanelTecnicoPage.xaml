@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="PHANTEL.Views.PanelTecnicoPage"
+             BackgroundColor="#1E1E1E"
+             Title="PHANTEL - Panel de Atención Técnica">
+
+    <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
+
+        <!-- Encabezado del Técnico -->
+        <Border Grid.Row="0" Stroke="#007ACC" Padding="15" BackgroundColor="#1E1E1E">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10"/>
+            </Border.StrokeShape>
+            <Grid ColumnDefinitions="*, Auto">
+                <VerticalStackLayout Spacing="5">
+                    <Label x:Name="lblBienvenida" Text="Bienvenido" FontAttributes="Bold" FontSize="18" TextColor="White"/>
+                    <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="Cerrar Sesión" Clicked="OnCerrarSesionClicked" BackgroundColor="#DC3545" TextColor="White" HeightRequest="40"/>
+            </Grid>
+        </Border>
+
+        <Label Grid.Row="1" Text="Solicitudes de Trabajo Recibidas" FontAttributes="Bold" FontSize="16" TextColor="White" Margin="0,5,0,0"/>
+
+        <!-- CollectionView directa en Grid.Row 2 (Sin ScrollView padre para evitar conflictos de renderizado) -->
+        <CollectionView Grid.Row="2" x:Name="listCitasTecnico" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <Label Text="No tienes solicitudes pendientes por el momento." HorizontalOptions="Center" Margin="0,20" TextColor="Gray"/>
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Stroke="#007ACC" Margin="0,5" Padding="12" BackgroundColor="#252526">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="10">
+                            <!-- Encabezado de la Tarjeta con Estado y Cobro -->
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}" FontAttributes="Bold" TextColor="#28A745"/>
+                                <Label Grid.Column="1" Text="{Binding TarifaTraslado, StringFormat='Cobro Traslado: ${0:F2}'}" FontAttributes="Bold" TextColor="#007ACC"/>
+                            </Grid>
+
+                            <!-- Información General de la Cita -->
+                            <Label Text="{Binding DescripcionFalla, StringFormat='Falla reportada: {0}'}" TextColor="White" FontAttributes="Bold"/>
+
+                            <!-- Dirección del Domicilio ingresada por el Cliente -->
+                            <Label Text="{Binding DireccionCliente, StringFormat='📍 Dirección: {0}'}" TextColor="#FFC107" FontSize="13" FontAttributes="Bold"/>
+
+                            <!-- Fecha y Hora Programada por el Cliente -->
+                            <Label Text="{Binding FechaHoraProgramada, StringFormat='📅 Cita Programada: {0:dd/MM/yyyy HH:mm hrs}'}" TextColor="#A5A6F6" FontAttributes="Bold" FontSize="13"/>
+
+                            <Label Text="{Binding DistanciaKm, StringFormat='Distancia estimada al cliente: {0} km'}" TextColor="Gray" FontSize="12"/>
+                            <Label Text="{Binding FechaCreacion, StringFormat='Solicitado el: {0:dd/MM/yyyy HH:mm}'}" TextColor="Gray" FontSize="11"/>
+
+                            <!-- Evidencia de Foto -->
+                            <Image Source="{Binding EvidenciaRutaImagen}" HeightRequest="150" Aspect="AspectFit"/>
+
+                            <!-- Video con controles y volumen -->
+                            <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}" HeightRequest="200" 
+                                                  ShouldAutoPlay="False" ShouldShowPlaybackControls="True" Volume="1.0" />
+
+                            <!-- Acciones de Aceptar/Rechazar -->
+                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
+                                <Button Grid.Column="0" Text="Aceptar / Finalizar" 
+                                        Clicked="OnAceptarFinalizarClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#28A745" TextColor="White"/>
+                                <Button Grid.Column="1" Text="Rechazar Cita" 
+                                        Clicked="OnRechazarCitaClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#DC3545" TextColor="White"/>
+                            </Grid>
+
+                            <!-- Abrir Ruta Directa en Navegador Web (Google Maps) -->
+                            <Button Text="🌐 Abrir Ruta en Google Maps (Web)" 
+                                    Clicked="OnAbrirGoogleMapsWebClicked" 
+                                    CommandParameter="{Binding .}" 
+                                    BackgroundColor="#007ACC" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

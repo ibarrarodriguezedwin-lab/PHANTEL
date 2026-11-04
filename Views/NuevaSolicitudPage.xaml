@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             x:Class="PHANTEL.Views.NuevaSolicitudPage"
+             BackgroundColor="#1E1E1E"
+             Title="Agendar Servicio">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+
+            <Label x:Name="lblTecnicoInfo" Text="Atención con: " FontSize="18" FontAttributes="Bold" TextColor="White"/>
+
+            <!-- Descripción de la Falla -->
+            <Label Text="Descripción del Problema:" TextColor="LightGray" FontAttributes="Bold"/>
+            <Editor x:Name="editorDescripcion" Placeholder="Escribe a detalle la falla técnica..." HeightRequest="100" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
+            <Label x:Name="lblErrorDescripcion" Text="Por favor describe la falla antes de enviar." TextColor="#FF6B6B" IsVisible="False" FontSize="12"/>
+
+            <!-- Selección de Dirección -->
+            <Label Text="Dirección / Domicilio del Servicio:" TextColor="LightGray" FontAttributes="Bold"/>
+            <Entry x:Name="entryDireccion" Placeholder="Ej. Av. Insurgentes Sur 123, Col. Centro" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
+
+            <!-- Programar Fecha y Hora -->
+            <Label Text="¿Cuándo necesitas la visita del técnico?" TextColor="LightGray" FontAttributes="Bold" Margin="0,5,0,0"/>
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                <VerticalStackLayout Grid.Column="0" Spacing="5">
+                    <Label Text="Día:" TextColor="Gray" FontSize="12"/>
+                    <DatePicker x:Name="pickerFecha" MinimumDate="{x:Static sys:DateTime.Today}" BackgroundColor="#252526" TextColor="White"
+                                xmlns:sys="clr-namespace:System;assembly=mscorlib"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="5">
+                    <Label Text="Hora estimada:" TextColor="Gray" FontSize="12"/>
+                    <TimePicker x:Name="pickerHora" Time="10:00:00" BackgroundColor="#252526" TextColor="White"/>
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Tarjeta de Distancia y Tarifa -->
+            <Border Stroke="#28A745" BackgroundColor="#252526" Padding="15" Margin="0,5,0,0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="5">
+                    <Label x:Name="lblDistancia" Text="Calculando distancia..." TextColor="White" FontSize="14"/>
+                    <Label x:Name="lblTarifa" Text="Calculando tarifa..." TextColor="#28A745" FontAttributes="Bold" FontSize="16"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Adjuntar Evidencias -->
+            <Label Text="Adjuntar Evidencia Multimedios:" TextColor="LightGray" FontAttributes="Bold"/>
+            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="📷 Foto" Clicked="OnTomarFotoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+                <Button Grid.Column="1" Text="🎥 Video" Clicked="OnGrabarVideoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+                <Button Grid.Column="2" Text="🎙️ Audio" Clicked="OnGrabarAudioClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+            </Grid>
+
+            <Image x:Name="imgPrevisualizacion" HeightRequest="150" Aspect="AspectFit" IsVisible="False"/>
+            <toolkit:MediaElement x:Name="mediaVideoPrevisualizacion" HeightRequest="180" ShouldAutoPlay="False" ShouldShowPlaybackControls="True" IsVisible="False"/>
+
+            <!-- Botón de Confirmación -->
+            <Button Text="Confirmar y Agendar Cita" Clicked="OnAgendarCitaClicked" BackgroundColor="#007ACC" TextColor="White" FontAttributes="Bold" FontSize="16" HeightRequest="50" Margin="0,15,0,20"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
