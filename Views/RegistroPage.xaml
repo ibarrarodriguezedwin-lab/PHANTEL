@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.RegistroPage"
+             BackgroundColor="#1E1E1E"
+             Title="Crear Cuenta PHANTEL">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="15" MaximumWidthRequest="400" HorizontalOptions="Center">
+
+            <Label Text="Registro de Usuario" FontSize="26" FontAttributes="Bold" TextColor="#00D2FF" HorizontalOptions="Center"/>
+            <Label Text="Selecciona tu perfil e ingresa tus datos" FontSize="13" TextColor="Gray" HorizontalOptions="Center"/>
+
+            <!-- Selector de Rol (Cliente vs Técnico) -->
+            <Label Text="¿Cómo deseas registrarte? *" TextColor="LightGray" FontAttributes="Bold"/>
+            <Border Stroke="#007ACC" StrokeThickness="1" BackgroundColor="#252526" Padding="5,0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+                <Picker x:Name="pickerRol" 
+                        Title="-- Selecciona tu rol --" 
+                        SelectedIndexChanged="OnRolChanged" 
+                        TextColor="White"
+                        TitleColor="Gray">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Cliente</x:String>
+                            <x:String>Técnico / Trabajador</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Border>
+
+            <!-- Datos Generales -->
+            <Label Text="Información Personal *" TextColor="LightGray" FontAttributes="Bold" Margin="0,5,0,0"/>
+            <Entry x:Name="entryNombre" Placeholder="Nombre(s) y Apellidos" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            <Entry x:Name="entryEmail" Placeholder="Correo electrónico" Keyboard="Email" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            <Entry x:Name="entryPassword" Placeholder="Contraseña de acceso" IsPassword="True" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            <Entry x:Name="entryTelefono" Placeholder="Número telefónico de contacto" Keyboard="Telephone" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            <Entry x:Name="entryDireccion" Placeholder="Dirección / Colonia o Alcaldía" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+
+            <!-- Campos Exclusivos si se selecciona Técnico -->
+            <VerticalStackLayout x:Name="layoutSeccionTecnico" IsVisible="False" Spacing="12">
+                <BoxView HeightRequest="1" Color="#007ACC" Margin="0,5"/>
+                <Label Text="Perfil Técnico y de Servicio *" TextColor="#00D2FF" FontAttributes="Bold"/>
+
+                <Border Stroke="#007ACC" StrokeThickness="1" BackgroundColor="#252526" Padding="5,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <Picker x:Name="pickerEspecialidad" Title="-- Selecciona tu Oficio / Especialidad --" TextColor="White" TitleColor="Gray">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Electricista</x:String>
+                                <x:String>Plomero</x:String>
+                                <x:String>Mecánico automotriz</x:String>
+                                <x:String>Técnico en informática</x:String>
+                                <x:String>Técnico en refrigeración</x:String>
+                                <x:String>Cerrajero</x:String>
+                                <x:String>Carpintero</x:String>
+                                <x:String>Técnico en electrónica</x:String>
+                                <x:String>Pintor</x:String>
+                                <x:String>Instalación de redes</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Border>
+
+                <Entry x:Name="entryExperiencia" Placeholder="Años de experiencia (Ej. 3 años)" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+                <Entry x:Name="entryTarifa" Placeholder="Tarifa estimada por servicio ($ MXN)" Keyboard="Numeric" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            </VerticalStackLayout>
+
+            <!-- Mensaje de Error -->
+            <Label x:Name="lblError" TextColor="#FF6B6B" IsVisible="False" FontSize="12" HorizontalOptions="Center"/>
+
+            <!-- Botón de Registro Nube -->
+            <Button Text="Registrar Cuenta en la Nube" 
+                    Clicked="OnRegistrarClicked" 
+                    BackgroundColor="#007ACC" 
+                    TextColor="White" 
+                    FontAttributes="Bold" 
+                    CornerRadius="10"
+                    HeightRequest="48" 
+                    Margin="0,10,0,0"/>
+
+            <Button Text="¿Ya tienes cuenta? Regresar al Login" 
+                    Clicked="OnVolverLoginClicked" 
+                    BackgroundColor="Transparent" 
+                    TextColor="#00D2FF" 
+                    FontSize="12"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

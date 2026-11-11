@@ -5,7 +5,7 @@ namespace PHANTEL.Views
 {
     public partial class MisSolicitudesPage : ContentPage
     {
-        private readonly DatabaseService _dbService = new();
+        private readonly CloudDatabaseService _dbService = new();
 
         public MisSolicitudesPage()
         {
@@ -20,7 +20,14 @@ namespace PHANTEL.Views
 
         private async void CargarSolicitudes()
         {
-            var solicitudes = await _dbService.ObtenerSolicitudesPorUsuarioAsync(usuarioId: 1, esTecnico: false);
+            if (LoginPage.UsuarioActual == null)
+                return;
+
+            // Consultar las solicitudes en la nube filtrando por el ID dinámico del cliente actual
+            var solicitudes = await _dbService.ObtenerSolicitudesPorUsuarioAsync(
+                usuarioId: LoginPage.UsuarioActual.Id,
+                esTecnico: false);
+
             listSolicitudes.ItemsSource = solicitudes;
         }
 
@@ -41,10 +48,10 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                bool confirmar = await DisplayAlert("Confirmar", "¿Deseas cancelar y eliminar esta solicitud?", "Sí", "No");
+                bool confirmar = await DisplayAlert("Confirmar", "¿Deseas cancelar esta solicitud?", "Sí", "No");
                 if (confirmar)
                 {
-                    await _dbService.EliminarSolicitudAsync(cita.Id);
+                    await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Cancelada");
                     CargarSolicitudes();
                 }
             }

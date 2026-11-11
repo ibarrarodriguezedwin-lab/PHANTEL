@@ -1,31 +1,124 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="PHANTEL.Views.LoginPage"
-             BackgroundColor="#1E1E1E"
+             BackgroundColor="Black"
              Title="Acceso PHANTEL">
 
-    <Grid VerticalOptions="Center" Padding="30">
-        <Border Stroke="#007ACC" StrokeThickness="2" Padding="25" BackgroundColor="#252526">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="12"/>
-            </Border.StrokeShape>
+    <Grid HorizontalOptions="Fill" VerticalOptions="Fill">
 
-            <VerticalStackLayout Spacing="15">
-                <Label Text="PHANTEL" FontSize="32" FontAttributes="Bold" TextColor="#007ACC" HorizontalOptions="Center"/>
-                <Label Text="Inicia sesión según tu rol" FontSize="14" TextColor="Gray" HorizontalOptions="Center"/>
+        <!-- 1. VIDEO DE FONDO EN BUCLE (ARRANQUE SEGURO CON MEDIAOPENED) -->
+        <toolkit:MediaElement x:Name="mediaFondo"
+                              Source="embed://fondo_login.mp4"
+                              Aspect="AspectFill"
+                              ShouldAutoPlay="False"
+                              ShouldLoopPlayback="True"
+                              ShouldShowPlaybackControls="False"
+                              Volume="1.0"
+                              InputTransparent="True"
+                              HorizontalOptions="Fill"
+                              VerticalOptions="Fill"
+                              MediaOpened="OnMediaOpened" />
 
-                <Entry x:Name="entryEmail" Placeholder="Correo electrónico" TextColor="White" PlaceholderColor="Gray"/>
-                <Entry x:Name="entryPassword" Placeholder="Contraseña" IsPassword="True" TextColor="White" PlaceholderColor="Gray"/>
+        <!-- 2. CAPA OSCURA MUY LIGERA PARA NO TAPAR EL VIDEO -->
+        <BoxView Color="Black" Opacity="0.25" HorizontalOptions="Fill" VerticalOptions="Fill" />
 
-                <Label x:Name="lblError" TextColor="Red" IsVisible="False" HorizontalOptions="Center"/>
+        <!-- 3. TARJETA EN EFECTO LIQUID GLASS / CRISTAL FLOTANTE -->
+        <ScrollView VerticalOptions="Center">
+            <Grid Padding="25">
 
-                <Button Text="Ingresar" Clicked="OnIngresarClicked" BackgroundColor="#007ACC" TextColor="White" FontAttributes="Bold" Margin="0,10,0,0"/>
+                <!-- Tarjeta Principal Glassmorphism -->
+                <Border Stroke="#80007ACC" 
+                        StrokeThickness="1.5" 
+                        Padding="25" 
+                        BackgroundColor="#2B1A2433" 
+                        MaximumWidthRequest="380"
+                        HorizontalOptions="Center">
 
-                <Label Text="Cuentas de prueba:" TextColor="Gray" FontSize="12" Margin="0,15,0,0"/>
-                <Label Text="• Cliente: cliente@phantel.com / 123" TextColor="DarkGray" FontSize="11"/>
-                <Label Text="• Técnico: tecnico@phantel.com / 123" TextColor="DarkGray" FontSize="11"/>
-            </VerticalStackLayout>
-        </Border>
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="20"/>
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="15">
+
+                        <!-- Logotipo e Identidad -->
+                        <Label Text="PHANTEL" 
+                               FontSize="34" 
+                               FontAttributes="Bold" 
+                               TextColor="#00D2FF" 
+                               HorizontalOptions="Center"
+                               Margin="0,5,0,0"/>
+
+                        <Label Text="Inicia sesión según tu rol" 
+                               FontSize="13" 
+                               TextColor="#E0E0E0" 
+                               HorizontalOptions="Center" 
+                               Margin="0,-5,0,10"/>
+
+                        <!-- Campo Correo (Estilo Cristal) -->
+                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#20FFFFFF" Padding="12,2">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10"/>
+                            </Border.StrokeShape>
+                            <Entry x:Name="entryEmail" 
+                                   Placeholder="Correo electrónico" 
+                                   Keyboard="Email"
+                                   TextColor="White" 
+                                   PlaceholderColor="#B0C4DE" 
+                                   BackgroundColor="Transparent"/>
+                        </Border>
+
+                        <!-- Campo Contraseña (Estilo Cristal) -->
+                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#20FFFFFF" Padding="12,2">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10"/>
+                            </Border.StrokeShape>
+                            <Entry x:Name="entryPassword" 
+                                   Placeholder="Contraseña" 
+                                   IsPassword="True" 
+                                   TextColor="White" 
+                                   PlaceholderColor="#B0C4DE" 
+                                   BackgroundColor="Transparent"/>
+                        </Border>
+
+                        <!-- Mensaje de Error -->
+                        <Label x:Name="lblError" 
+                               TextColor="#FF6B6B" 
+                               IsVisible="False" 
+                               HorizontalOptions="Center" 
+                               FontSize="12"/>
+
+                        <!-- Botón de Ingreso -->
+                        <Button Text="Ingresar" 
+                                Clicked="OnIngresarClicked" 
+                                BackgroundColor="#0088FF" 
+                                TextColor="White" 
+                                FontAttributes="Bold" 
+                                CornerRadius="10" 
+                                HeightRequest="45" 
+                                Margin="0,10,0,0"/>
+
+                        <!-- Botón para Navegar a Registro -->
+                        <Button Text="¿No tienes cuenta? Regístrate aquí" 
+                                Clicked="OnIrARegistroClicked" 
+                                BackgroundColor="Transparent" 
+                                TextColor="#00D2FF" 
+                                FontAttributes="Bold"
+                                FontSize="13"
+                                Margin="0,5,0,0"/>
+
+                        <!-- Cuentas de Prueba -->
+                        <VerticalStackLayout Spacing="3" Margin="0,10,0,0">
+                            <Label Text="Cuentas de prueba:" TextColor="#A0AAB5" FontSize="11" HorizontalOptions="Center"/>
+                            <Label Text="• Cliente: cliente@phantel.com / 123" TextColor="#D0D7DE" FontSize="11" HorizontalOptions="Center"/>
+                            <Label Text="• Técnico: tecnico@phantel.com / 123" TextColor="#D0D7DE" FontSize="11" HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </ScrollView>
+
     </Grid>
 </ContentPage>

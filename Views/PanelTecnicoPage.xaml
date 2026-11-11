@@ -2,9 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.PanelTecnicoPage"
              BackgroundColor="#1E1E1E"
              Title="PHANTEL - Panel de Atención Técnica">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Instancia del Convertidor de Base64 a Imagen -->
+            <helpers:Base64ToImageConverter x:Key="Base64ToImageConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
 
@@ -24,7 +32,7 @@
 
         <Label Grid.Row="1" Text="Solicitudes de Trabajo Recibidas" FontAttributes="Bold" FontSize="16" TextColor="White" Margin="0,5,0,0"/>
 
-        <!-- CollectionView directa en Grid.Row 2 (Sin ScrollView padre para evitar conflictos de renderizado) -->
+        <!-- CollectionView de Solicitudes -->
         <CollectionView Grid.Row="2" x:Name="listCitasTecnico" SelectionMode="None">
             <CollectionView.EmptyView>
                 <Label Text="No tienes solicitudes pendientes por el momento." HorizontalOptions="Center" Margin="0,20" TextColor="Gray"/>
@@ -51,15 +59,23 @@
                             <!-- Fecha y Hora Programada por el Cliente -->
                             <Label Text="{Binding FechaHoraProgramada, StringFormat='📅 Cita Programada: {0:dd/MM/yyyy HH:mm hrs}'}" TextColor="#A5A6F6" FontAttributes="Bold" FontSize="13"/>
 
-                            <Label Text="{Binding DistanciaKm, StringFormat='Distancia estimada al cliente: {0} km'}" TextColor="Gray" FontSize="12"/>
+                            <Label Text="{Binding DistanciaKm, StringFormat='Distancia estimada al cliente: {0:F1} km'}" TextColor="Gray" FontSize="12"/>
                             <Label Text="{Binding FechaCreacion, StringFormat='Solicitado el: {0:dd/MM/yyyy HH:mm}'}" TextColor="Gray" FontSize="11"/>
 
-                            <!-- Evidencia de Foto -->
-                            <Image Source="{Binding EvidenciaRutaImagen}" HeightRequest="150" Aspect="AspectFit"/>
-
-                            <!-- Video con controles y volumen -->
-                            <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}" HeightRequest="200" 
-                                                  ShouldAutoPlay="False" ShouldShowPlaybackControls="True" Volume="1.0" />
+                            <!-- Evidencia en Foto desde la Nube -->
+                            <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}" 
+                              HeightRequest="220" 
+                              MaximumWidthRequest="350"
+                              Aspect="AspectFit"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center"
+                              Margin="0,10"/>
+                            <!-- Video de Evidencia -->
+                            <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}" 
+                                                  HeightRequest="180" 
+                                                  ShouldAutoPlay="False" 
+                                                  ShouldShowPlaybackControls="True" 
+                                                  Volume="1.0" />
 
                             <!-- Acciones de Aceptar/Rechazar -->
                             <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">

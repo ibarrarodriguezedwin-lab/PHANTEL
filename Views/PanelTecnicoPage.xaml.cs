@@ -1,12 +1,14 @@
 using PHANTEL.Models;
 using PHANTEL.Services;
 
+using PHANTEL.Models;
+using PHANTEL.Services;
+
 namespace PHANTEL.Views
 {
     public partial class PanelTecnicoPage : ContentPage
     {
-        private readonly DatabaseService _dbService = new();
-        private readonly Usuario? _tecnicoActual = LoginPage.UsuarioActual;
+        private readonly CloudDatabaseService _dbService = new();
 
         public PanelTecnicoPage()
         {
@@ -21,13 +23,23 @@ namespace PHANTEL.Views
 
         private async void CargarDatosTecnico()
         {
-            if (_tecnicoActual != null)
-            {
-                lblBienvenida.Text = $"👨‍🔧 {_tecnicoActual.Nombre}";
-                lblEspecialidad.Text = $"Especialidad: {_tecnicoActual.Especialidad} | ⭐ {_tecnicoActual.CalificacionPromedio:F1}";
+            // Obtener el técnico actual en tiempo real desde la propiedad global
+            var tecnicoActual = LoginPage.UsuarioActual;
 
-                var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(_tecnicoActual.Id, esTecnico: true);
+            if (tecnicoActual != null)
+            {
+                lblBienvenida.Text = $"👨‍🔧 {tecnicoActual.Nombre}";
+                lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
+
+                // Cargar solicitudes asociadas a este técnico en vivo desde la nube
+                var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
+
                 listCitasTecnico.ItemsSource = citas;
+            }
+            else
+            {
+                await DisplayAlert("Error de Sesión", "No se encontró un técnico activo. Inicia sesión de nuevo.", "OK");
+                Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
             }
         }
 
@@ -71,15 +83,11 @@ namespace PHANTEL.Views
 
                 try
                 {
-                    // Prioriza la dirección escrita por el cliente o usa las coordenadas GPS por defecto
                     string destino = !string.IsNullOrWhiteSpace(cita.DireccionCliente) && cita.DireccionCliente != "Ubicación por coordenadas GPS"
                         ? Uri.EscapeDataString(cita.DireccionCliente)
                         : "19.3452,-99.1384";
 
-                    // URL universal para trazar ruta de manejo en Google Maps
                     string urlGoogleMaps = $"https://www.google.com/maps/dir/?api=1&destination={destino}&travelmode=driving";
-
-                    // Abre en el navegador por defecto (Chrome/Edge/Safari)
                     await Launcher.OpenAsync(new Uri(urlGoogleMaps));
                 }
                 catch (Exception ex)
@@ -89,9 +97,11 @@ namespace PHANTEL.Views
             }
         }
 
-        private async void OnCerrarSesionClicked(object sender, EventArgs e)
+        private void OnCerrarSesionClicked(object sender, EventArgs e)
         {
-            Application.Current!.Windows[0].Page = new LoginPage();
+            // Limpiar la sesión global antes de redirigir al Login
+            LoginPage.UsuarioActual = null;
+            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
         }
     }
 }

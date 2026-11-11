@@ -10,12 +10,18 @@ namespace PHANTEL.Models
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string TipoPerfil { get; set; } = string.Empty; // "Cliente" o "Técnico"
-        public string Especialidad { get; set; } = string.Empty; // Plomería, Electricidad, Soporte de Cómputo, Cerrajería
+        public string Especialidad { get; set; } = string.Empty; // Plomería, Electricidad, Soporte de Cómputo, Cerrajería, etc.
+
+        // Propiedades requeridas para el Registro y Perfil Completo
+        public string Telefono { get; set; } = string.Empty;
+        public string Direccion { get; set; } = string.Empty;
+        public string Experiencia { get; set; } = string.Empty;
+        public decimal TarifaPorHora { get; set; }
+
         public double Latitud { get; set; }
         public double Longitud { get; set; }
         public double CalificacionPromedio { get; set; } = 5.0;
-        // En Models/Entidades.cs
-        public string FotoPerfil { get; set; } = string.Empty; // Dejar vacío por defecto si no hay archivo en Resources/Images
+        public string FotoPerfil { get; set; } = string.Empty;
     }
 
     public class SolicitudCita
@@ -25,8 +31,8 @@ namespace PHANTEL.Models
         public int ClienteId { get; set; }
         public int TecnicoId { get; set; }
         public string DescripcionFalla { get; set; } = string.Empty;
-        public string DireccionCliente { get; set; } = string.Empty; // <-- Dirección/Referencia del domicilio
-        public DateTime FechaHoraProgramada { get; set; } = DateTime.Now; // <-- Fecha y Hora seleccionada
+        public string DireccionCliente { get; set; } = string.Empty;
+        public DateTime FechaHoraProgramada { get; set; } = DateTime.Now;
         public double DistanciaKm { get; set; }
         public decimal TarifaTraslado { get; set; }
         public string Estado { get; set; } = "Pendiente";

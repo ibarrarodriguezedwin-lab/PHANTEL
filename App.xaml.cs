@@ -11,8 +11,8 @@ namespace PHANTEL
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Iniciar primero con la pantalla de Login
-            return new Window(new LoginPage());
+            // Envolver LoginPage dentro de NavigationPage para habilitar la navegación a RegistroPage
+            return new Window(new NavigationPage(new LoginPage()));
         }
     }
 }

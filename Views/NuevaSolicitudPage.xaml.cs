@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Views;
+using PHANTEL.Helpers;
 using PHANTEL.Models;
 using PHANTEL.Services;
 
@@ -7,11 +8,10 @@ namespace PHANTEL.Views
     public partial class NuevaSolicitudPage : ContentPage
     {
         private readonly Usuario _tecnico;
-        private readonly DatabaseService _dbService = new();
+        private readonly CloudDatabaseService _dbService = new();
         private double _distanciaCalculada;
         private decimal _tarifaCalculada;
 
-        // Inicializar en null para evitar que los controles intenten leer rutas vacías
         private string? _rutaFoto = null;
         private string? _rutaVideo = null;
         private string? _rutaAudio = null;
@@ -37,7 +37,7 @@ namespace PHANTEL.Views
                 _distanciaCalculada = DatabaseService.CalcularDistanciaKm(latCliente, lonCliente, _tecnico.Latitud, _tecnico.Longitud);
                 _tarifaCalculada = DatabaseService.CalcularTarifaTraslado(_distanciaCalculada);
 
-                lblDistancia.Text = $"Distancia estimada al técnico: {_distanciaCalculada} km";
+                lblDistancia.Text = $"Distancia estimada al técnico: {_distanciaCalculada:F1} km";
                 lblTarifa.Text = $"Tarifa de traslado estimada: ${_tarifaCalculada:F2} MXN";
             }
             catch
@@ -48,7 +48,7 @@ namespace PHANTEL.Views
                 _distanciaCalculada = DatabaseService.CalcularDistanciaKm(latCliente, lonCliente, _tecnico.Latitud, _tecnico.Longitud);
                 _tarifaCalculada = DatabaseService.CalcularTarifaTraslado(_distanciaCalculada);
 
-                lblDistancia.Text = $"Distancia estimada: {_distanciaCalculada} km";
+                lblDistancia.Text = $"Distancia estimada: {_distanciaCalculada:F1} km";
                 lblTarifa.Text = $"Tarifa de traslado: ${_tarifaCalculada:F2} MXN";
             }
         }
@@ -89,8 +89,6 @@ namespace PHANTEL.Views
                     await stream.CopyToAsync(newStream);
 
                     _rutaVideo = newPath;
-
-                    // Asignar el reproductor únicamente cuando el archivo ya esté guardado en disco
                     mediaVideoPrevisualizacion.Source = MediaSource.FromFile(_rutaVideo);
                     mediaVideoPrevisualizacion.IsVisible = true;
                 }
@@ -103,7 +101,7 @@ namespace PHANTEL.Views
 
         private async void OnGrabarAudioClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Audio", "Presiona para iniciar/detener la grabación de voz.", "OK");
+            await DisplayAlert("Audio", "Audio de muestra adjuntado.", "OK");
             _rutaAudio = "audio_evidencia_sample.mp3";
         }
 
@@ -116,35 +114,60 @@ namespace PHANTEL.Views
             }
             lblErrorDescripcion.IsVisible = false;
 
-            // Manejo seguro de nulos para DateTime? y TimeSpan?
+            if (LoginPage.UsuarioActual == null)
+            {
+                await DisplayAlert("Error", "No hay sesión de usuario activa.", "OK");
+                return;
+            }
+
             DateTime fechaBase = pickerFecha.Date ?? DateTime.Today;
             TimeSpan horaSeleccionada = pickerHora.Time ?? new TimeSpan(10, 0, 0);
             DateTime fechaProgramada = fechaBase.Date.Add(horaSeleccionada);
 
             string direccionFinal = string.IsNullOrWhiteSpace(entryDireccion.Text)
-                ? "Ubicación por coordenadas GPS"
+                ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? "Ubicación por coordenadas GPS" : LoginPage.UsuarioActual.Direccion)
                 : entryDireccion.Text.Trim();
 
-            int idClienteActual = LoginPage.UsuarioActual?.Id ?? 1;
+            // CONVERSIÓN EXPLÍCITA A BASE64
+            string fotoBase64 = string.Empty;
+            if (!string.IsNullOrEmpty(_rutaFoto) && File.Exists(_rutaFoto))
+            {
+                fotoBase64 = await FileHelper.FileToBase64Async(_rutaFoto);
+            }
+
+            string videoBase64 = string.Empty;
+            if (!string.IsNullOrEmpty(_rutaVideo) && File.Exists(_rutaVideo))
+            {
+                videoBase64 = await FileHelper.FileToBase64Async(_rutaVideo);
+            }
 
             var nuevaCita = new SolicitudCita
             {
-                ClienteId = idClienteActual,
+                ClienteId = LoginPage.UsuarioActual.Id,
                 TecnicoId = _tecnico.Id,
-                DescripcionFalla = editorDescripcion.Text,
+                DescripcionFalla = editorDescripcion.Text.Trim(),
                 DireccionCliente = direccionFinal,
                 FechaHoraProgramada = fechaProgramada,
                 DistanciaKm = _distanciaCalculada,
                 TarifaTraslado = _tarifaCalculada,
                 Estado = "Pendiente",
-                EvidenciaRutaImagen = _rutaFoto ?? string.Empty,
-                EvidenciaRutaVideo = _rutaVideo ?? string.Empty,
+                FechaCreacion = DateTime.Now,
+                EvidenciaRutaImagen = fotoBase64,
+                EvidenciaRutaVideo = videoBase64,
                 EvidenciaRutaAudio = _rutaAudio ?? string.Empty
             };
 
-            await _dbService.CrearSolicitudAsync(nuevaCita);
-            await DisplayAlert("Éxito", $"Tu solicitud fue agendada para el {fechaProgramada:dd/MM/yyyy} a las {fechaProgramada:HH:mm} hrs.", "Aceptar");
-            await Navigation.PopAsync();
+            bool guardado = await _dbService.CrearSolicitudAsync(nuevaCita);
+
+            if (guardado)
+            {
+                await DisplayAlert("Éxito", $"Solicitud agendada con éxito para el {fechaProgramada:dd/MM/yyyy HH:mm} hrs.", "Aceptar");
+                await Navigation.PopAsync();
+            }
+            else
+            {
+                await DisplayAlert("Error", "No se pudo guardar la solicitud en la nube.", "OK");
+            }
         }
     }
 }
