@@ -16,7 +16,35 @@ namespace PHANTEL.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            CargarPerfilCliente();
             await CargarTecnicosAsync();
+        }
+
+        private void CargarPerfilCliente()
+        {
+            var usuarioActual = LoginPage.UsuarioActual;
+            if (usuarioActual != null)
+            {
+                lblClienteNombre.Text = $"Hola, {usuarioActual.Nombre}";
+
+                // Cargar Foto de Perfil en el ImageButton si existe en Base64
+                if (!string.IsNullOrEmpty(usuarioActual.FotoPerfil))
+                {
+                    try
+                    {
+                        string cleanBase64 = usuarioActual.FotoPerfil.Contains(",")
+                            ? usuarioActual.FotoPerfil.Split(',')[1]
+                            : usuarioActual.FotoPerfil;
+
+                        byte[] imageBytes = Convert.FromBase64String(cleanBase64.Trim());
+                        btnPerfilCliente.Source = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    }
+                    catch
+                    {
+                        btnPerfilCliente.Source = "dotnet_bot.png";
+                    }
+                }
+            }
         }
 
         private async Task CargarTecnicosAsync()
@@ -62,6 +90,31 @@ namespace PHANTEL.Views
             pickerEspecialidad.SelectedIndex = 0;
             AplicarFiltros();
         }
+
+        // --- MANEJO DEL MENÚ DE PERFIL DEL CLIENTE ---
+
+
+        private async void OnVerCuentaClienteClicked(object sender, EventArgs e)
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u != null)
+            {
+                await DisplayAlert("Mi Cuenta PHANTEL",
+                    $"Nombre: {u.Nombre}\n" +
+                    $"Correo: {u.Email}\n" +
+                    $"Teléfono: {u.Telefono}\n" +
+                    $"Dirección: {u.Direccion}\n" +
+                    $"Tipo de Perfil: {u.TipoPerfil}", "Aceptar");
+            }
+        }
+
+        private void OnCerrarSesionClicked(object sender, EventArgs e)
+        {
+            LoginPage.UsuarioActual = null;
+            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
+        }
+
+        // --- SOLICITUDES DE TÉCNICOS ---
 
         private async void OnSolicitarClicked(object sender, EventArgs e)
         {

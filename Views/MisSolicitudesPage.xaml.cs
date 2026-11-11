@@ -56,5 +56,21 @@ namespace PHANTEL.Views
                 }
             }
         }
+
+        // --- NAVEGACIÓN AL CHAT DE RETROALIMENTACIÓN DESDE LA VISTA DEL CLIENTE ---
+        private async void OnAbrirChatClicked(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.CommandParameter is SolicitudCita cita)
+            {
+                if (cita.Estado != "Aceptada")
+                {
+                    await DisplayAlert("Atención", "El técnico debe aceptar la cita primero para iniciar la conversación por chat.", "OK");
+                    return;
+                }
+
+                await Navigation.PushAsync(new ChatPage(cita));
+            }
+        }
     }
 }

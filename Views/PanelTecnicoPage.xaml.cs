@@ -1,9 +1,6 @@
 using PHANTEL.Models;
 using PHANTEL.Services;
 
-using PHANTEL.Models;
-using PHANTEL.Services;
-
 namespace PHANTEL.Views
 {
     public partial class PanelTecnicoPage : ContentPage
@@ -31,9 +28,26 @@ namespace PHANTEL.Views
                 lblBienvenida.Text = $"👨‍🔧 {tecnicoActual.Nombre}";
                 lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
 
+                // Cargar Foto de Perfil en el ImageButton si existe en Base64
+                if (!string.IsNullOrEmpty(tecnicoActual.FotoPerfil))
+                {
+                    try
+                    {
+                        string cleanBase64 = tecnicoActual.FotoPerfil.Contains(",")
+                            ? tecnicoActual.FotoPerfil.Split(',')[1]
+                            : tecnicoActual.FotoPerfil;
+
+                        byte[] imageBytes = Convert.FromBase64String(cleanBase64.Trim());
+                        btnPerfilTecnico.Source = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    }
+                    catch
+                    {
+                        btnPerfilTecnico.Source = "dotnet_bot.png";
+                    }
+                }
+
                 // Cargar solicitudes asociadas a este técnico en vivo desde la nube
                 var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
-
                 listCitasTecnico.ItemsSource = citas;
             }
             else
@@ -42,6 +56,32 @@ namespace PHANTEL.Views
                 Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
             }
         }
+
+        // --- MENÚ DESPLEGABLE Y GESTIÓN DE PERFIL ---
+
+       
+        private async void OnVerPerfilClicked(object sender, EventArgs e)
+        {
+            var usuario = LoginPage.UsuarioActual;
+            if (usuario != null)
+            {
+                await DisplayAlert("Mi Cuenta PHANTEL",
+                    $"Nombre: {usuario.Nombre}\n" +
+                    $"Email: {usuario.Email}\n" +
+                    $"Teléfono: {usuario.Telefono}\n" +
+                    $"Rol: {usuario.TipoPerfil}\n" +
+                    $"Especialidad: {usuario.Especialidad}", "Aceptar");
+            }
+        }
+
+        private void OnCerrarSesionClicked(object sender, EventArgs e)
+        {
+            // Limpiar la sesión global antes de redirigir al Login
+            LoginPage.UsuarioActual = null;
+            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
+        }
+
+        // --- ACCIONES SOBRE CITA ---
 
         private async void OnAceptarFinalizarClicked(object sender, EventArgs e)
         {
@@ -66,6 +106,22 @@ namespace PHANTEL.Views
                     await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Rechazada");
                     CargarDatosTecnico();
                 }
+            }
+        }
+
+        // --- NAVEGACIÓN A CHAT DE RETROALIMENTACIÓN DIRECTA ---
+        private async void OnAbrirChatClicked(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.CommandParameter is SolicitudCita cita)
+            {
+                if (cita.Estado != "Aceptada")
+                {
+                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar la retroalimentación por chat.", "OK");
+                    return;
+                }
+
+                await Navigation.PushAsync(new ChatPage(cita));
             }
         }
 
@@ -95,13 +151,6 @@ namespace PHANTEL.Views
                     await DisplayAlert("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
                 }
             }
-        }
-
-        private void OnCerrarSesionClicked(object sender, EventArgs e)
-        {
-            // Limpiar la sesión global antes de redirigir al Login
-            LoginPage.UsuarioActual = null;
-            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
         }
     }
 }

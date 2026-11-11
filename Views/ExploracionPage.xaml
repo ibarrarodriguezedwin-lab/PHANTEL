@@ -1,18 +1,64 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.ExploracionPage"
+             BackgroundColor="#1E1E1E"
              Title="PHANTEL - Buscar Técnico">
 
-    <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Instancia del Convertidor de Base64 a Imagen para Avatares -->
+            <helpers:AvatarConverter x:Key="AvatarConverter" />
+            <helpers:Base64ToImageConverter x:Key="Base64ToImageConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-        <!-- SearchBar y Filtros -->
-        <SearchBar Grid.Row="0" x:Name="searchBarTecnicos" 
+    <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="15" RowSpacing="10">
+
+        <!-- Encabezado de Usuario Cliente con Menú Desplegable -->
+        <Border Grid.Row="0" Stroke="#007ACC" Padding="12" BackgroundColor="#252526">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10"/>
+            </Border.StrokeShape>
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
+                    <Label x:Name="lblClienteNombre" Text="Hola, Cliente" FontAttributes="Bold" FontSize="17" TextColor="White"/>
+                    <Label Text="¿Qué servicio técnico necesitas hoy?" TextColor="Gray" FontSize="12"/>
+                </VerticalStackLayout>
+
+                <!-- Avatar Circular del Cliente con Menú de Perfil Corregido -->
+                <ImageButton Grid.Column="1"
+                             x:Name="btnPerfilCliente"
+                             Aspect="AspectFill"
+                             WidthRequest="48"
+                             HeightRequest="48"
+                             CornerRadius="24"
+                             Source="dotnet_bot.png"
+                             VerticalOptions="Center">
+                    <FlyoutBase.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="👤 Ver Mi Cuenta" Clicked="OnVerCuentaClienteClicked" />
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Text="🚪 Cerrar Sesión" Clicked="OnCerrarSesionClicked" />
+                        </MenuFlyout>
+                    </FlyoutBase.ContextFlyout>
+                </ImageButton>
+            </Grid>
+        </Border>
+
+        <!-- SearchBar -->
+        <SearchBar Grid.Row="1" x:Name="searchBarTecnicos" 
                    Placeholder="Buscar por nombre..." 
+                   TextColor="White"
+                   PlaceholderColor="Gray"
+                   BackgroundColor="#252526"
                    TextChanged="OnSearchTextChanged" />
 
-        <Grid Grid.Row="1" ColumnDefinitions="*, Auto">
+        <!-- Filtros de Especialidad -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="8">
             <Picker x:Name="pickerEspecialidad" Title="Filtrar por Especialidad"
+                    TitleColor="Gray" TextColor="White"
                     SelectedIndexChanged="OnEspecialidadChanged">
                 <Picker.ItemsSource>
                     <x:Array Type="{x:Type x:String}">
@@ -24,27 +70,42 @@
                     </x:Array>
                 </Picker.ItemsSource>
             </Picker>
-            <Button Grid.Column="1" Text="Limpiar" Clicked="OnLimpiarFiltrosClicked" Margin="5,0,0,0"/>
+            <Button Grid.Column="1" Text="Limpiar" Clicked="OnLimpiarFiltrosClicked" BackgroundColor="#2D2D30" TextColor="White"/>
         </Grid>
 
-        <!-- Lista de Técnicos Disponible -->
-        <CollectionView Grid.Row="2" x:Name="listTecnicos" SelectionMode="Single"
+        <!-- Lista de Técnicos Disponibles -->
+        <CollectionView Grid.Row="3" x:Name="listTecnicos" SelectionMode="Single"
                         SelectionChanged="OnTecnicoSeleccionado">
+            <CollectionView.EmptyView>
+                <Label Text="No se encontraron técnicos con los filtros seleccionados." 
+                       HorizontalOptions="Center" VerticalOptions="Center" Margin="0,30" TextColor="Gray"/>
+            </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#007ACC" StrokeThickness="1" Margin="0,5" Padding="10">
+                    <Border Stroke="#007ACC" StrokeThickness="1" Margin="0,5" Padding="12" BackgroundColor="#252526">
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
-                            <Image Source="{Binding FotoPerfil}" WidthRequest="50" HeightRequest="50" Aspect="AspectFill" />
-                            <StackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="{Binding Nombre}" FontAttributes="Bold" FontSize="16" />
-                                <Label Text="{Binding Especialidad}" TextColor="Gray" FontSize="14" />
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+
+                            <!-- Foto de Perfil del Técnico procesada desde Base64 -->
+                            <Border Grid.Column="0" Stroke="#007ACC" WidthRequest="50" HeightRequest="50">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="25"/>
+                                </Border.StrokeShape>
+                                <Image Source="{Binding FotoPerfil, Converter={StaticResource AvatarConverter}}" 
+                                       WidthRequest="50" HeightRequest="50" Aspect="AspectFill" />
+                            </Border>
+
+                            <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                <Label Text="{Binding Nombre}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                                <Label Text="{Binding Especialidad}" TextColor="#FFC107" FontSize="13" />
+                                <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa: ${0:F2}/hr'}" TextColor="Gray" FontSize="11" />
                             </StackLayout>
-                            <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
-                                <Label Text="{Binding CalificacionPromedio, StringFormat='⭐ {0:F1}'}" FontAttributes="Bold" />
-                                <Button Text="Solicitar" Clicked="OnSolicitarClicked" CommandParameter="{Binding .}" HeightRequest="35" Padding="10,0"/>
+
+                            <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="5">
+                                <Label Text="{Binding CalificacionPromedio, StringFormat='⭐ {0:F1}'}" FontAttributes="Bold" TextColor="#28A745" HorizontalOptions="End"/>
+                                <Button Text="Solicitar" Clicked="OnSolicitarClicked" CommandParameter="{Binding .}" BackgroundColor="#007ACC" TextColor="White" HeightRequest="36" Padding="12,0"/>
                             </StackLayout>
                         </Grid>
                     </Border>

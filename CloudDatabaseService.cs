@@ -1,5 +1,6 @@
 ﻿using Firebase.Database;
 using Firebase.Database.Query;
+using Firebase.Database.Streaming;
 using PHANTEL.Models;
 
 namespace PHANTEL.Services
@@ -176,5 +177,36 @@ namespace PHANTEL.Services
                 System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR UPDATE ESTADO]: {ex.Message}");
             }
         }
+
+        // --- 3. CHAT Y RETROALIMENTACIÓN EN TIEMPO REAL ---
+
+        // Enviar un mensaje al chat de la cita
+        public async Task<bool> EnviarMensajeChatAsync(MensajeChat mensaje)
+        {
+            try
+            {
+                await _firebase
+                    .Child("Chats")
+                    .Child(mensaje.SolicitudId.ToString())
+                    .PostAsync(mensaje);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR ENVIAR CHAT]: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Escuchar/Obtener los mensajes del chat en tiempo real
+        public IObservable<FirebaseEvent<MensajeChat>> EscucharChatEnVivo(int solicitudId)
+        {
+            return _firebase
+                .Child("Chats")
+                .Child(solicitudId.ToString())
+                .AsObservable<MensajeChat>();
+        }
+
+
     }
 }

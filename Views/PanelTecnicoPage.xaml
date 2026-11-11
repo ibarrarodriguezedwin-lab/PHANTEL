@@ -16,17 +16,37 @@
 
     <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
 
-        <!-- Encabezado del Técnico -->
+        <!-- Encabezado del Técnico con Avatar y Menú Desplegable de Perfil -->
         <Border Grid.Row="0" Stroke="#007ACC" Padding="15" BackgroundColor="#1E1E1E">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="10"/>
             </Border.StrokeShape>
-            <Grid ColumnDefinitions="*, Auto">
-                <VerticalStackLayout Spacing="5">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+
+                <!-- Datos de Bienvenida -->
+                <VerticalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
                     <Label x:Name="lblBienvenida" Text="Bienvenido" FontAttributes="Bold" FontSize="18" TextColor="White"/>
                     <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
                 </VerticalStackLayout>
-                <Button Grid.Column="1" Text="Cerrar Sesión" Clicked="OnCerrarSesionClicked" BackgroundColor="#DC3545" TextColor="White" HeightRequest="40"/>
+
+                <!-- Avatar Circular del Técnico con Menú Desplegable Corregido -->
+                <ImageButton Grid.Column="1"
+                             x:Name="btnPerfilTecnico" 
+                             Aspect="AspectFill" 
+                             WidthRequest="55" 
+                             HeightRequest="55"
+                             CornerRadius="28"
+                             Source="dotnet_bot.png"
+                             VerticalOptions="Center">
+                    <FlyoutBase.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="👤 Mi Cuenta / Perfil" Clicked="OnVerPerfilClicked" />
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Text="🚪 Cerrar Sesión" Clicked="OnCerrarSesionClicked" />
+                        </MenuFlyout>
+                    </FlyoutBase.ContextFlyout>
+                </ImageButton>
+
             </Grid>
         </Border>
 
@@ -64,12 +84,13 @@
 
                             <!-- Evidencia en Foto desde la Nube -->
                             <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}" 
-                              HeightRequest="220" 
-                              MaximumWidthRequest="350"
-                              Aspect="AspectFit"
-                              HorizontalOptions="Center"
-                              VerticalOptions="Center"
-                              Margin="0,10"/>
+                                   HeightRequest="220" 
+                                   MaximumWidthRequest="350"
+                                   Aspect="AspectFit"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   Margin="0,10"/>
+
                             <!-- Video de Evidencia -->
                             <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}" 
                                                   HeightRequest="180" 
@@ -88,6 +109,12 @@
                                         CommandParameter="{Binding .}" 
                                         BackgroundColor="#DC3545" TextColor="White"/>
                             </Grid>
+
+                            <!-- Abrir Chat Directo / Retroalimentación con el Cliente -->
+                            <Button Text="💬 Chat / Retroalimentación Directa" 
+                                    Clicked="OnAbrirChatClicked" 
+                                    CommandParameter="{Binding .}" 
+                                    BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
 
                             <!-- Abrir Ruta Directa en Navegador Web (Google Maps) -->
                             <Button Text="🌐 Abrir Ruta en Google Maps (Web)" 

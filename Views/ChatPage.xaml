@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:PHANTEL.Helpers"
+             x:Class="PHANTEL.Views.ChatPage"
+             BackgroundColor="#1E1E1E"
+             Title="Chat y Retroalimentación">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <helpers:ChatAlignmentConverter x:Key="ChatAlignmentConverter" />
+            <helpers:ChatColorConverter x:Key="ChatColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto" Padding="15" RowSpacing="10">
+
+        <!-- Encabezado del Chat -->
+        <Border Grid.Row="0" Stroke="#007ACC" Padding="10" BackgroundColor="#252526">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="3">
+                <Label x:Name="lblTituloChat" Text="💬 Chat de Retroalimentación" FontAttributes="Bold" TextColor="White" FontSize="16"/>
+                <Label x:Name="lblDetalleCita" Text="Cita # --" TextColor="Gray" FontSize="12"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Lista de Mensajes -->
+        <CollectionView Grid.Row="1" x:Name="listMensajes" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="5">
+                        <Border StrokeShape="RoundRectangle 12" 
+                                Padding="10" 
+                                Margin="5"
+                                HorizontalOptions="{Binding EsMio, Converter={StaticResource ChatAlignmentConverter}}"
+                                BackgroundColor="{Binding EsMio, Converter={StaticResource ChatColorConverter}}">
+                            <VerticalStackLayout Spacing="3" MaximumWidthRequest="280">
+                                <Label Text="{Binding EmisorNombre}" FontAttributes="Bold" FontSize="11" TextColor="#FFC107"/>
+                                <Label Text="{Binding Texto}" TextColor="White" FontSize="14"/>
+                                <Label Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}" TextColor="LightGray" FontSize="9" HorizontalOptions="End"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Entrada de Texto -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+            <Entry x:Name="entryMensaje" 
+                   Placeholder="Escribe un mensaje..." 
+                   TextColor="White" 
+                   PlaceholderColor="Gray" 
+                   BackgroundColor="#252526"/>
+            <Button Grid.Column="1" 
+                    Text="Enviar 📤" 
+                    Clicked="OnEnviarMensajeClicked" 
+                    BackgroundColor="#007ACC" 
+                    TextColor="White"/>
+        </Grid>
+    </Grid>
+</ContentPage>
