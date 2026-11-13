@@ -19,14 +19,10 @@ namespace PHANTEL.Services
 
                 if (existe != null) return false;
 
-                // Crear registro en Firebase
                 var result = await _firebase.Child("Usuarios").PostAsync(usuario);
-
-                // Generar un ID entero positivo unico basado en la clave de Firebase
                 int idUnico = Math.Abs(result.Key.GetHashCode());
                 usuario.Id = idUnico;
 
-                // Actualizar el objeto en Firebase con su ID asignado
                 await _firebase.Child("Usuarios").Child(result.Key).PutAsync(usuario);
                 return true;
             }
@@ -49,8 +45,6 @@ namespace PHANTEL.Services
                 if (coincidencia != null)
                 {
                     var u = coincidencia.Object;
-
-                    // Si en la base de datos el ID es 0, se lo asignamos y guardamos en Firebase
                     if (u.Id == 0)
                     {
                         u.Id = Math.Abs(coincidencia.Key.GetHashCode());
@@ -112,7 +106,6 @@ namespace PHANTEL.Services
 
                 if (esTecnico)
                 {
-                    // Busca coincidencia por TecnicoId directo
                     var lista = solicitudes
                         .Select(s => {
                             var obj = s.Object;
@@ -122,8 +115,6 @@ namespace PHANTEL.Services
                         .Where(s => s.TecnicoId == usuarioId)
                         .ToList();
 
-                    // Si no encontró coincidencia exacta por ID (por citas agendadas antes del cambio de ID), 
-                    // trae las solicitudes pendientes asociadas
                     if (!lista.Any())
                     {
                         lista = solicitudes
@@ -178,9 +169,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 3. CHAT Y RETROALIMENTACIÓN EN TIEMPO REAL ---
-
-        // Enviar un mensaje al chat de la cita
+        // --- 3. CHAT Y FOTO DE PERFIL ---
         public async Task<bool> EnviarMensajeChatAsync(MensajeChat mensaje)
         {
             try
@@ -198,7 +187,6 @@ namespace PHANTEL.Services
             }
         }
 
-        // Escuchar/Obtener los mensajes del chat en tiempo real
         public IObservable<FirebaseEvent<MensajeChat>> EscucharChatEnVivo(int solicitudId)
         {
             return _firebase
@@ -232,5 +220,40 @@ namespace PHANTEL.Services
             }
         }
 
+        // --- 4. CALIFICACIONES Y ELIMINACIÓN (AGREGADOS PARA CORREGIR EL ERROR) ---
+        public async Task<bool> GuardarCalificacionAsync(Calificacion calificacion)
+        {
+            try
+            {
+                await _firebase.Child("Calificaciones").PostAsync(calificacion);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR CALIFICACION]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> EliminarSolicitudAsync(int solicitudId)
+        {
+            try
+            {
+                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var itemABorrar = solicitudes.FirstOrDefault(s => s.Object.Id == solicitudId || Math.Abs(s.Key.GetHashCode()) == solicitudId);
+
+                if (itemABorrar != null)
+                {
+                    await _firebase.Child("Solicitudes").Child(itemABorrar.Key).DeleteAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR ELIMINAR]: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

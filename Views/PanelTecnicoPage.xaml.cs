@@ -6,6 +6,8 @@ namespace PHANTEL.Views
     public partial class PanelTecnicoPage : ContentPage
     {
         private readonly CloudDatabaseService _dbService = new();
+        // Control local para no abrir el popup repetidamente en la misma sesión para una cita ya calificada
+        private static readonly HashSet<int> _citasCalificadasPorTecnico = new();
 
         public PanelTecnicoPage()
         {
@@ -20,7 +22,6 @@ namespace PHANTEL.Views
 
         private async void CargarDatosTecnico()
         {
-            // Obtener el técnico actual en tiempo real desde la propiedad global
             var tecnicoActual = LoginPage.UsuarioActual;
 
             if (tecnicoActual != null)
@@ -28,7 +29,6 @@ namespace PHANTEL.Views
                 lblBienvenida.Text = $"👨‍🔧 {tecnicoActual.Nombre}";
                 lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
 
-                // Cargar Foto de Perfil en el ImageButton si existe en Base64
                 if (!string.IsNullOrEmpty(tecnicoActual.FotoPerfil))
                 {
                     try
@@ -46,9 +46,16 @@ namespace PHANTEL.Views
                     }
                 }
 
-                // Cargar solicitudes asociadas a este técnico en vivo desde la nube
                 var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
                 listCitasTecnico.ItemsSource = citas;
+
+                // DETECCIÓN AUTOMÁTICA: Si el cliente finalizó el trabajo, pedirle al técnico calificar al cliente
+                var citaRecienFinalizada = citas.FirstOrDefault(c => c.Estado == "Finalizada" && !_citasCalificadasPorTecnico.Contains(c.Id));
+                if (citaRecienFinalizada != null)
+                {
+                    _citasCalificadasPorTecnico.Add(citaRecienFinalizada.Id);
+                    await AbrirModalCalificarClienteAsync(citaRecienFinalizada);
+                }
             }
             else
             {
@@ -136,17 +143,77 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- ACCIONES SOBRE CITA ---
+        // --- ACCIONES INDEPENDIENTES SOBRE CITA ---
 
-        private async void OnAceptarFinalizarClicked(object sender, EventArgs e)
+        // 1. ACEPTAR CITA
+        private async void OnAceptarCitaClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                string nuevoEstado = cita.Estado == "Pendiente" ? "Aceptada" : "Finalizada";
-                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, nuevoEstado);
-                await DisplayAlert("Estado Actualizado", $"La cita ha sido marcada como: {nuevoEstado}", "OK");
+                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Aceptada");
+                await DisplayAlert("Estado Actualizado", "La cita ha sido marcada como Aceptada.", "OK");
                 CargarDatosTecnico();
+            }
+        }
+
+        // 2. FINALIZAR TRABAJO Y CALIFICAR AL CLIENTE
+        private async void OnFinalizarCalificarClicked(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.CommandParameter is SolicitudCita cita)
+            {
+                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
+                {
+                    await DisplayAlert("Atención", "Debes aceptar la cita antes de finalizar el trabajo.", "OK");
+                    return;
+                }
+
+                // Cambia el estado en la nube a Finalizada (esto avisará también al cliente)
+                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
+                _citasCalificadasPorTecnico.Add(cita.Id);
+
+                await AbrirModalCalificarClienteAsync(cita);
+            }
+        }
+
+        private async Task AbrirModalCalificarClienteAsync(SolicitudCita cita)
+        {
+            var popup = new CalificacionPopup("Tecnico");
+            await Navigation.PushModalAsync(popup);
+
+            popup.Disappearing += async (s, args) =>
+            {
+                if (popup.FueConfirmado)
+                {
+                    var nuevaCalificacion = new Calificacion
+                    {
+                        SolicitudId = cita.Id,
+                        TecnicoId = cita.TecnicoId,
+                        Puntuacion = popup.PuntuacionResultado,
+                        Comentario = $"[Técnico evaluó al Cliente]: {popup.ComentarioResultado}"
+                    };
+
+                    await _dbService.GuardarCalificacionAsync(nuevaCalificacion);
+                    await DisplayAlert("¡Gracias!", $"Evaluación de {popup.PuntuacionResultado} ★ enviada al cliente.", "OK");
+                }
+                CargarDatosTecnico();
+            };
+        }
+
+        // 3. ELIMINAR CITA (Botón totalmente independiente)
+        private async void OnEliminarCitaClicked(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.CommandParameter is SolicitudCita cita)
+            {
+                bool confirmar = await DisplayAlert("⚠️ Eliminar Cita", "¿Estás seguro de eliminar permanentemente esta solicitud?", "Sí, eliminar", "Cancelar");
+                if (confirmar)
+                {
+                    await _dbService.EliminarSolicitudAsync(cita.Id);
+                    await DisplayAlert("Eliminada", "La cita ha sido eliminada del sistema.", "OK");
+                    CargarDatosTecnico();
+                }
             }
         }
 
@@ -164,15 +231,14 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- NAVEGACIÓN A CHAT DE RETROALIMENTACIÓN DIRECTA ---
         private async void OnAbrirChatClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                if (cita.Estado != "Aceptada")
+                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
                 {
-                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar la retroalimentación por chat.", "OK");
+                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar el chat.", "OK");
                     return;
                 }
 
@@ -180,7 +246,6 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- NAVEGACIÓN EN TIEMPO REAL CON GOOGLE MAPS (WEB / UNIVERSAL) ---
         private async void OnAbrirGoogleMapsWebClicked(object sender, EventArgs e)
         {
             var button = sender as Button;

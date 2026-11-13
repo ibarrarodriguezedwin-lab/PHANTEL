@@ -91,29 +91,37 @@
                                                   ShouldShowPlaybackControls="True" 
                                                   Volume="1.0" />
 
-                            <!-- Acciones de Aceptar/Rechazar -->
+                            <!-- Botones Independientes: Aceptar Cita y Finalizar con Calificación -->
                             <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
-                                <Button Grid.Column="0" Text="Aceptar / Finalizar" 
-                                        Clicked="OnAceptarFinalizarClicked" 
+                                <Button Grid.Column="0" Text="✅ Aceptar Cita" 
+                                        Clicked="OnAceptarCitaClicked" 
                                         CommandParameter="{Binding .}" 
                                         BackgroundColor="#28A745" TextColor="White"/>
-                                <Button Grid.Column="1" Text="Rechazar Cita" 
-                                        Clicked="OnRechazarCitaClicked" 
+
+                                <Button Grid.Column="1" Text="⭐ Finalizar y Calificar" 
+                                        Clicked="OnFinalizarCalificarClicked" 
                                         CommandParameter="{Binding .}" 
-                                        BackgroundColor="#DC3545" TextColor="White"/>
+                                        BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold"/>
                             </Grid>
 
                             <!-- Abrir Chat Directo / Retroalimentación con el Cliente -->
                             <Button Text="💬 Chat / Retroalimentación Directa" 
                                     Clicked="OnAbrirChatClicked" 
                                     CommandParameter="{Binding .}" 
-                                    BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+                                    BackgroundColor="#6C757D" TextColor="White"/>
 
-                            <!-- Abrir Ruta Directa en Navegador Web (Google Maps) -->
-                            <Button Text="🌐 Abrir Ruta en Google Maps (Web)" 
-                                    Clicked="OnAbrirGoogleMapsWebClicked" 
-                                    CommandParameter="{Binding .}" 
-                                    BackgroundColor="#007ACC" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+                            <!-- Botones Independientes: Ver Ruta en Maps y Eliminar Cita -->
+                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                                <Button Grid.Column="0" Text="🌐 Ver Ruta Maps" 
+                                        Clicked="OnAbrirGoogleMapsWebClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#007ACC" TextColor="White"/>
+
+                                <Button Grid.Column="1" Text="🗑️ Eliminar Cita" 
+                                        Clicked="OnEliminarCitaClicked" 
+                                        CommandParameter="{Binding .}" 
+                                        BackgroundColor="#DC3545" TextColor="White" FontAttributes="Bold"/>
+                            </Grid>
 
                         </VerticalStackLayout>
                     </Border>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.CalificacionPopup"
+             BackgroundColor="#80000000"
+             Title="Calificación">
+
+    <Border VerticalOptions="Center" HorizontalOptions="Center" 
+            BackgroundColor="#252526" Stroke="#007ACC" Padding="25" WidthRequest="340">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="15"/>
+        </Border.StrokeShape>
+
+        <VerticalStackLayout Spacing="15">
+            <Label x:Name="lblTituloCalificacion" Text="Calificar" FontSize="19" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center"/>
+            <Label x:Name="lblSubtitulo" Text="Toca las estrellas para puntuar:" FontSize="13" TextColor="LightGray" HorizontalOptions="Center"/>
+
+            <!-- Estrellas Interactivas -->
+            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                <Button x:Name="btnS1" Text="★" FontSize="32" BackgroundColor="Transparent" TextColor="Gold" Clicked="OnEstrella1Clicked" Padding="2"/>
+                <Button x:Name="btnS2" Text="★" FontSize="32" BackgroundColor="Transparent" TextColor="Gold" Clicked="OnEstrella2Clicked" Padding="2"/>
+                <Button x:Name="btnS3" Text="★" FontSize="32" BackgroundColor="Transparent" TextColor="Gold" Clicked="OnEstrella3Clicked" Padding="2"/>
+                <Button x:Name="btnS4" Text="★" FontSize="32" BackgroundColor="Transparent" TextColor="Gold" Clicked="OnEstrella4Clicked" Padding="2"/>
+                <Button x:Name="btnS5" Text="★" FontSize="32" BackgroundColor="Transparent" TextColor="Gold" Clicked="OnEstrella5Clicked" Padding="2"/>
+            </HorizontalStackLayout>
+
+            <Label x:Name="lblPuntuacionTexto" Text="5 ★ - Excelente" TextColor="#FFC107" FontAttributes="Bold" HorizontalOptions="Center"/>
+
+            <Editor x:Name="editorComentario" Placeholder="Escribe tu comentario o retroalimentación..." 
+                    HeightRequest="90" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#1E1E1E"/>
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelarClicked" BackgroundColor="#6C757D" TextColor="White"/>
+                <Button Grid.Column="1" Text="Enviar" Clicked="OnGuardarClicked" BackgroundColor="#28A745" TextColor="White" FontAttributes="Bold"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+</ContentPage>
