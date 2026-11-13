@@ -128,7 +128,6 @@ namespace PHANTEL.Views
                 ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? "Ubicación por coordenadas GPS" : LoginPage.UsuarioActual.Direccion)
                 : entryDireccion.Text.Trim();
 
-            // CONVERSIÓN EXPLÍCITA A BASE64
             string fotoBase64 = string.Empty;
             if (!string.IsNullOrEmpty(_rutaFoto) && File.Exists(_rutaFoto))
             {
@@ -145,6 +144,7 @@ namespace PHANTEL.Views
             {
                 ClienteId = LoginPage.UsuarioActual.Id,
                 TecnicoId = _tecnico.Id,
+                TecnicoEmail = _tecnico.Email.Trim().ToLower(), // <--- Asignación directa e inmutable del técnico
                 DescripcionFalla = editorDescripcion.Text.Trim(),
                 DireccionCliente = direccionFinal,
                 FechaHoraProgramada = fechaProgramada,

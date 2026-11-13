@@ -10,9 +10,8 @@ namespace PHANTEL.Models
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string TipoPerfil { get; set; } = string.Empty; // "Cliente" o "Técnico"
-        public string Especialidad { get; set; } = string.Empty; // Plomería, Electricidad, Soporte de Cómputo, Cerrajería, etc.
+        public string Especialidad { get; set; } = string.Empty;
 
-        // Propiedades requeridas para el Registro y Perfil Completo
         public string Telefono { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;
         public string Experiencia { get; set; } = string.Empty;
@@ -30,6 +29,7 @@ namespace PHANTEL.Models
         public int Id { get; set; }
         public int ClienteId { get; set; }
         public int TecnicoId { get; set; }
+        public string TecnicoEmail { get; set; } = string.Empty; // <--- Identificador único del técnico en la nube
         public string DescripcionFalla { get; set; } = string.Empty;
         public string DireccionCliente { get; set; } = string.Empty;
         public DateTime FechaHoraProgramada { get; set; } = DateTime.Now;
@@ -48,7 +48,7 @@ namespace PHANTEL.Models
         public int Id { get; set; }
         public int SolicitudId { get; set; }
         public int TecnicoId { get; set; }
-        public int Puntuacion { get; set; } // 1 a 5
+        public int Puntuacion { get; set; }
         public string Comentario { get; set; } = string.Empty;
     }
 }
