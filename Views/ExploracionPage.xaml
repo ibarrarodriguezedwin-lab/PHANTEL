@@ -55,10 +55,37 @@
                 <Picker.ItemsSource>
                     <x:Array Type="{x:Type x:String}">
                         <x:String>Todos</x:String>
-                        <x:String>Plomería</x:String>
-                        <x:String>Electricidad</x:String>
-                        <x:String>Soporte de Cómputo</x:String>
-                        <x:String>Cerrajería</x:String>
+                        <x:String>Electricista</x:String>
+                        <x:String>Plomero</x:String>
+                        <x:String>Mecánico automotriz</x:String>
+                        <x:String>Técnico en informática</x:String>
+                        <x:String>Técnico en refrigeración</x:String>
+                        <x:String>Cerrajero</x:String>
+                        <x:String>Carpintero</x:String>
+                        <x:String>Técnico en electrónica</x:String>
+                        <x:String>Pintor</x:String>
+                        <x:String>Instalación de redes</x:String>
+                        <x:String>Albañil</x:String>
+                        <x:String>Herrero</x:String>
+                        <x:String>Jardinero</x:String>
+                        <x:String>Plomero destapa caños</x:String>
+                        <x:String>Técnico en paneles solares</x:String>
+                        <x:String>Técnico en lavadoras y secadoras</x:String>
+                        <x:String>Técnico en aire acondicionado</x:String>
+                        <x:String>Impermeabilizador</x:String>
+                        <x:String>Yesero</x:String>
+                        <x:String>Instalador de pisos</x:String>
+                        <x:String>Técnico en cámaras de seguridad</x:String>
+                        <x:String>Gasfitero / Gasero</x:String>
+                        <x:String>Tapicero</x:String>
+                        <x:String>Vidriero</x:String>
+                        <x:String>Ebanista</x:String>
+                        <x:String>Técnico en portones automáticos</x:String>
+                        <x:String>Instalador de paneles de yeso (Drywall)</x:String>
+                        <x:String>Limpiador de cisternas</x:String>
+                        <x:String>Técnico en telefonía celular</x:String>
+                        <x:String>Especialista en control de plagas</x:String>
+
                     </x:Array>
                 </Picker.ItemsSource>
             </Picker>
