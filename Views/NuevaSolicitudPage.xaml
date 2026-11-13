@@ -26,8 +26,7 @@
             <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                 <VerticalStackLayout Grid.Column="0" Spacing="5">
                     <Label Text="Día:" TextColor="Gray" FontSize="12"/>
-                    <DatePicker x:Name="pickerFecha" MinimumDate="{x:Static sys:DateTime.Today}" BackgroundColor="#252526" TextColor="White"
-                                xmlns:sys="clr-namespace:System;assembly=mscorlib"/>
+                    <DatePicker x:Name="pickerFecha" MinimumDate="{x:Static sys:DateTime.Today}" BackgroundColor="#252526" TextColor="White"/>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="5">
@@ -47,12 +46,13 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Adjuntar Evidencias -->
+            <!-- Adjuntar Evidencias (2x2 con Cámara y Galería) -->
             <Label Text="Adjuntar Evidencia Multimedios:" TextColor="LightGray" FontAttributes="Bold"/>
-            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
-                <Button Grid.Column="0" Text="📷 Foto" Clicked="OnTomarFotoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
-                <Button Grid.Column="1" Text="🎥 Video" Clicked="OnGrabarVideoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
-                <Button Grid.Column="2" Text="🎙️ Audio" Clicked="OnGrabarAudioClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+            <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, *" RowSpacing="10" ColumnSpacing="10">
+                <Button Grid.Row="0" Grid.Column="0" Text="📷 Cámara" Clicked="OnTomarFotoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+                <Button Grid.Row="0" Grid.Column="1" Text="🖼️ Galería" Clicked="OnSeleccionarFotoGaleriaClicked" BackgroundColor="#82CFFD" TextColor="Black" FontAttributes="Bold"/>
+                <Button Grid.Row="1" Grid.Column="0" Text="🎥 Video" Clicked="OnGrabarVideoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
+                <Button Grid.Row="1" Grid.Column="1" Text="🎙️ Audio" Clicked="OnGrabarAudioClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
             </Grid>
 
             <Image x:Name="imgPrevisualizacion" HeightRequest="150" Aspect="AspectFit" IsVisible="False"/>

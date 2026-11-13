@@ -57,30 +57,56 @@ namespace PHANTEL.Views
         {
             try
             {
-                var photo = await MediaPicker.CapturePhotoAsync();
+                var photo = await MediaPicker.Default.CapturePhotoAsync();
                 if (photo != null)
                 {
-                    var newPath = Path.Combine(FileSystem.CacheDirectory, photo.FileName);
-                    using var stream = await photo.OpenReadAsync();
-                    using var newStream = File.OpenWrite(newPath);
-                    await stream.CopyToAsync(newStream);
-
-                    _rutaFoto = newPath;
-                    imgPrevisualizacion.Source = ImageSource.FromFile(_rutaFoto);
-                    imgPrevisualizacion.IsVisible = true;
+                    await GuardarYMostrarFotoAsync(photo);
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error al tomar foto: {ex.Message}");
+                await DisplayAlertAsync("Cámara no disponible", $"No se pudo abrir la cámara ({ex.Message}). Puedes usar el botón '🖼️ Galería'.", "OK");
             }
+        }
+
+        private async void OnSeleccionarFotoGaleriaClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                var results = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
+                {
+                    Title = "Selecciona una foto de la falla"
+                });
+
+                var photo = results?.FirstOrDefault();
+                if (photo != null)
+                {
+                    await GuardarYMostrarFotoAsync(photo);
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Error", $"No se pudo seleccionar la imagen: {ex.Message}", "OK");
+            }
+        }
+
+        private async Task GuardarYMostrarFotoAsync(FileResult photo)
+        {
+            var newPath = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid()}_{photo.FileName}");
+            using var stream = await photo.OpenReadAsync();
+            using var newStream = File.OpenWrite(newPath);
+            await stream.CopyToAsync(newStream);
+
+            _rutaFoto = newPath;
+            imgPrevisualizacion.Source = ImageSource.FromFile(_rutaFoto);
+            imgPrevisualizacion.IsVisible = true;
         }
 
         private async void OnGrabarVideoClicked(object sender, EventArgs e)
         {
             try
             {
-                var video = await MediaPicker.CaptureVideoAsync();
+                var video = await MediaPicker.Default.CaptureVideoAsync();
                 if (video != null)
                 {
                     var newPath = Path.Combine(FileSystem.CacheDirectory, video.FileName);
@@ -101,7 +127,7 @@ namespace PHANTEL.Views
 
         private async void OnGrabarAudioClicked(object sender, EventArgs e)
         {
-            await DisplayAlert("Audio", "Audio de muestra adjuntado.", "OK");
+            await DisplayAlertAsync("Audio", "Audio de muestra adjuntado.", "OK");
             _rutaAudio = "audio_evidencia_sample.mp3";
         }
 
@@ -116,7 +142,7 @@ namespace PHANTEL.Views
 
             if (LoginPage.UsuarioActual == null)
             {
-                await DisplayAlert("Error", "No hay sesión de usuario activa.", "OK");
+                await DisplayAlertAsync("Error", "No hay sesión de usuario activa.", "OK");
                 return;
             }
 
@@ -144,7 +170,7 @@ namespace PHANTEL.Views
             {
                 ClienteId = LoginPage.UsuarioActual.Id,
                 TecnicoId = _tecnico.Id,
-                TecnicoEmail = _tecnico.Email.Trim().ToLower(), // <--- Asignación directa e inmutable del técnico
+                TecnicoEmail = _tecnico.Email.Trim().ToLower(),
                 DescripcionFalla = editorDescripcion.Text.Trim(),
                 DireccionCliente = direccionFinal,
                 FechaHoraProgramada = fechaProgramada,
@@ -161,12 +187,12 @@ namespace PHANTEL.Views
 
             if (guardado)
             {
-                await DisplayAlert("Éxito", $"Solicitud agendada con éxito para el {fechaProgramada:dd/MM/yyyy HH:mm} hrs.", "Aceptar");
+                await DisplayAlertAsync("Éxito", $"Solicitud agendada con éxito para el {fechaProgramada:dd/MM/yyyy HH:mm} hrs.", "Aceptar");
                 await Navigation.PopAsync();
             }
             else
             {
-                await DisplayAlert("Error", "No se pudo guardar la solicitud en la nube.", "OK");
+                await DisplayAlertAsync("Error", "No se pudo guardar la solicitud en la nube.", "OK");
             }
         }
     }
