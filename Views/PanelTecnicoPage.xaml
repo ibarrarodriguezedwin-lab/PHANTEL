@@ -16,7 +16,7 @@
 
     <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
 
-        <!-- Encabezado del Técnico con Avatar y Menú Desplegable de Perfil -->
+        <!-- Encabezado del Técnico con Avatar Clicable -->
         <Border Grid.Row="0" Stroke="#007ACC" Padding="15" BackgroundColor="#1E1E1E">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="10"/>
@@ -29,7 +29,7 @@
                     <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
                 </VerticalStackLayout>
 
-                <!-- Avatar Circular del Técnico con Menú Desplegable Corregido -->
+                <!-- Avatar Circular del Técnico (abre DisplayActionSheet al dar clic) -->
                 <ImageButton Grid.Column="1"
                              x:Name="btnPerfilTecnico" 
                              Aspect="AspectFill" 
@@ -37,15 +37,8 @@
                              HeightRequest="55"
                              CornerRadius="28"
                              Source="dotnet_bot.png"
-                             VerticalOptions="Center">
-                    <FlyoutBase.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Text="👤 Mi Cuenta / Perfil" Clicked="OnVerPerfilClicked" />
-                            <MenuFlyoutSeparator />
-                            <MenuFlyoutItem Text="🚪 Cerrar Sesión" Clicked="OnCerrarSesionClicked" />
-                        </MenuFlyout>
-                    </FlyoutBase.ContextFlyout>
-                </ImageButton>
+                             VerticalOptions="Center"
+                             Clicked="OnPerfilTecnicoClicked" />
 
             </Grid>
         </Border>

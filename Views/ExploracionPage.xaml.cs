@@ -93,25 +93,69 @@ namespace PHANTEL.Views
 
         // --- MANEJO DEL MENÚ DE PERFIL DEL CLIENTE ---
 
-
-        private async void OnVerCuentaClienteClicked(object sender, EventArgs e)
+        private async void OnPerfilClienteClicked(object sender, EventArgs e)
         {
             var u = LoginPage.UsuarioActual;
-            if (u != null)
+            if (u == null) return;
+
+            string opcion = await DisplayActionSheet(
+                $"Cuenta: {u.Nombre}",
+                "Cancelar",
+                null,
+                "📷 Editar Foto de Perfil",
+                "📋 Historial de Citas",
+                "🚪 Cerrar Sesión");
+
+            switch (opcion)
             {
-                await DisplayAlert("Mi Cuenta PHANTEL",
-                    $"Nombre: {u.Nombre}\n" +
-                    $"Correo: {u.Email}\n" +
-                    $"Teléfono: {u.Telefono}\n" +
-                    $"Dirección: {u.Direccion}\n" +
-                    $"Tipo de Perfil: {u.TipoPerfil}", "Aceptar");
+                case "📷 Editar Foto de Perfil":
+                    await CambiarFotoPerfilAsync();
+                    break;
+
+                case "📋 Historial de Citas":
+                    await Navigation.PushAsync(new MisSolicitudesPage());
+                    break;
+
+                case "🚪 Cerrar Sesión":
+                    LoginPage.UsuarioActual = null;
+                    Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
+                    break;
             }
         }
 
-        private void OnCerrarSesionClicked(object sender, EventArgs e)
+        private async Task CambiarFotoPerfilAsync()
         {
-            LoginPage.UsuarioActual = null;
-            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
+            try
+            {
+                var photo = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+                {
+                    Title = "Selecciona tu nueva foto de perfil"
+                });
+
+                if (photo != null && LoginPage.UsuarioActual != null)
+                {
+                    using var stream = await photo.OpenReadAsync();
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    string base64 = Convert.ToBase64String(ms.ToArray());
+
+                    bool guardado = await _dbService.ActualizarFotoPerfilAsync(LoginPage.UsuarioActual.Id, base64);
+                    if (guardado)
+                    {
+                        LoginPage.UsuarioActual.FotoPerfil = base64;
+                        btnPerfilCliente.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
+                        await DisplayAlert("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "No se pudo guardar la foto en la nube.", "OK");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
+            }
         }
 
         // --- SOLICITUDES DE TÉCNICOS ---

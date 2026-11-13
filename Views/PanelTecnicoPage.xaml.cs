@@ -20,6 +20,7 @@ namespace PHANTEL.Views
 
         private async void CargarDatosTecnico()
         {
+            // Obtener el técnico actual en tiempo real desde la propiedad global
             var tecnicoActual = LoginPage.UsuarioActual;
 
             if (tecnicoActual != null)
@@ -27,12 +28,16 @@ namespace PHANTEL.Views
                 lblBienvenida.Text = $"👨‍🔧 {tecnicoActual.Nombre}";
                 lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
 
-                // Cargar imagen de perfil si la tiene
+                // Cargar Foto de Perfil en el ImageButton si existe en Base64
                 if (!string.IsNullOrEmpty(tecnicoActual.FotoPerfil))
                 {
                     try
                     {
-                        byte[] imageBytes = Convert.FromBase64String(tecnicoActual.FotoPerfil);
+                        string cleanBase64 = tecnicoActual.FotoPerfil.Contains(",")
+                            ? tecnicoActual.FotoPerfil.Split(',')[1]
+                            : tecnicoActual.FotoPerfil;
+
+                        byte[] imageBytes = Convert.FromBase64String(cleanBase64.Trim());
                         btnPerfilTecnico.Source = ImageSource.FromStream(() => new MemoryStream(imageBytes));
                     }
                     catch
@@ -41,23 +46,97 @@ namespace PHANTEL.Views
                     }
                 }
 
-                // FILTRO ESTRICTO: Obtenemos todas las solicitudes de la nube y filtramos por el correo del técnico actual
-                var todasLasSolicitudes = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
-
-                string emailTecnico = tecnicoActual.Email.Trim().ToLower();
-                var citasFiltradas = todasLasSolicitudes
-                    .Where(s => (!string.IsNullOrEmpty(s.TecnicoEmail) && s.TecnicoEmail.Trim().ToLower() == emailTecnico) ||
-                                (string.IsNullOrEmpty(s.TecnicoEmail) && s.TecnicoId == tecnicoActual.Id))
-                    .ToList();
-
-                listCitasTecnico.ItemsSource = citasFiltradas;
+                // Cargar solicitudes asociadas a este técnico en vivo desde la nube
+                var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
+                listCitasTecnico.ItemsSource = citas;
             }
             else
             {
-                await DisplayAlertAsync("Error de Sesión", "No se encontró un técnico activo.", "OK");
+                await DisplayAlert("Error de Sesión", "No se encontró un técnico activo. Inicia sesión de nuevo.", "OK");
                 Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
             }
         }
+
+        // --- MENÚ DESPLEGABLE Y GESTIÓN DE PERFIL DEL TÉCNICO ---
+
+        private async void OnPerfilTecnicoClicked(object sender, EventArgs e)
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u == null) return;
+
+            string opcion = await DisplayActionSheet(
+                $"Técnico: {u.Nombre}",
+                "Cancelar",
+                null,
+                "📷 Editar Foto de Perfil",
+                "📋 Historial de Citas",
+                "🚪 Cerrar Sesión");
+
+            switch (opcion)
+            {
+                case "📷 Editar Foto de Perfil":
+                    await CambiarFotoPerfilTecnicoAsync();
+                    break;
+
+                case "📋 Historial de Citas":
+                    var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(u.Id, esTecnico: true);
+                    var historial = citas.Where(c => c.Estado == "Finalizada" || c.Estado == "Rechazada").ToList();
+
+                    if (historial.Count == 0)
+                    {
+                        await DisplayAlert("Historial de Citas", "Aún no tienes citas finalizadas o rechazadas en tu historial.", "OK");
+                    }
+                    else
+                    {
+                        string resumen = string.Join("\n\n", historial.Select(c =>
+                            $"• Cita #{c.Id} [{c.Estado}]\n  Falla: {c.DescripcionFalla}\n  Traslado: ${c.TarifaTraslado:F2}"));
+                        await DisplayAlert("Historial de Citas", resumen, "Cerrar");
+                    }
+                    break;
+
+                case "🚪 Cerrar Sesión":
+                    LoginPage.UsuarioActual = null;
+                    Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
+                    break;
+            }
+        }
+
+        private async Task CambiarFotoPerfilTecnicoAsync()
+        {
+            try
+            {
+                var photo = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+                {
+                    Title = "Selecciona tu nueva foto de perfil"
+                });
+
+                if (photo != null && LoginPage.UsuarioActual != null)
+                {
+                    using var stream = await photo.OpenReadAsync();
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    string base64 = Convert.ToBase64String(ms.ToArray());
+
+                    bool guardado = await _dbService.ActualizarFotoPerfilAsync(LoginPage.UsuarioActual.Id, base64);
+                    if (guardado)
+                    {
+                        LoginPage.UsuarioActual.FotoPerfil = base64;
+                        btnPerfilTecnico.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
+                        await DisplayAlert("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "No se pudo guardar la foto en la nube.", "OK");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
+            }
+        }
+
+        // --- ACCIONES SOBRE CITA ---
 
         private async void OnAceptarFinalizarClicked(object sender, EventArgs e)
         {
@@ -66,7 +145,7 @@ namespace PHANTEL.Views
             {
                 string nuevoEstado = cita.Estado == "Pendiente" ? "Aceptada" : "Finalizada";
                 await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, nuevoEstado);
-                await DisplayAlertAsync("Estado Actualizado", $"La cita ha sido marcada como: {nuevoEstado}", "OK");
+                await DisplayAlert("Estado Actualizado", $"La cita ha sido marcada como: {nuevoEstado}", "OK");
                 CargarDatosTecnico();
             }
         }
@@ -76,7 +155,7 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                bool confirmar = await DisplayAlertAsync("Confirmar", "¿Deseas rechazar esta solicitud?", "Sí", "No");
+                bool confirmar = await DisplayAlert("Confirmar", "¿Deseas rechazar esta solicitud?", "Sí", "No");
                 if (confirmar)
                 {
                     await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Rechazada");
@@ -85,6 +164,7 @@ namespace PHANTEL.Views
             }
         }
 
+        // --- NAVEGACIÓN A CHAT DE RETROALIMENTACIÓN DIRECTA ---
         private async void OnAbrirChatClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -92,7 +172,7 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada")
                 {
-                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar la retroalimentación por chat.", "OK");
+                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar la retroalimentación por chat.", "OK");
                     return;
                 }
 
@@ -100,6 +180,7 @@ namespace PHANTEL.Views
             }
         }
 
+        // --- NAVEGACIÓN EN TIEMPO REAL CON GOOGLE MAPS (WEB / UNIVERSAL) ---
         private async void OnAbrirGoogleMapsWebClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -107,7 +188,7 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada")
                 {
-                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar la ruta de navegación.", "OK");
+                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar la ruta de navegación.", "OK");
                     return;
                 }
 
@@ -122,30 +203,9 @@ namespace PHANTEL.Views
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlertAsync("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
+                    await DisplayAlert("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
                 }
             }
-        }
-
-        private void OnVerPerfilClicked(object sender, EventArgs e)
-        {
-            DisplayAlertAsync("Mi Perfil", "Módulo de perfil de técnico.", "OK");
-        }
-
-        private void OnCerrarSesionClicked(object sender, EventArgs e)
-        {
-            LoginPage.UsuarioActual = null;
-            Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
-        }
-
-        private Task DisplayAlertAsync(string title, string message, string cancel)
-        {
-            return DisplayAlert(title, message, cancel);
-        }
-
-        private Task<bool> DisplayAlertAsync(string title, string message, string accept, string cancel)
-        {
-            return DisplayAlert(title, message, accept, cancel);
         }
     }
 }

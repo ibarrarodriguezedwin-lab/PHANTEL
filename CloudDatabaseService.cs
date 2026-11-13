@@ -207,6 +207,30 @@ namespace PHANTEL.Services
                 .AsObservable<MensajeChat>();
         }
 
+        public async Task<bool> ActualizarFotoPerfilAsync(int usuarioId, string nuevaFotoBase64)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var nodoUsuario = usuarios.FirstOrDefault(u => u.Object != null && u.Object.Id == usuarioId);
+
+                if (nodoUsuario != null)
+                {
+                    nodoUsuario.Object.FotoPerfil = nuevaFotoBase64;
+                    await _firebase
+                        .Child("Usuarios")
+                        .Child(nodoUsuario.Key)
+                        .PutAsync(nodoUsuario.Object);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR ACTUALIZAR FOTO]: {ex.Message}");
+                return false;
+            }
+        }
 
     }
 }
