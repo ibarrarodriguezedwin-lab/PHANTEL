@@ -40,6 +40,13 @@
                                     CommandParameter="{Binding .}" 
                                     BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
 
+                            <!-- Botón de Denuncia / Reembolso (Visible solo cuando Estado == "Finalizada") -->
+                            <Button Text="🚨 Reportar Problema / Reembolso" 
+                                    Clicked="OnReportarProblemaClicked" 
+                                    CommandParameter="{Binding .}" 
+                                    IsVisible="{Binding MostrarBotonReportar}"
+                                    BackgroundColor="#E67E22" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

@@ -47,7 +47,7 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
                 {
-                    await DisplayAlert("Atención", "El técnico debe aceptar la solicitud antes de poder finalizar el trabajo.", "OK");
+                    await DisplayAlertAsync("Atención", "El técnico debe aceptar la solicitud antes de poder finalizar el trabajo.", "OK");
                     return;
                 }
 
@@ -77,7 +77,7 @@ namespace PHANTEL.Views
                     };
 
                     await _dbService.GuardarCalificacionAsync(nuevaCalificacion);
-                    await DisplayAlert("¡Gracias!", $"Has calificado el servicio del técnico con {popup.PuntuacionResultado} ★.", "OK");
+                    await DisplayAlertAsync("¡Gracias!", $"Has calificado el servicio del técnico con {popup.PuntuacionResultado} ★.", "OK");
                 }
                 CargarSolicitudes();
             };
@@ -89,11 +89,11 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                bool confirmar = await DisplayAlert("⚠️ Eliminar Cita", "¿Deseas eliminar esta solicitud de tus citas?", "Sí, eliminar", "Cancelar");
+                bool confirmar = await DisplayAlertAsync("⚠️ Eliminar Cita", "¿Deseas eliminar esta solicitud de tus citas?", "Sí, eliminar", "Cancelar");
                 if (confirmar)
                 {
                     await _dbService.EliminarSolicitudAsync(cita.Id);
-                    await DisplayAlert("Eliminada", "La cita ha sido eliminada.", "OK");
+                    await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada.", "OK");
                     CargarSolicitudes();
                 }
             }
@@ -107,11 +107,79 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
                 {
-                    await DisplayAlert("Atención", "El técnico debe aceptar la cita primero para iniciar la conversación por chat.", "OK");
+                    await DisplayAlertAsync("Atención", "El técnico debe aceptar la cita primero para iniciar la conversación por chat.", "OK");
                     return;
                 }
 
                 await Navigation.PushAsync(new ChatPage(cita));
+            }
+        }
+
+        // 4. REPORTAR PROBLEMA / REEMBOLSO (WHATSAPP O LLAMADA A ADMINISTRACIÓN)
+        private async void OnReportarProblemaClicked(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button?.CommandParameter is not SolicitudCita cita) return;
+
+            // Números de soporte de los administradores PHANTEL (Formato internacional con 52 para México)
+            string telefonoWhatsApp = "525582393553"; // <-- Reemplaza con tu número real de administrador
+            string telefonoLlamada = "+525636511034"; // <-- Reemplaza con tu número real de administrador
+
+            string opcion = await DisplayActionSheetAsync(
+                $"Soporte y Reembolsos - Cita #{cita.Id}",
+                "Cancelar",
+                null,
+                "💬 Mensaje Directo por WhatsApp",
+                "📞 Llamar a un Administrador");
+
+            if (string.IsNullOrEmpty(opcion) || opcion == "Cancelar")
+                return;
+
+            var cliente = LoginPage.UsuarioActual;
+            string nombreCliente = cliente?.Nombre ?? "Cliente";
+
+            if (opcion == "💬 Mensaje Directo por WhatsApp")
+            {
+                await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "WhatsApp");
+
+                string mensaje = $"Hola equipo de Administración PHANTEL. Quiero reportar un problema con un servicio finalizado para revisión y posible reembolso:\n\n" +
+                                 $"• Folio de Cita: #{cita.Id}\n" +
+                                 $"• Cliente: {nombreCliente}\n" +
+                                 $"• Técnico asignado: {cita.TecnicoEmail}\n" +
+                                 $"• Falla reportada: {cita.DescripcionFalla}\n" +
+                                 $"• Monto pagado: ${cita.TarifaTraslado:F2} MXN\n\n" +
+                                 $"Detalle de mi problema: ";
+
+                string urlWhatsApp = $"https://wa.me/{telefonoWhatsApp}?text={Uri.EscapeDataString(mensaje)}";
+
+                try
+                {
+                    await Launcher.Default.OpenAsync(new Uri(urlWhatsApp));
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Error", $"No se pudo abrir WhatsApp en este dispositivo: {ex.Message}", "OK");
+                }
+            }
+            else if (opcion == "📞 Llamar a un Administrador")
+            {
+                await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "Llamada Telefónica");
+
+                try
+                {
+                    if (PhoneDialer.Default.IsSupported)
+                    {
+                        PhoneDialer.Default.Open(telefonoLlamada);
+                    }
+                    else
+                    {
+                        await Launcher.Default.OpenAsync(new Uri($"tel:{telefonoLlamada}"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await DisplayAlertAsync("Contacto Directo", $"Marca directamente al número de soporte: {telefonoLlamada}\n({ex.Message})", "OK");
+                }
             }
         }
     }

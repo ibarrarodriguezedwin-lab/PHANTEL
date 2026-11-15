@@ -40,6 +40,14 @@ namespace PHANTEL.Models
         public string EvidenciaRutaImagen { get; set; } = string.Empty;
         public string EvidenciaRutaVideo { get; set; } = string.Empty;
         public string EvidenciaRutaAudio { get; set; } = string.Empty;
+
+        // --- NUEVAS PROPIEDADES PARA DISPUTAS Y REEMBOLSOS ---
+        public bool EnDisputa { get; set; } = false;
+        public string MotivoReporte { get; set; } = string.Empty;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool MostrarBotonReportar => Estado == "Finalizada";
     }
 
     public class Calificacion

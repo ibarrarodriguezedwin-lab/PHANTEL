@@ -169,6 +169,33 @@ namespace PHANTEL.Services
             }
         }
 
+        public async Task<bool> MarcarCitaEnDisputaAsync(int citaId, string canalContacto)
+        {
+            try
+            {
+                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var citaTarget = solicitudes.FirstOrDefault(s => s.Object.Id == citaId || Math.Abs(s.Key.GetHashCode()) == citaId);
+
+                if (citaTarget != null)
+                {
+                    citaTarget.Object.EnDisputa = true;
+                    citaTarget.Object.MotivoReporte = $"Reporte iniciado por cliente vía {canalContacto} el {DateTime.Now:dd/MM/yyyy HH:mm}";
+
+                    await _firebase
+                        .Child("Solicitudes")
+                        .Child(citaTarget.Key)
+                        .PutAsync(citaTarget.Object);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR DISPUTA]: {ex.Message}");
+                return false;
+            }
+        }
+
         // --- 3. CHAT Y FOTO DE PERFIL ---
         public async Task<bool> EnviarMensajeChatAsync(MensajeChat mensaje)
         {
@@ -220,7 +247,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 4. CALIFICACIONES Y ELIMINACIÓN (AGREGADOS PARA CORREGIR EL ERROR) ---
+        // --- 4. CALIFICACIONES Y ELIMINACIÓN ---
         public async Task<bool> GuardarCalificacionAsync(Calificacion calificacion)
         {
             try
