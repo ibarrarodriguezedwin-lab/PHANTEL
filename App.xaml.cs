@@ -1,4 +1,5 @@
-﻿using PHANTEL.Views;
+﻿using PHANTEL.Services;
+using PHANTEL.Views;
 
 namespace PHANTEL
 {
@@ -11,8 +12,44 @@ namespace PHANTEL
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Envolver LoginPage dentro de NavigationPage para habilitar la navegación a RegistroPage
-            return new Window(new NavigationPage(new LoginPage()));
+            var window = new Window(new NavigationPage(new LoginPage()));
+            VerificarSesionActivaAsync(window);
+            return window;
+        }
+
+        private async void VerificarSesionActivaAsync(Window window)
+        {
+            string emailGuardado = Preferences.Default.Get("SesionEmail", string.Empty);
+
+            if (!string.IsNullOrWhiteSpace(emailGuardado))
+            {
+                try
+                {
+                    var dbService = new CloudDatabaseService();
+                    var usuario = await dbService.ObtenerUsuarioPorEmailAsync(emailGuardado);
+
+                    if (usuario != null)
+                    {
+                        LoginPage.UsuarioActual = usuario;
+
+                        MainThread.BeginInvokeOnMainThread(() =>
+                        {
+                            if (usuario.TipoPerfil == "Técnico")
+                                window.Page = new NavigationPage(new PanelTecnicoPage());
+                            else
+                                window.Page = new AppShell();
+                        });
+                    }
+                    else
+                    {
+                        Preferences.Default.Remove("SesionEmail");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ERROR RESTAURAR SESION]: {ex.Message}");
+                }
+            }
         }
     }
 }

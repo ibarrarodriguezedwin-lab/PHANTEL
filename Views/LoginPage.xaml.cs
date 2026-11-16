@@ -14,7 +14,7 @@ namespace PHANTEL.Views
             InitializeComponent();
         }
 
-        private void OnMediaOpened(object sender, EventArgs e)
+        private void OnMediaOpened(object? sender, EventArgs e)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -47,6 +47,7 @@ namespace PHANTEL.Views
                 {
                     mediaFondo.Pause();
                     mediaFondo.Stop();
+                    mediaFondo.Handler?.DisconnectHandler();
                 }
             }
             catch (Exception ex)
@@ -74,6 +75,9 @@ namespace PHANTEL.Views
                 lblError.IsVisible = false;
                 UsuarioActual = usuario;
 
+                // Guardar sesión persistente en el dispositivo
+                Preferences.Default.Set("SesionEmail", usuario.Email.Trim().ToLower());
+
                 PausarVideoSeguro();
 
                 if (usuario.TipoPerfil == "Técnico")
@@ -89,6 +93,53 @@ namespace PHANTEL.Views
             {
                 lblError.Text = "Credenciales incorrectas o usuario no registrado.";
                 lblError.IsVisible = true;
+            }
+        }
+
+        private async void OnOlvidarPasswordClicked(object sender, EventArgs e)
+        {
+            string email = await DisplayPromptAsync(
+                "Recuperar Contraseña",
+                "Ingresa el correo electrónico con el que te registraste:",
+                accept: "Siguiente",
+                cancel: "Cancelar",
+                placeholder: "ejemplo@correo.com",
+                keyboard: Keyboard.Email);
+
+            if (string.IsNullOrWhiteSpace(email)) return;
+
+            string telefono = await DisplayPromptAsync(
+                "Verificación de Seguridad",
+                "Ingresa el número de teléfono asociado a tu cuenta:",
+                accept: "Verificar",
+                cancel: "Cancelar",
+                placeholder: "10 dígitos",
+                keyboard: Keyboard.Telephone);
+
+            if (string.IsNullOrWhiteSpace(telefono)) return;
+
+            string nuevaPass = await DisplayPromptAsync(
+                "Nueva Contraseña",
+                "Escribe tu nueva contraseña (mínimo 6 caracteres):",
+                accept: "Guardar",
+                cancel: "Cancelar",
+                placeholder: "Nueva contraseña");
+
+            if (string.IsNullOrWhiteSpace(nuevaPass) || nuevaPass.Trim().Length < 6)
+            {
+                await DisplayAlertAsync("Atención", "La contraseña debe tener al menos 6 caracteres.", "OK");
+                return;
+            }
+
+            bool actualizado = await _dbService.RestablecerPasswordAsync(email, telefono, nuevaPass);
+
+            if (actualizado)
+            {
+                await DisplayAlertAsync("¡Listo!", "Tu contraseña se actualizó correctamente. Ya puedes iniciar sesión.", "Aceptar");
+            }
+            else
+            {
+                await DisplayAlertAsync("Datos incorrectos", "El correo y el teléfono no coinciden con ninguna cuenta registrada.", "OK");
             }
         }
 

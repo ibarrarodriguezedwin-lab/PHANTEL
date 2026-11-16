@@ -1,6 +1,7 @@
 ﻿using Firebase.Database;
 using Firebase.Database.Query;
 using Firebase.Database.Streaming;
+using PHANTEL.Helpers;
 using PHANTEL.Models;
 
 namespace PHANTEL.Services
@@ -9,7 +10,7 @@ namespace PHANTEL.Services
     {
         private readonly FirebaseClient _firebase = new("https://phantel-enterprises-default-rtdb.firebaseio.com/");
 
-        // --- 1. USUARIOS (REGISTRO Y LOGIN) ---
+        // --- 1. USUARIOS (REGISTRO, LOGIN, SESIÓN Y RECUPERACIÓN) ---
         public async Task<bool> RegistrarUsuarioAsync(Usuario usuario)
         {
             try
@@ -18,6 +19,9 @@ namespace PHANTEL.Services
                 var existe = usuarios.FirstOrDefault(u => u.Object.Email.ToLower() == usuario.Email.Trim().ToLower());
 
                 if (existe != null) return false;
+
+                // Cifrar la contraseña con SHA-256 antes de guardarla en Firebase
+                usuario.Password = SecurityHelper.HashPassword(usuario.Password);
 
                 var result = await _firebase.Child("Usuarios").PostAsync(usuario);
                 int idUnico = Math.Abs(result.Key.GetHashCode());
@@ -37,19 +41,34 @@ namespace PHANTEL.Services
         {
             try
             {
+                string passwordHash = SecurityHelper.HashPassword(password);
                 var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+
                 var coincidencia = usuarios.FirstOrDefault(u =>
                     u.Object.Email.Trim().ToLower() == email.Trim().ToLower() &&
-                    u.Object.Password.Trim() == password.Trim());
+                    (u.Object.Password.Trim() == passwordHash || u.Object.Password.Trim() == password.Trim()));
 
                 if (coincidencia != null)
                 {
                     var u = coincidencia.Object;
+                    bool requiereActualizar = false;
+
                     if (u.Id == 0)
                     {
                         u.Id = Math.Abs(coincidencia.Key.GetHashCode());
-                        await _firebase.Child("Usuarios").Child(coincidencia.Key).PutAsync(u);
+                        requiereActualizar = true;
                     }
+
+                    // Si la cuenta era vieja (texto plano), la migra automáticamente a SHA-256
+                    if (u.Password.Trim() == password.Trim() && password.Trim() != passwordHash)
+                    {
+                        u.Password = passwordHash;
+                        requiereActualizar = true;
+                    }
+
+                    if (requiereActualizar)
+                        await _firebase.Child("Usuarios").Child(coincidencia.Key).PutAsync(u);
+
                     return u;
                 }
                 return null;
@@ -58,6 +77,52 @@ namespace PHANTEL.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR LOGIN]: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<Usuario?> ObtenerUsuarioPorEmailAsync(string email)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var coincidencia = usuarios.FirstOrDefault(u =>
+                    u.Object != null &&
+                    u.Object.Email.Trim().ToLower() == email.Trim().ToLower());
+
+                return coincidencia?.Object;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR SESION]: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task<bool> RestablecerPasswordAsync(string email, string telefono, string nuevaPassword)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var coincidencia = usuarios.FirstOrDefault(u =>
+                    u.Object != null &&
+                    u.Object.Email.Trim().ToLower() == email.Trim().ToLower() &&
+                    u.Object.Telefono.Trim() == telefono.Trim());
+
+                if (coincidencia != null)
+                {
+                    coincidencia.Object.Password = SecurityHelper.HashPassword(nuevaPassword);
+                    await _firebase
+                        .Child("Usuarios")
+                        .Child(coincidencia.Key)
+                        .PutAsync(coincidencia.Object);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR RESET PASS]: {ex.Message}");
+                return false;
             }
         }
 
@@ -247,7 +312,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 4. CALIFICACIONES Y ELIMINACIÓN ---
+        // --- 4. CALIFICACIONES, CONTROL DE POPUP Y ELIMINACIÓN ---
         public async Task<bool> GuardarCalificacionAsync(Calificacion calificacion)
         {
             try
@@ -259,6 +324,29 @@ namespace PHANTEL.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR CALIFICACION]: {ex.Message}");
                 return false;
+            }
+        }
+
+        public async Task MarcarCitaCalificadaAsync(int citaId, bool esTecnico)
+        {
+            try
+            {
+                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var citaTarget = solicitudes.FirstOrDefault(s => s.Object.Id == citaId || Math.Abs(s.Key.GetHashCode()) == citaId);
+
+                if (citaTarget != null)
+                {
+                    string campo = esTecnico ? "CalificadaPorTecnico" : "CalificadaPorCliente";
+                    await _firebase
+                        .Child("Solicitudes")
+                        .Child(citaTarget.Key)
+                        .Child(campo)
+                        .PutAsync("true");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR MARCAR CALIFICADA]: {ex.Message}");
             }
         }
 

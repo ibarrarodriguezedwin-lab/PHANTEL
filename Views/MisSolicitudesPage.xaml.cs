@@ -6,7 +6,7 @@ namespace PHANTEL.Views
     public partial class MisSolicitudesPage : ContentPage
     {
         private readonly CloudDatabaseService _dbService = new();
-        private static readonly HashSet<int> _citasCalificadasPorCliente = new();
+        private bool _popupAbierto = false;
 
         public MisSolicitudesPage()
         {
@@ -29,17 +29,9 @@ namespace PHANTEL.Views
                 esTecnico: false);
 
             listSolicitudes.ItemsSource = solicitudes;
-
-            // DETECCIÓN AUTOMÁTICA: Si el técnico finalizó el trabajo, pedirle al cliente calificar al técnico
-            var citaRecienFinalizada = solicitudes.FirstOrDefault(c => c.Estado == "Finalizada" && !_citasCalificadasPorCliente.Contains(c.Id));
-            if (citaRecienFinalizada != null)
-            {
-                _citasCalificadasPorCliente.Add(citaRecienFinalizada.Id);
-                await AbrirModalCalificarTecnicoAsync(citaRecienFinalizada);
-            }
         }
 
-        // 1. FINALIZAR TRABAJO Y CALIFICAR AL TÉCNICO
+        // 1. FINALIZAR TRABAJO Y CALIFICAR AL TÉCNICO (SOLO MANUAL AL PRESIONAR EL BOTÓN)
         private async void OnFinalizarTrabajoClienteClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -51,9 +43,11 @@ namespace PHANTEL.Views
                     return;
                 }
 
-                // Marca como Finalizada en Firebase (esto también activará la calificación del técnico)
-                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
-                _citasCalificadasPorCliente.Add(cita.Id);
+                if (cita.CalificadaPorCliente)
+                {
+                    await DisplayAlertAsync("Aviso", "Este servicio ya fue finalizado y calificado.", "OK");
+                    return;
+                }
 
                 await AbrirModalCalificarTecnicoAsync(cita);
             }
@@ -61,13 +55,23 @@ namespace PHANTEL.Views
 
         private async Task AbrirModalCalificarTecnicoAsync(SolicitudCita cita)
         {
+            if (_popupAbierto) return;
+            _popupAbierto = true;
+
             var popup = new CalificacionPopup("Cliente");
             await Navigation.PushModalAsync(popup);
 
             popup.Disappearing += async (s, args) =>
             {
+                _popupAbierto = false;
                 if (popup.FueConfirmado)
                 {
+                    cita.Estado = "Finalizada";
+                    cita.CalificadaPorCliente = true;
+
+                    await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
+                    await _dbService.MarcarCitaCalificadaAsync(cita.Id, esTecnico: false);
+
                     var nuevaCalificacion = new Calificacion
                     {
                         SolicitudId = cita.Id,
@@ -121,9 +125,8 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is not SolicitudCita cita) return;
 
-            // Números de soporte de los administradores PHANTEL (Formato internacional con 52 para México)
-            string telefonoWhatsApp = "525582393553"; // <-- Reemplaza con tu número real de administrador
-            string telefonoLlamada = "+525636511034"; // <-- Reemplaza con tu número real de administrador
+            string telefonoWhatsApp = "525582393553";
+            string telefonoLlamada = "5636511034";
 
             string opcion = await DisplayActionSheetAsync(
                 $"Soporte y Reembolsos - Cita #{cita.Id}",

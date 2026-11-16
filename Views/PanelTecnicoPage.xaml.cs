@@ -6,8 +6,6 @@ namespace PHANTEL.Views
     public partial class PanelTecnicoPage : ContentPage
     {
         private readonly CloudDatabaseService _dbService = new();
-        // Control local para no abrir el popup repetidamente en la misma sesión para una cita ya calificada
-        private static readonly HashSet<int> _citasCalificadasPorTecnico = new();
 
         public PanelTecnicoPage()
         {
@@ -48,18 +46,10 @@ namespace PHANTEL.Views
 
                 var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(tecnicoActual.Id, esTecnico: true);
                 listCitasTecnico.ItemsSource = citas;
-
-                // DETECCIÓN AUTOMÁTICA: Si el cliente finalizó el trabajo, pedirle al técnico calificar al cliente
-                var citaRecienFinalizada = citas.FirstOrDefault(c => c.Estado == "Finalizada" && !_citasCalificadasPorTecnico.Contains(c.Id));
-                if (citaRecienFinalizada != null)
-                {
-                    _citasCalificadasPorTecnico.Add(citaRecienFinalizada.Id);
-                    await AbrirModalCalificarClienteAsync(citaRecienFinalizada);
-                }
             }
             else
             {
-                await DisplayAlert("Error de Sesión", "No se encontró un técnico activo. Inicia sesión de nuevo.", "OK");
+                await DisplayAlertAsync("Error de Sesión", "No se encontró un técnico activo. Inicia sesión de nuevo.", "OK");
                 Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
             }
         }
@@ -71,7 +61,7 @@ namespace PHANTEL.Views
             var u = LoginPage.UsuarioActual;
             if (u == null) return;
 
-            string opcion = await DisplayActionSheet(
+            string opcion = await DisplayActionSheetAsync(
                 $"Técnico: {u.Nombre}",
                 "Cancelar",
                 null,
@@ -91,17 +81,18 @@ namespace PHANTEL.Views
 
                     if (historial.Count == 0)
                     {
-                        await DisplayAlert("Historial de Citas", "Aún no tienes citas finalizadas o rechazadas en tu historial.", "OK");
+                        await DisplayAlertAsync("Historial de Citas", "Aún no tienes citas finalizadas o rechazadas en tu historial.", "OK");
                     }
                     else
                     {
                         string resumen = string.Join("\n\n", historial.Select(c =>
                             $"• Cita #{c.Id} [{c.Estado}]\n  Falla: {c.DescripcionFalla}\n  Traslado: ${c.TarifaTraslado:F2}"));
-                        await DisplayAlert("Historial de Citas", resumen, "Cerrar");
+                        await DisplayAlertAsync("Historial de Citas", resumen, "Cerrar");
                     }
                     break;
 
                 case "🚪 Cerrar Sesión":
+                    Preferences.Default.Remove("SesionEmail");
                     LoginPage.UsuarioActual = null;
                     Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
                     break;
@@ -112,11 +103,12 @@ namespace PHANTEL.Views
         {
             try
             {
-                var photo = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+                var results = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
                 {
                     Title = "Selecciona tu nueva foto de perfil"
                 });
 
+                var photo = results?.FirstOrDefault();
                 if (photo != null && LoginPage.UsuarioActual != null)
                 {
                     using var stream = await photo.OpenReadAsync();
@@ -129,17 +121,17 @@ namespace PHANTEL.Views
                     {
                         LoginPage.UsuarioActual.FotoPerfil = base64;
                         btnPerfilTecnico.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
-                        await DisplayAlert("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
+                        await DisplayAlertAsync("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
                     }
                     else
                     {
-                        await DisplayAlert("Error", "No se pudo guardar la foto en la nube.", "OK");
+                        await DisplayAlertAsync("Error", "No se pudo guardar la foto en la nube.", "OK");
                     }
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
+                await DisplayAlertAsync("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
             }
         }
 
@@ -152,53 +144,38 @@ namespace PHANTEL.Views
             if (button?.CommandParameter is SolicitudCita cita)
             {
                 await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Aceptada");
-                await DisplayAlert("Estado Actualizado", "La cita ha sido marcada como Aceptada.", "OK");
+                await DisplayAlertAsync("Estado Actualizado", "La cita ha sido marcada como Aceptada.", "OK");
                 CargarDatosTecnico();
             }
         }
 
-        // 2. FINALIZAR TRABAJO Y CALIFICAR AL CLIENTE
-        private async void OnFinalizarCalificarClicked(object sender, EventArgs e)
+        // 2. FINALIZAR TRABAJO (SIN CALIFICAR AL CLIENTE)
+        private async void OnFinalizarTrabajoClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
+                if (cita.Estado == "Finalizada")
                 {
-                    await DisplayAlert("Atención", "Debes aceptar la cita antes de finalizar el trabajo.", "OK");
+                    await DisplayAlertAsync("Aviso", "Este servicio ya fue marcado como finalizado.", "OK");
                     return;
                 }
 
-                // Cambia el estado en la nube a Finalizada (esto avisará también al cliente)
-                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
-                _citasCalificadasPorTecnico.Add(cita.Id);
-
-                await AbrirModalCalificarClienteAsync(cita);
-            }
-        }
-
-        private async Task AbrirModalCalificarClienteAsync(SolicitudCita cita)
-        {
-            var popup = new CalificacionPopup("Tecnico");
-            await Navigation.PushModalAsync(popup);
-
-            popup.Disappearing += async (s, args) =>
-            {
-                if (popup.FueConfirmado)
+                if (cita.Estado != "Aceptada")
                 {
-                    var nuevaCalificacion = new Calificacion
-                    {
-                        SolicitudId = cita.Id,
-                        TecnicoId = cita.TecnicoId,
-                        Puntuacion = popup.PuntuacionResultado,
-                        Comentario = $"[Técnico evaluó al Cliente]: {popup.ComentarioResultado}"
-                    };
-
-                    await _dbService.GuardarCalificacionAsync(nuevaCalificacion);
-                    await DisplayAlert("¡Gracias!", $"Evaluación de {popup.PuntuacionResultado} ★ enviada al cliente.", "OK");
+                    await DisplayAlertAsync("Atención", "Debes aceptar la cita antes de finalizar el trabajo.", "OK");
+                    return;
                 }
-                CargarDatosTecnico();
-            };
+
+                bool confirmar = await DisplayAlertAsync("Finalizar Trabajo", "¿Confirmas que el servicio técnico ha concluido?", "Sí, finalizar", "Cancelar");
+                if (confirmar)
+                {
+                    cita.Estado = "Finalizada";
+                    await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
+                    await DisplayAlertAsync("Trabajo Finalizado", "El servicio ha sido marcado como finalizado.", "OK");
+                    CargarDatosTecnico();
+                }
+            }
         }
 
         // 3. ELIMINAR CITA (Botón totalmente independiente)
@@ -207,11 +184,11 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                bool confirmar = await DisplayAlert("⚠️ Eliminar Cita", "¿Estás seguro de eliminar permanentemente esta solicitud?", "Sí, eliminar", "Cancelar");
+                bool confirmar = await DisplayAlertAsync("⚠️ Eliminar Cita", "¿Estás seguro de eliminar permanentemente esta solicitud?", "Sí, eliminar", "Cancelar");
                 if (confirmar)
                 {
                     await _dbService.EliminarSolicitudAsync(cita.Id);
-                    await DisplayAlert("Eliminada", "La cita ha sido eliminada del sistema.", "OK");
+                    await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada del sistema.", "OK");
                     CargarDatosTecnico();
                 }
             }
@@ -222,7 +199,7 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
-                bool confirmar = await DisplayAlert("Confirmar", "¿Deseas rechazar esta solicitud?", "Sí", "No");
+                bool confirmar = await DisplayAlertAsync("Confirmar", "¿Deseas rechazar esta solicitud?", "Sí", "No");
                 if (confirmar)
                 {
                     await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Rechazada");
@@ -238,7 +215,7 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
                 {
-                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar el chat.", "OK");
+                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar el chat.", "OK");
                     return;
                 }
 
@@ -253,7 +230,7 @@ namespace PHANTEL.Views
             {
                 if (cita.Estado != "Aceptada")
                 {
-                    await DisplayAlert("Atención", "Debes aceptar la cita primero para iniciar la ruta de navegación.", "OK");
+                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar la ruta de navegación.", "OK");
                     return;
                 }
 
@@ -268,7 +245,7 @@ namespace PHANTEL.Views
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
+                    await DisplayAlertAsync("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
                 }
             }
         }
