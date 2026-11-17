@@ -27,7 +27,6 @@ namespace PHANTEL.Views
             {
                 lblClienteNombre.Text = $"Hola, {usuarioActual.Nombre}";
 
-                // Cargar Foto de Perfil en el ImageButton si existe en Base64
                 if (!string.IsNullOrEmpty(usuarioActual.FotoPerfil))
                 {
                     try
@@ -51,7 +50,7 @@ namespace PHANTEL.Views
         {
             try
             {
-                // Carga los técnicos desde Firebase Realtime Database
+                // Ya vienen ordenados: primero los técnicos con EstadoVerificacion == "Verificado" y luego por calificación
                 _todosLosTecnicos = await _dbService.ObtenerTecnicosAsync();
                 AplicarFiltros();
             }
@@ -69,11 +68,12 @@ namespace PHANTEL.Views
             var filtrados = _todosLosTecnicos.Where(t =>
             {
                 bool cumpleEspecialidad = especialidad == "Todos" ||
-                                         t.Especialidad.Equals(especialidad, StringComparison.OrdinalIgnoreCase);
+                                          t.Especialidad.Equals(especialidad, StringComparison.OrdinalIgnoreCase);
 
                 bool cumpleTexto = string.IsNullOrEmpty(textoBusqueda) ||
                                    t.Nombre.ToLower().Contains(textoBusqueda) ||
-                                   t.Especialidad.ToLower().Contains(textoBusqueda);
+                                   t.Especialidad.ToLower().Contains(textoBusqueda) ||
+                                   (textoBusqueda.Contains("verificado") && t.EstaVerificado);
 
                 return cumpleEspecialidad && cumpleTexto;
             }).ToList();
@@ -98,7 +98,7 @@ namespace PHANTEL.Views
             var u = LoginPage.UsuarioActual;
             if (u == null) return;
 
-            string opcion = await DisplayActionSheet(
+            string opcion = await DisplayActionSheetAsync(
                 $"Cuenta: {u.Nombre}",
                 "Cancelar",
                 null,
@@ -117,6 +117,7 @@ namespace PHANTEL.Views
                     break;
 
                 case "🚪 Cerrar Sesión":
+                    Preferences.Default.Remove("SesionEmail");
                     LoginPage.UsuarioActual = null;
                     Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
                     break;
@@ -127,11 +128,12 @@ namespace PHANTEL.Views
         {
             try
             {
-                var photo = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
+                var photos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
                 {
                     Title = "Selecciona tu nueva foto de perfil"
                 });
 
+                var photo = photos?.FirstOrDefault();
                 if (photo != null && LoginPage.UsuarioActual != null)
                 {
                     using var stream = await photo.OpenReadAsync();
@@ -144,17 +146,17 @@ namespace PHANTEL.Views
                     {
                         LoginPage.UsuarioActual.FotoPerfil = base64;
                         btnPerfilCliente.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
-                        await DisplayAlert("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
+                        await DisplayAlertAsync("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
                     }
                     else
                     {
-                        await DisplayAlert("Error", "No se pudo guardar la foto en la nube.", "OK");
+                        await DisplayAlertAsync("Error", "No se pudo guardar la foto en la nube.", "OK");
                     }
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
+                await DisplayAlertAsync("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
             }
         }
 

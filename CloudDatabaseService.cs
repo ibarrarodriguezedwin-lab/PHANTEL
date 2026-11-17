@@ -138,6 +138,8 @@ namespace PHANTEL.Services
                         return user;
                     })
                     .Where(u => u.TipoPerfil == "Técnico" && !u.CuentaSuspendida)
+                    .OrderByDescending(u => u.EstadoVerificacion == "Verificado")
+                    .ThenByDescending(u => u.CalificacionPromedio)
                     .ToList();
             }
             catch
@@ -673,6 +675,90 @@ namespace PHANTEL.Services
             }
             catch
             {
+                return false;
+            }
+        }
+
+        // --- 7. VERIFICACIÓN DE IDENTIDAD DE TÉCNICOS (KYC) ---
+        public async Task<bool> EnviarDocumentosVerificacionAsync(int tecnicoId, string emailTecnico, string ineFrenteBase64, string ineReversoBase64)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var tecNode = usuarios.FirstOrDefault(u =>
+                    u.Object != null &&
+                    (
+                        (tecnicoId != 0 && u.Object.Id == tecnicoId) ||
+                        (!string.IsNullOrWhiteSpace(emailTecnico) &&
+                         u.Object.Email.Trim().ToLower() == emailTecnico.Trim().ToLower())
+                    ));
+
+                if (tecNode != null)
+                {
+                    tecNode.Object.IneFrenteBase64 = ineFrenteBase64;
+                    tecNode.Object.IneReversoBase64 = ineReversoBase64;
+                    tecNode.Object.EstadoVerificacion = "En Revisión";
+                    tecNode.Object.MotivoRechazoVerificacion = string.Empty;
+
+                    await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR ENVIAR KYC]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<List<Usuario>> ObtenerTecnicosPendientesVerificacionAsync()
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                return usuarios
+                    .Select(u =>
+                    {
+                        var obj = u.Object;
+                        if (obj.Id == 0) obj.Id = Math.Abs(u.Key.GetHashCode());
+                        return obj;
+                    })
+                    .Where(u => u.TipoPerfil == "Técnico" && u.EstadoVerificacion == "En Revisión")
+                    .ToList();
+            }
+            catch
+            {
+                return new List<Usuario>();
+            }
+        }
+
+        public async Task<bool> DictaminarVerificacionTecnicoAsync(int tecnicoId, string emailTecnico, bool aprobar, string motivoRechazo = "")
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var tecNode = usuarios.FirstOrDefault(u =>
+                    u.Object != null &&
+                    (
+                        (tecnicoId != 0 && u.Object.Id == tecnicoId) ||
+                        (!string.IsNullOrWhiteSpace(emailTecnico) &&
+                         u.Object.Email.Trim().ToLower() == emailTecnico.Trim().ToLower())
+                    ));
+
+                if (tecNode != null)
+                {
+                    tecNode.Object.EstadoVerificacion = aprobar ? "Verificado" : "Rechazado";
+                    tecNode.Object.MotivoRechazoVerificacion = aprobar ? string.Empty : motivoRechazo;
+
+                    await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR DICTAMINAR KYC]: {ex.Message}");
                 return false;
             }
         }

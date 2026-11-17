@@ -12,26 +12,38 @@
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="12"/>
             </Border.StrokeShape>
-            <Grid ColumnDefinitions="*, Auto">
-                <VerticalStackLayout Spacing="4">
-                    <Label x:Name="lblAdminBienvenida"
-                           Text="⚖️ Panel de Administración"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           TextColor="#FFC107"/>
-                    <Label Text="Auditoría de disputas, pruebas y pagos en custodia"
-                           FontSize="12"
-                           TextColor="#B0C4DE"/>
-                </VerticalStackLayout>
-                <Button Grid.Column="1"
-                        Text="🚪 Salir"
-                        Clicked="OnCerrarSesionAdminClicked"
-                        BackgroundColor="#DC3545"
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*, Auto">
+                    <VerticalStackLayout Spacing="4">
+                        <Label x:Name="lblAdminBienvenida"
+                               Text="⚖️ Panel de Administración"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#FFC107"/>
+                        <Label Text="Auditoría de disputas, pruebas y pagos en custodia"
+                               FontSize="12"
+                               TextColor="#B0C4DE"/>
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1"
+                            Text="🚪 Salir"
+                            Clicked="OnCerrarSesionAdminClicked"
+                            BackgroundColor="#DC3545"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            HeightRequest="38"
+                            CornerRadius="8"/>
+                </Grid>
+
+                <!-- Acceso directo a Validación de Identidad (KYC) -->
+                <Button x:Name="btnValidarTecnicosKyc"
+                        Text="🪪 Validar Identidad de Técnicos (KYC)"
+                        Clicked="OnAbrirValidacionesKycClicked"
+                        BackgroundColor="#007ACC"
                         TextColor="White"
                         FontAttributes="Bold"
-                        HeightRequest="38"
+                        HeightRequest="40"
                         CornerRadius="8"/>
-            </Grid>
+            </VerticalStackLayout>
         </Border>
 
         <!-- Lista de Disputas Activas -->

@@ -24,8 +24,27 @@ namespace PHANTEL.Views
 
             if (tecnicoActual != null)
             {
-                lblBienvenida.Text = $"👨‍🔧 {tecnicoActual.Nombre}";
+                // Refrescar estado del técnico desde Firebase para detectar si ya fue verificado o suspendido
+                var usuarioFresco = await _dbService.ObtenerUsuarioPorEmailAsync(tecnicoActual.Email);
+                if (usuarioFresco != null)
+                {
+                    LoginPage.UsuarioActual = usuarioFresco;
+                    tecnicoActual = usuarioFresco;
+
+                    if (tecnicoActual.CuentaSuspendida)
+                    {
+                        Application.Current!.Windows[0].Page = new NavigationPage(new CuentaSuspendidaPage());
+                        return;
+                    }
+                }
+
+                lblBienvenida.Text = tecnicoActual.EstaVerificado
+                    ? $"👨‍🔧 {tecnicoActual.Nombre} ✔️"
+                    : $"👨‍🔧 {tecnicoActual.Nombre}";
+
                 lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
+
+                ActualizarBotonVerificacionKyc();
 
                 if (!string.IsNullOrEmpty(tecnicoActual.FotoPerfil))
                 {
@@ -54,6 +73,41 @@ namespace PHANTEL.Views
             }
         }
 
+        private void ActualizarBotonVerificacionKyc()
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u == null || btnVerificacionKyc == null) return;
+
+            switch (u.EstadoVerificacion)
+            {
+                case "Verificado":
+                    btnVerificacionKyc.Text = "✔️ Técnico Verificado PHANTEL";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#28A745");
+                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#16281E");
+                    break;
+                case "En Revisión":
+                    btnVerificacionKyc.Text = "⏳ Verificación de Identidad en Revisión";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#00D2FF");
+                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#162430");
+                    break;
+                case "Rechazado":
+                    btnVerificacionKyc.Text = "❌ Verificación Rechazada - Subir INE de nuevo";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#FF6B6B");
+                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#2E181A");
+                    break;
+                default:
+                    btnVerificacionKyc.Text = "🪪 Verificar mi Identidad (Obtener Sello ✔️)";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#FFC107");
+                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#2D333B");
+                    break;
+            }
+        }
+
+        private async void OnAbrirVerificacionKycClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new VerificacionTecnicoPage());
+        }
+
         // --- MENÚ DESPLEGABLE Y GESTIÓN DE PERFIL DEL TÉCNICO ---
 
         private async void OnPerfilTecnicoClicked(object sender, EventArgs e)
@@ -65,12 +119,17 @@ namespace PHANTEL.Views
                 $"Técnico: {u.Nombre}",
                 "Cancelar",
                 null,
+                "🪪 Verificación de Identidad (INE)",
                 "📷 Editar Foto de Perfil",
                 "📋 Historial de Citas",
                 "🚪 Cerrar Sesión");
 
             switch (opcion)
             {
+                case "🪪 Verificación de Identidad (INE)":
+                    await Navigation.PushAsync(new VerificacionTecnicoPage());
+                    break;
+
                 case "📷 Editar Foto de Perfil":
                     await CambiarFotoPerfilTecnicoAsync();
                     break;

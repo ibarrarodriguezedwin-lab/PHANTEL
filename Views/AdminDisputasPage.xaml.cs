@@ -15,26 +15,43 @@ namespace PHANTEL.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+
             if (LoginPage.UsuarioActual != null)
                 lblAdminBienvenida.Text = $"⚖️ Admin: {LoginPage.UsuarioActual.Nombre}";
 
-            await CargarDisputasAsync();
+            await CargarDisputasYVerificacionesAsync();
         }
 
-        private async Task CargarDisputasAsync()
+        private async Task CargarDisputasYVerificacionesAsync()
         {
             var disputas = await _dbService.ObtenerDisputasActivasAsync();
             listDisputas.ItemsSource = disputas;
+
+            var pendientesKyc = await _dbService.ObtenerTecnicosPendientesVerificacionAsync();
+            if (btnValidarTecnicosKyc != null)
+            {
+                btnValidarTecnicosKyc.Text = pendientesKyc.Count > 0
+                    ? $"🪪 Validar Identidad de Técnicos ({pendientesKyc.Count} pendiente{(pendientesKyc.Count == 1 ? "" : "s")})"
+                    : "🪪 Validar Identidad de Técnicos (Sin pendientes)";
+            }
         }
 
-        private async void OnRefrescarClicked(object sender, EventArgs e) => await CargarDisputasAsync();
+        private async void OnAbrirValidacionesKycClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new AdminVerificacionesPage());
+        }
 
         private async void OnAuditarDisputaClicked(object sender, EventArgs e)
         {
-            if (sender is Button btn && btn.CommandParameter is SolicitudCita cita)
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
             {
                 await Navigation.PushAsync(new ResolverDisputaPage(cita));
             }
+        }
+
+        private async void OnRefrescarClicked(object sender, EventArgs e)
+        {
+            await CargarDisputasYVerificacionesAsync();
         }
 
         private void OnCerrarSesionAdminClicked(object sender, EventArgs e)
