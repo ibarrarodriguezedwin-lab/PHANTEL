@@ -9,7 +9,7 @@ namespace PHANTEL.Models
         public string Nombre { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string TipoPerfil { get; set; } = string.Empty; // "Cliente" o "Técnico"
+        public string TipoPerfil { get; set; } = string.Empty; // "Cliente", "Técnico" o "Admin"
         public string Especialidad { get; set; } = string.Empty;
 
         public string Telefono { get; set; } = string.Empty;
@@ -21,6 +21,14 @@ namespace PHANTEL.Models
         public double Longitud { get; set; }
         public double CalificacionPromedio { get; set; } = 5.0;
         public string FotoPerfil { get; set; } = string.Empty;
+
+        // --- CONTROL FINANCIERO Y REPUTACIÓN (CUSTODIA / PENALIZACIONES) ---
+        public string ClabeInterbancaria { get; set; } = string.Empty;
+        public decimal SaldoEnCustodia { get; set; } = 0m;
+        public decimal SaldoLiberado { get; set; } = 0m;
+        public int ReportesAcumulados { get; set; } = 0;
+        public bool CuentaSuspendida { get; set; } = false;
+        public string MotivoSuspension { get; set; } = string.Empty;
     }
 
     public class SolicitudCita
@@ -45,13 +53,32 @@ namespace PHANTEL.Models
         public bool CalificadaPorCliente { get; set; } = false;
         public bool CalificadaPorTecnico { get; set; } = false;
 
+        // --- PRESUPUESTO Y PAGO PROTEGIDO (ESTILO MERCADO LIBRE) ---
+        public string ConceptoPresupuesto { get; set; } = string.Empty;
+        public decimal MontoPresupuesto { get; set; } = 0m;
+        public string EstadoPago { get; set; } = "Sin Cotizar";
+        // Valores: "Sin Cotizar", "Cotizado", "En Custodia (Retenido)", "Liberado al Técnico", "Retenido por Disputa", "Fondos Liquidados (Cerrado)", "Reembolsado al Cliente (Cerrado)"
+        public string ReferenciaTransferencia { get; set; } = string.Empty;
+        public string ComprobantePagoBase64 { get; set; } = string.Empty;
+        public decimal PenalizacionAplicada { get; set; } = 0m;
+
         // --- PROPIEDADES PARA DISPUTAS Y REEMBOLSOS ---
         public bool EnDisputa { get; set; } = false;
+        public bool ResueltaPorAdmin { get; set; } = false;
         public string MotivoReporte { get; set; } = string.Empty;
+        public string DictamenAdmin { get; set; } = string.Empty;
 
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
-        public bool MostrarBotonReportar => Estado == "Finalizada";
+        public decimal MontoTotalConTraslado => TarifaTraslado + MontoPresupuesto;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool MostrarBotonCalificar => Estado == "Finalizada" && !CalificadaPorCliente && !ResueltaPorAdmin && !EnDisputa;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool MostrarBotonReportar => (Estado == "Finalizada" || EstadoPago == "En Custodia (Retenido)") && !ResueltaPorAdmin && !EnDisputa;
     }
 
     public class Calificacion

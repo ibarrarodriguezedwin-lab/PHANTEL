@@ -15,37 +15,62 @@
                         <VerticalStackLayout Spacing="6">
                             <Grid ColumnDefinitions="*, Auto">
                                 <Label Text="{Binding Estado, StringFormat='Estado: {0}'}" FontAttributes="Bold" TextColor="#007ACC"/>
-                                <Label Grid.Column="1" Text="{Binding TarifaTraslado, StringFormat='${0:F2}'}" FontAttributes="Bold" TextColor="Green"/>
+                                <Label Grid.Column="1" Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}" FontAttributes="Bold" TextColor="Green"/>
                             </Grid>
 
                             <Label Text="{Binding DescripcionFalla}" FontAttributes="Italic"/>
                             <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" TextColor="Gray"/>
 
+                            <!-- Estado del Pago Protegido / Dictamen -->
+                            <Label Text="{Binding EstadoPago, StringFormat='🛡️ Pago: {0}'}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="#00D2FF"/>
+
+                            <Label Text="{Binding DictamenAdmin, StringFormat='⚖️ Dictamen Admin: {0}'}"
+                                   IsVisible="{Binding ResueltaPorAdmin}"
+                                   FontSize="12"
+                                   TextColor="#FFC107"/>
+
                             <!-- Botones Separados: Finalizar Trabajo (Calificar) y Eliminar Cita -->
                             <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
-                                <Button Grid.Column="0" Text="✅ Calificar al Técnico" 
-                                        Clicked="OnFinalizarTrabajoClienteClicked" 
-                                        CommandParameter="{Binding .}" 
-                                        BackgroundColor="#28A745" TextColor="White" FontAttributes="Bold"/>
+                                <Button Grid.Column="0"
+                                        Text="✅ Calificar al Técnico"
+                                        Clicked="OnFinalizarTrabajoClienteClicked"
+                                        CommandParameter="{Binding .}"
+                                        IsEnabled="{Binding MostrarBotonCalificar}"
+                                        BackgroundColor="#28A745"
+                                        TextColor="White"
+                                        FontAttributes="Bold"/>
 
-                                <Button Grid.Column="1" Text="🗑️ Eliminar Cita" 
-                                        Clicked="OnEliminarCitaClicked" 
-                                        CommandParameter="{Binding .}" 
-                                        BackgroundColor="#DC3545" TextColor="White" FontAttributes="Bold"/>
+                                <Button Grid.Column="1"
+                                        Text="🗑️ Eliminar Cita"
+                                        Clicked="OnEliminarCitaClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#DC3545"
+                                        TextColor="White"
+                                        FontAttributes="Bold"/>
                             </Grid>
 
                             <!-- Abrir Chat Directo con el Técnico -->
-                            <Button Text="💬 Abrir Chat con el Técnico" 
-                                    Clicked="OnAbrirChatClicked" 
-                                    CommandParameter="{Binding .}" 
-                                    BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+                            <Button Text="💬 Abrir Chat con el Técnico"
+                                    Clicked="OnAbrirChatClicked"
+                                    CommandParameter="{Binding .}"
+                                    BackgroundColor="#17A2B8"
+                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    Margin="0,5,0,0"/>
 
-                            <!-- Botón de Denuncia / Reembolso (Visible solo cuando Estado == "Finalizada") -->
-                            <Button Text="🚨 Reportar Problema / Reembolso" 
-                                    Clicked="OnReportarProblemaClicked" 
-                                    CommandParameter="{Binding .}" 
+                            <!-- Botón de Denuncia / Reembolso (Inhabilitado si Admin ya cerró o hay disputa) -->
+                            <Button Text="🚨 Reportar Problema / Reembolso"
+                                    Clicked="OnReportarProblemaClicked"
+                                    CommandParameter="{Binding .}"
                                     IsVisible="{Binding MostrarBotonReportar}"
-                                    BackgroundColor="#E67E22" TextColor="White" FontAttributes="Bold" Margin="0,5,0,0"/>
+                                    IsEnabled="{Binding MostrarBotonReportar}"
+                                    BackgroundColor="#E67E22"
+                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    Margin="0,5,0,0"/>
 
                         </VerticalStackLayout>
                     </Border>

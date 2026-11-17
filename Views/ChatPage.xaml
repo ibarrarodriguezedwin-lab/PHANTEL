@@ -4,7 +4,7 @@
              xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.ChatPage"
              BackgroundColor="#1E1E1E"
-             Title="Chat y Retroalimentación">
+             Title="Chat y Presupuesto Protegido">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -13,21 +13,106 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, *, Auto" Padding="15" RowSpacing="10">
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="15" RowSpacing="10">
 
-        <!-- Encabezado del Chat -->
+        <!-- 0. Encabezado del Chat -->
         <Border Grid.Row="0" Stroke="#007ACC" Padding="10" BackgroundColor="#252526">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="8"/>
             </Border.StrokeShape>
             <VerticalStackLayout Spacing="3">
-                <Label x:Name="lblTituloChat" Text="💬 Chat de Retroalimentación" FontAttributes="Bold" TextColor="White" FontSize="16"/>
+                <Label x:Name="lblTituloChat" Text="💬 Chat de Servicio" FontAttributes="Bold" TextColor="White" FontSize="16"/>
                 <Label x:Name="lblDetalleCita" Text="Cita # --" TextColor="Gray" FontSize="12"/>
             </VerticalStackLayout>
         </Border>
 
-        <!-- Lista de Mensajes -->
-        <CollectionView Grid.Row="1" x:Name="listMensajes" SelectionMode="None">
+        <!-- 1. Tarjeta de Presupuesto y Pago en Custodia (Estilo Mercado Libre) -->
+        <Border Grid.Row="1"
+                x:Name="cardPresupuesto"
+                Stroke="#28A745"
+                StrokeThickness="1.2"
+                Padding="12"
+                BackgroundColor="#1A2634">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="10"/>
+            </Border.StrokeShape>
+
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*, Auto">
+                    <Label x:Name="lblEstadoPago"
+                           Text="🛡️ Protección PHANTEL: Sin cotizar"
+                           FontAttributes="Bold"
+                           TextColor="#00D2FF"
+                           FontSize="13"/>
+                    <Label x:Name="lblMontoTotal"
+                           Grid.Column="1"
+                           Text="$0.00 MXN"
+                           FontAttributes="Bold"
+                           TextColor="#28A745"
+                           FontSize="14"/>
+                </Grid>
+
+                <Label x:Name="lblConceptoPresupuesto"
+                       Text="El técnico aún no ha enviado el presupuesto de reparación."
+                       TextColor="#D0D7DE"
+                       FontSize="12"/>
+
+                <!-- Aviso de seguridad sobre retención / penalizaciones -->
+                <Label x:Name="lblAdvertenciaSeguridad"
+                       Text="🔒 Tu dinero se resguarda en PHANTEL y solo se libera al técnico si el servicio concluye sin reportes."
+                       TextColor="#FFC107"
+                       FontSize="11"/>
+
+                <!-- Botón exclusivo Técnico: Cotizar -->
+                <Button x:Name="btnEnviarPresupuesto"
+                        Text="💰 Enviar / Actualizar Presupuesto"
+                        Clicked="OnEnviarPresupuestoClicked"
+                        IsVisible="False"
+                        BackgroundColor="#007ACC"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        HeightRequest="38"
+                        CornerRadius="8"/>
+
+                <!-- Botón exclusivo Cliente: Pagar por transferencia -->
+                <Button x:Name="btnPagarCustodia"
+                        Text="💳 Pagar por Transferencia (En Custodia)"
+                        Clicked="OnPagarCustodiaClicked"
+                        IsVisible="False"
+                        BackgroundColor="#28A745"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        HeightRequest="38"
+                        CornerRadius="8"/>
+
+                <!-- Botones exclusivos Cliente cuando el dinero ya está retenido -->
+                <Grid x:Name="gridAccionesCustodiaCliente"
+                      ColumnDefinitions="*, *"
+                      ColumnSpacing="8"
+                      IsVisible="False">
+                    <Button Text="✅ Liberar Pago"
+                            Clicked="OnLiberarPagoClicked"
+                            BackgroundColor="#198754"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            HeightRequest="38"
+                            CornerRadius="8"/>
+                    <Button Grid.Column="1"
+                            Text="⚠️ Reportar / Retener"
+                            Clicked="OnReportarDisputaChatClicked"
+                            BackgroundColor="#DC3545"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            FontSize="12"
+                            HeightRequest="38"
+                            CornerRadius="8"/>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- 2. Lista de Mensajes -->
+        <CollectionView Grid.Row="2" x:Name="listMensajes" SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Grid Padding="5">
@@ -47,8 +132,8 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Entrada de Texto -->
-        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+        <!-- 3. Entrada de Texto -->
+        <Grid Grid.Row="3" ColumnDefinitions="*, Auto" ColumnSpacing="10">
             <Entry x:Name="entryMensaje" 
                    Placeholder="Escribe un mensaje..." 
                    TextColor="White" 

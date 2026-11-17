@@ -31,12 +31,18 @@ namespace PHANTEL.Views
             listSolicitudes.ItemsSource = solicitudes;
         }
 
-        // 1. FINALIZAR TRABAJO Y CALIFICAR AL TÉCNICO (SOLO MANUAL AL PRESIONAR EL BOTÓN)
+        // 1. FINALIZAR TRABAJO, CALIFICAR AL TÉCNICO Y LIBERAR PAGO EN AUTOMÁTICO
         private async void OnFinalizarTrabajoClienteClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
             if (button?.CommandParameter is SolicitudCita cita)
             {
+                if (cita.ResueltaPorAdmin || cita.EnDisputa)
+                {
+                    await DisplayAlertAsync("Caso cerrado / en revisión", "Esta cita ya fue gestionada por Administración PHANTEL y no admite calificación manual.", "OK");
+                    return;
+                }
+
                 if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
                 {
                     await DisplayAlertAsync("Atención", "El técnico debe aceptar la solicitud antes de poder finalizar el trabajo.", "OK");
@@ -81,13 +87,38 @@ namespace PHANTEL.Views
                     };
 
                     await _dbService.GuardarCalificacionAsync(nuevaCalificacion);
-                    await DisplayAlertAsync("¡Gracias!", $"Has calificado el servicio del técnico con {popup.PuntuacionResultado} ★.", "OK");
+
+                    // Si había pago en custodia y no existe disputa ni resolución de admin, liberar dinero automáticamente al técnico
+                    bool pagoLiberado = false;
+                    if (!cita.EnDisputa && !cita.ResueltaPorAdmin && cita.EstadoPago == "En Custodia (Retenido)")
+                    {
+                        pagoLiberado = await _dbService.LiberarPagoATecnicoAsync(cita.Id);
+                        if (pagoLiberado)
+                        {
+                            cita.EstadoPago = "Liberado al Técnico";
+                            await _dbService.EnviarMensajeChatAsync(new MensajeChat
+                            {
+                                SolicitudId = cita.Id,
+                                EmisorId = LoginPage.UsuarioActual?.Id ?? 0,
+                                EmisorNombre = "🛡️ SISTEMA PHANTEL",
+                                Texto = $"✅ SERVICIO CALIFICADO ({popup.PuntuacionResultado} ★) Y PAGO LIBERADO: Se liberaron automáticamente ${cita.MontoTotalConTraslado:F2} MXN al técnico.",
+                                FechaHora = DateTime.Now,
+                                EsTecnico = false
+                            });
+                        }
+                    }
+
+                    string msgConfirmacion = pagoLiberado
+                        ? $"Has calificado al técnico con {popup.PuntuacionResultado} ★ y se liberaron automáticamente ${cita.MontoTotalConTraslado:F2} MXN a su cuenta."
+                        : $"Has calificado el servicio del técnico con {popup.PuntuacionResultado} ★.";
+
+                    await DisplayAlertAsync("¡Gracias!", msgConfirmacion, "OK");
                 }
                 CargarSolicitudes();
             };
         }
 
-        // 2. ELIMINAR CITA (Botón totalmente independiente)
+        // 2. ELIMINAR CITA
         private async void OnEliminarCitaClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -125,6 +156,12 @@ namespace PHANTEL.Views
             var button = sender as Button;
             if (button?.CommandParameter is not SolicitudCita cita) return;
 
+            if (cita.ResueltaPorAdmin || cita.EnDisputa)
+            {
+                await DisplayAlertAsync("Aviso", "Esta cita ya cuenta con un reporte abierto o dictamen final de Administración.", "OK");
+                return;
+            }
+
             string telefonoWhatsApp = "525582393553";
             string telefonoLlamada = "5636511034";
 
@@ -144,13 +181,14 @@ namespace PHANTEL.Views
             if (opcion == "💬 Mensaje Directo por WhatsApp")
             {
                 await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "WhatsApp");
+                CargarSolicitudes();
 
-                string mensaje = $"Hola equipo de Administración PHANTEL. Quiero reportar un problema con un servicio finalizado para revisión y posible reembolso:\n\n" +
+                string mensaje = $"Hola equipo de Administración PHANTEL. Quiero reportar un problema con un servicio para revisión y posible reembolso:\n\n" +
                                  $"• Folio de Cita: #{cita.Id}\n" +
                                  $"• Cliente: {nombreCliente}\n" +
                                  $"• Técnico asignado: {cita.TecnicoEmail}\n" +
                                  $"• Falla reportada: {cita.DescripcionFalla}\n" +
-                                 $"• Monto pagado: ${cita.TarifaTraslado:F2} MXN\n\n" +
+                                 $"• Monto total: ${cita.MontoTotalConTraslado:F2} MXN\n\n" +
                                  $"Detalle de mi problema: ";
 
                 string urlWhatsApp = $"https://wa.me/{telefonoWhatsApp}?text={Uri.EscapeDataString(mensaje)}";
@@ -167,6 +205,7 @@ namespace PHANTEL.Views
             else if (opcion == "📞 Llamar a un Administrador")
             {
                 await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "Llamada Telefónica");
+                CargarSolicitudes();
 
                 try
                 {

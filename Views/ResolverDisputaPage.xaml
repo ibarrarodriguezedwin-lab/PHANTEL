@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.ResolverDisputaPage"
+             BackgroundColor="#121212"
+             Title="⚖️ Resolución de Disputa">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="15" Spacing="14">
+
+            <!-- 1. EXPEDIENTE E IDENTIFICACIÓN DE LAS PARTES -->
+            <Border Stroke="#FFC107" StrokeThickness="1.2" Padding="12" BackgroundColor="#1E222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="6">
+                    <Label x:Name="lblFolioExpediente" Text="Expediente Cita #--" FontAttributes="Bold" FontSize="16" TextColor="#FFC107"/>
+                    <Label x:Name="lblDatosCliente" Text="Cliente: Cargando..." TextColor="White" FontSize="13"/>
+                    <Label x:Name="lblDatosTecnico" Text="Técnico: Cargando..." TextColor="#00D2FF" FontSize="13"/>
+                    <Label x:Name="lblMotivoExpediente" Text="Motivo: --" TextColor="#FF6B6B" FontSize="12"/>
+                    <Label x:Name="lblMontoCustodia" Text="Monto Retenido: $0.00 MXN" FontAttributes="Bold" TextColor="#28A745" FontSize="14"/>
+
+                    <!-- Contacto directo por WhatsApp con ambas partes -->
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="8" Margin="0,6,0,0">
+                        <Button Text="💬 WhatsApp Cliente"
+                                Clicked="OnContactarClienteWhatsClicked"
+                                BackgroundColor="#198754"
+                                TextColor="White"
+                                FontSize="12"
+                                HeightRequest="38"
+                                CornerRadius="8"/>
+                        <Button Grid.Column="1"
+                                Text="💬 WhatsApp Técnico"
+                                Clicked="OnContactarTecnicoWhatsClicked"
+                                BackgroundColor="#0D6EFD"
+                                TextColor="White"
+                                FontSize="12"
+                                HeightRequest="38"
+                                CornerRadius="8"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 2. EVIDENCIAS MULTIMEDIA Y COMPROBANTE SPEI -->
+            <Border Stroke="#40FFFFFF" StrokeThickness="1" Padding="12" BackgroundColor="#1E222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="📎 Evidencias Multimedia y Comprobante Bancario" FontAttributes="Bold" TextColor="White" FontSize="14"/>
+                    <Label x:Name="lblSinEvidencias" Text="No se adjuntaron imágenes en este expediente." TextColor="Gray" FontSize="12"/>
+
+                    <Label x:Name="lblTituloFotoFalla" Text="Foto de la falla reportada:" TextColor="#B0C4DE" FontSize="12" IsVisible="False"/>
+                    <Image x:Name="imgEvidenciaFalla" HeightRequest="180" Aspect="AspectFit" IsVisible="False"/>
+
+                    <Label x:Name="lblTituloComprobante" Text="Comprobante de transferencia SPEI:" TextColor="#B0C4DE" FontSize="12" IsVisible="False"/>
+                    <Image x:Name="imgComprobantePago" HeightRequest="180" Aspect="AspectFit" IsVisible="False"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 3. INTERVENCIÓN EN CHAT EN VIVO (CUESTIONAMIENTO A AMBOS LADOS) -->
+            <Border Stroke="#007ACC" StrokeThickness="1.2" Padding="12" BackgroundColor="#1E222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="💬 Sala de Mediación en Vivo (Cliente ↔ Técnico)" FontAttributes="Bold" TextColor="#00D2FF" FontSize="14"/>
+
+                    <CollectionView x:Name="listChatAuditoria" HeightRequest="230" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8" Margin="0,3" BackgroundColor="#2A2F3A" StrokeShape="RoundRectangle 8">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <Label Text="{Binding EmisorNombre}" FontAttributes="Bold" FontSize="11" TextColor="#FFC107"/>
+                                            <Label Grid.Column="1" Text="{Binding FechaHora, StringFormat='{0:dd/MM HH:mm}'}" FontSize="10" TextColor="LightGray"/>
+                                        </Grid>
+                                        <Label Text="{Binding Texto}" TextColor="White" FontSize="13"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Preguntas rápidas de auditoría -->
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                        <Button Text="❓ Cuestionar Técnico"
+                                Clicked="OnCuestionarTecnicoClicked"
+                                BackgroundColor="#343A40"
+                                TextColor="#FFC107"
+                                FontSize="11"
+                                HeightRequest="34"
+                                CornerRadius="6"/>
+                        <Button Grid.Column="1"
+                                Text="❓ Cuestionar Cliente"
+                                Clicked="OnCuestionarClienteClicked"
+                                BackgroundColor="#343A40"
+                                TextColor="#00D2FF"
+                                FontSize="11"
+                                HeightRequest="34"
+                                CornerRadius="6"/>
+                    </Grid>
+
+                    <!-- Caja de mensaje directo como Administrador -->
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                        <Entry x:Name="entryMensajeAdmin"
+                               Placeholder="Escribe mensaje oficial en el chat..."
+                               TextColor="White"
+                               PlaceholderColor="Gray"
+                               BackgroundColor="#252526"/>
+                        <Button Grid.Column="1"
+                                Text="Enviar ⚖️"
+                                Clicked="OnEnviarMensajeAdminClicked"
+                                BackgroundColor="#FFC107"
+                                TextColor="Black"
+                                FontAttributes="Bold"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- 4. DICTAMEN FINANCIERO Y SANCIONES -->
+            <Border Stroke="#DC3545" StrokeThickness="1.5" Padding="14" BackgroundColor="#1E222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="⚖️ Dictamen Financiero y Penalizaciones" FontAttributes="Bold" FontSize="15" TextColor="#FF6B6B"/>
+
+                    <!-- Botones rápidos de reparto -->
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="8">
+                        <Button Text="100% al Técnico"
+                                Clicked="OnPresetTodoTecnicoClicked"
+                                BackgroundColor="#198754"
+                                TextColor="White"
+                                FontSize="12"
+                                HeightRequest="36"
+                                CornerRadius="8"/>
+                        <Button Grid.Column="1"
+                                Text="100% al Cliente"
+                                Clicked="OnPresetTodoClienteClicked"
+                                BackgroundColor="#DC3545"
+                                TextColor="White"
+                                FontSize="12"
+                                HeightRequest="36"
+                                CornerRadius="8"/>
+                    </Grid>
+
+                    <Label Text="Monto a liberar al Técnico ($ MXN):" TextColor="#E0E0E0" FontSize="12"/>
+                    <Entry x:Name="entryLiberarTecnico"
+                           Keyboard="Numeric"
+                           TextChanged="OnMontoLiberarChanged"
+                           TextColor="White"
+                           BackgroundColor="#252526"/>
+
+                    <Label x:Name="lblCalculoReembolso"
+                           Text="Reembolso automático al Cliente: $0.00 MXN"
+                           FontAttributes="Bold"
+                           TextColor="#00D2FF"
+                           FontSize="13"/>
+
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Penalizar reputación del técnico (-0.5 ★ y +1 reporte)"
+                               TextColor="White"
+                               FontSize="12"
+                               VerticalOptions="Center"/>
+                        <Switch x:Name="switchPenalizar" Grid.Column="1" OnColor="#FFC107"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="Suspender cuenta del técnico permanentemente"
+                               TextColor="#FF6B6B"
+                               FontAttributes="Bold"
+                               FontSize="12"
+                               VerticalOptions="Center"/>
+                        <Switch x:Name="switchSuspender" Grid.Column="1" OnColor="#DC3545"/>
+                    </Grid>
+
+                    <Entry x:Name="entryJustificacionAdmin"
+                           Placeholder="Escribe el motivo oficial de tu resolución..."
+                           TextColor="White"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#252526"/>
+
+                    <Button Text="⚖️ Ejecutar Resolución y Liquidar Fondos"
+                            Clicked="OnEjecutarResolucionClicked"
+                            BackgroundColor="#FFC107"
+                            TextColor="Black"
+                            FontAttributes="Bold"
+                            HeightRequest="45"
+                            CornerRadius="10"/>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

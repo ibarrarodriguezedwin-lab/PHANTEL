@@ -30,11 +30,19 @@ namespace PHANTEL
 
                     if (usuario != null)
                     {
+                        if (usuario.CuentaSuspendida)
+                        {
+                            Application.Current!.Windows[0].Page = new NavigationPage(new CuentaSuspendidaPage());
+                            return;
+                        }
+
                         LoginPage.UsuarioActual = usuario;
 
                         MainThread.BeginInvokeOnMainThread(() =>
                         {
-                            if (usuario.TipoPerfil == "Técnico")
+                            if (usuario.TipoPerfil == "Admin")
+                                window.Page = new NavigationPage(new AdminDisputasPage());
+                            else if (usuario.TipoPerfil == "Técnico")
                                 window.Page = new NavigationPage(new PanelTecnicoPage());
                             else
                                 window.Page = new AppShell();

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.AdminDisputasPage"
+             BackgroundColor="#121212"
+             Title="⚖️ Centro de Arbitraje PHANTEL">
+
+    <Grid RowDefinitions="Auto, *, Auto" Padding="15" RowSpacing="12">
+
+        <!-- Encabezado Admin -->
+        <Border Grid.Row="0" Stroke="#FFC107" StrokeThickness="1.5" Padding="14" BackgroundColor="#1F242D">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12"/>
+            </Border.StrokeShape>
+            <Grid ColumnDefinitions="*, Auto">
+                <VerticalStackLayout Spacing="4">
+                    <Label x:Name="lblAdminBienvenida"
+                           Text="⚖️ Panel de Administración"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="#FFC107"/>
+                    <Label Text="Auditoría de disputas, pruebas y pagos en custodia"
+                           FontSize="12"
+                           TextColor="#B0C4DE"/>
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="🚪 Salir"
+                        Clicked="OnCerrarSesionAdminClicked"
+                        BackgroundColor="#DC3545"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        HeightRequest="38"
+                        CornerRadius="8"/>
+            </Grid>
+        </Border>
+
+        <!-- Lista de Disputas Activas -->
+        <CollectionView Grid.Row="1" x:Name="listDisputas" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
+                    <Label Text="✅ Sin disputas pendientes" FontSize="18" FontAttributes="Bold" TextColor="#28A745" HorizontalOptions="Center"/>
+                    <Label Text="Todos los servicios y pagos en custodia operan con normalidad." FontSize="13" TextColor="Gray" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Stroke="#DC3545" StrokeThickness="1.2" Padding="14" Margin="0,6" BackgroundColor="#1E222A">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{Binding Id, StringFormat='🚨 FOLIO CITA #{0}'}"
+                                       FontAttributes="Bold"
+                                       TextColor="#FF6B6B"
+                                       FontSize="15"/>
+                                <Label Grid.Column="1"
+                                       Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}"
+                                       FontAttributes="Bold"
+                                       TextColor="#FFC107"
+                                       FontSize="15"/>
+                            </Grid>
+
+                            <Label Text="{Binding DescripcionFalla, StringFormat='Falla: {0}'}" TextColor="White" FontSize="13"/>
+                            <Label Text="{Binding TecnicoEmail, StringFormat='Técnico: {0}'}" TextColor="#00D2FF" FontSize="12"/>
+                            <Label Text="{Binding EstadoPago, StringFormat='Estado Pago: {0}'}" TextColor="#FFC107" FontSize="12"/>
+                            <Label Text="{Binding MotivoReporte, StringFormat='Reporte: {0}'}" TextColor="#E0E0E0" FontSize="12"/>
+
+                            <Button Text="🔍 Auditar Caso, Chatear y Resolver"
+                                    Clicked="OnAuditarDisputaClicked"
+                                    CommandParameter="{Binding .}"
+                                    BackgroundColor="#007ACC"
+                                    TextColor="White"
+                                    FontAttributes="Bold"
+                                    CornerRadius="8"
+                                    Margin="0,6,0,0"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Grid.Row="2"
+                Text="🔄 Actualizar Bandeja de Disputas"
+                Clicked="OnRefrescarClicked"
+                BackgroundColor="#252526"
+                TextColor="#00D2FF"
+                BorderColor="#007ACC"
+                BorderWidth="1"
+                CornerRadius="8"/>
+    </Grid>
+</ContentPage>

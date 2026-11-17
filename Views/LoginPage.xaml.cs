@@ -80,7 +80,17 @@ namespace PHANTEL.Views
 
                 PausarVideoSeguro();
 
-                if (usuario.TipoPerfil == "Técnico")
+                if (usuario.CuentaSuspendida)
+                {
+                    Application.Current!.Windows[0].Page = new NavigationPage(new CuentaSuspendidaPage());
+                    return;
+                }
+
+                if (usuario.TipoPerfil == "Admin")
+                {
+                    Application.Current!.Windows[0].Page = new NavigationPage(new AdminDisputasPage());
+                }
+                else if (usuario.TipoPerfil == "Técnico")
                 {
                     Application.Current!.Windows[0].Page = new NavigationPage(new PanelTecnicoPage());
                 }

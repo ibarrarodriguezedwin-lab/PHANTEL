@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.CuentaSuspendidaPage"
+             BackgroundColor="#121212"
+             Title="Estado de Cuenta PHANTEL">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16" VerticalOptions="Center">
+
+            <!-- Aviso Principal de Suspensión -->
+            <Border Stroke="#DC3545" StrokeThickness="1.5" Padding="18" BackgroundColor="#23171B">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="🚫 CUENTA SUSPENDIDA"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#FF6B6B"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="lblNombreTecnico"
+                           Text="Técnico: --"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <Label Text="Tu perfil ha sido inhabilitado para recibir o atender nuevos servicios dentro de PHANTEL debido a la siguiente resolución administrativa:"
+                           FontSize="13"
+                           TextColor="#D0D7DE"/>
+
+                    <Border Stroke="#40FF6B6B" Padding="12" BackgroundColor="#181214" StrokeShape="RoundRectangle 8">
+                        <Label x:Name="lblMotivoSuspension"
+                               Text="Motivo no especificado."
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#FFC107"/>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Módulo de Liquidación y Retiro de Saldo Liberado -->
+            <Border Stroke="#28A745" StrokeThickness="1.2" Padding="18" BackgroundColor="#1B222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="💰 Resumen Financiero y Retiro"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#00D2FF"/>
+
+                    <Label x:Name="lblSaldoDisponible"
+                           Text="Saldo liberado disponible: $0.00 MXN"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="#28A745"/>
+
+                    <Label x:Name="lblSaldoRetenido"
+                           Text="Saldo retenido / penalizado: $0.00 MXN"
+                           FontSize="13"
+                           TextColor="#B0C4DE"/>
+
+                    <Label Text="Ingresa tu CLABE interbancaria (18 dígitos) para transferir tu saldo liberado:"
+                           FontSize="12"
+                           TextColor="#E0E0E0"/>
+
+                    <Entry x:Name="entryClabeRetiro"
+                           Placeholder="CLABE Interbancaria (18 dígitos)"
+                           Keyboard="Numeric"
+                           MaxLength="18"
+                           TextColor="White"
+                           PlaceholderColor="Gray"
+                           BackgroundColor="#252526"/>
+
+                    <Button x:Name="btnRetirarSaldo"
+                            Text="🏦 Solicitar Transferencia SPEI de Saldo"
+                            Clicked="OnRetirarSaldoClicked"
+                            BackgroundColor="#28A745"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            HeightRequest="44"
+                            CornerRadius="10"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Soporte y Cerrar Sesión -->
+            <Button Text="💬 Aclaraciones con Administración (WhatsApp)"
+                    Clicked="OnContactarAdminClicked"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    HeightRequest="42"
+                    CornerRadius="10"/>
+
+            <Button Text="🚪 Cerrar Sesión"
+                    Clicked="OnCerrarSesionClicked"
+                    BackgroundColor="#343A40"
+                    TextColor="#FF6B6B"
+                    FontAttributes="Bold"
+                    HeightRequest="42"
+                    CornerRadius="10"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
