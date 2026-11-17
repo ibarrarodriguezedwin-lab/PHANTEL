@@ -29,6 +29,24 @@ namespace PHANTEL.Models
         public int ReportesAcumulados { get; set; } = 0;
         public bool CuentaSuspendida { get; set; } = false;
         public string MotivoSuspension { get; set; } = string.Empty;
+
+
+        // --- VERIFICACIÓN DE IDENTIDAD (KYC / TÉCNICO VERIFICADO) ---
+        public string EstadoVerificacion { get; set; } = "No Verificado";
+        // Valores: "No Verificado", "En Revisión", "Verificado", "Rechazado"
+        public string IneFrenteBase64 { get; set; } = string.Empty;
+        public string IneReversoBase64 { get; set; } = string.Empty;
+        public string MotivoRechazoVerificacion { get; set; } = string.Empty;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool EstaVerificado => EstadoVerificacion == "Verificado";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string InsigniaVerificacionTexto => EstadoVerificacion == "Verificado"
+            ? "✔️ Técnico Verificado PHANTEL"
+            : "⚠️ Perfil sin verificar";
     }
 
     public class SolicitudCita

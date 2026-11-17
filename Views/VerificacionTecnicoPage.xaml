@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Views.VerificacionTecnicoPage"
+             BackgroundColor="#121212"
+             Title="Verificación de Identidad">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="18" Spacing="16">
+
+            <!-- Estado Actual -->
+            <Border x:Name="cardEstadoKyc" Stroke="#007ACC" StrokeThickness="1.3" Padding="16" BackgroundColor="#1B222A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🪪 Verificación Oficial PHANTEL"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="#00D2FF"/>
+                    <Label x:Name="lblEstadoVerificacion"
+                           Text="Estado: No Verificado"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           TextColor="#FFC107"/>
+                    <Label x:Name="lblDetalleEstado"
+                           Text="Sube tu identificación oficial (INE) por ambos lados para obtener la insignia ✔️ Técnico Verificado y aparecer primero ante los clientes."
+                           FontSize="13"
+                           TextColor="#D0D7DE"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Frente de INE -->
+            <Border Stroke="#30363D" Padding="14" BackgroundColor="#1C1C1E" StrokeShape="RoundRectangle 12">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="1. Frente de tu INE / Identificación Oficial"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White"/>
+                    <Image x:Name="imgIneFrente"
+                           HeightRequest="170"
+                           Aspect="AspectFit"
+                           IsVisible="False"/>
+                    <Button Text="📷 Seleccionar / Tomar Foto (Frente)"
+                            Clicked="OnSeleccionarFrenteClicked"
+                            BackgroundColor="#2D333B"
+                            TextColor="#00D2FF"
+                            FontAttributes="Bold"
+                            CornerRadius="8"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Reverso de INE -->
+            <Border Stroke="#30363D" Padding="14" BackgroundColor="#1C1C1E" StrokeShape="RoundRectangle 12">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="2. Reverso de tu INE / Identificación Oficial"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White"/>
+                    <Image x:Name="imgIneReverso"
+                           HeightRequest="170"
+                           Aspect="AspectFit"
+                           IsVisible="False"/>
+                    <Button Text="📷 Seleccionar / Tomar Foto (Reverso)"
+                            Clicked="OnSeleccionarReversoClicked"
+                            BackgroundColor="#2D333B"
+                            TextColor="#00D2FF"
+                            FontAttributes="Bold"
+                            CornerRadius="8"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Enviar -->
+            <Button x:Name="btnEnviarVerificacion"
+                    Text="🚀 Enviar Documentos a Revisión"
+                    Clicked="OnEnviarVerificacionClicked"
+                    BackgroundColor="#28A745"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    HeightRequest="48"
+                    CornerRadius="10"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

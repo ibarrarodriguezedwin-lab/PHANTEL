@@ -16,31 +16,44 @@
 
     <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
 
-        <!-- Encabezado del Técnico con Avatar Clicable -->
+        <!-- Encabezado del Técnico con Avatar Clicable y Estado KYC -->
         <Border Grid.Row="0" Stroke="#007ACC" Padding="15" BackgroundColor="#1E1E1E">
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="10"/>
             </Border.StrokeShape>
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
 
-                <!-- Datos de Bienvenida -->
-                <VerticalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
-                    <Label x:Name="lblBienvenida" Text="Bienvenido" FontAttributes="Bold" FontSize="18" TextColor="White"/>
-                    <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
-                </VerticalStackLayout>
+                    <!-- Datos de Bienvenida -->
+                    <VerticalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
+                        <Label x:Name="lblBienvenida" Text="Bienvenido" FontAttributes="Bold" FontSize="18" TextColor="White"/>
+                        <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
+                    </VerticalStackLayout>
 
-                <!-- Avatar Circular del Técnico (abre DisplayActionSheet al dar clic) -->
-                <ImageButton Grid.Column="1"
-                             x:Name="btnPerfilTecnico" 
-                             Aspect="AspectFill" 
-                             WidthRequest="55" 
-                             HeightRequest="55"
-                             CornerRadius="28"
-                             Source="dotnet_bot.png"
-                             VerticalOptions="Center"
-                             Clicked="OnPerfilTecnicoClicked" />
+                    <!-- Avatar Circular del Técnico (abre DisplayActionSheet al dar clic) -->
+                    <ImageButton Grid.Column="1"
+                                 x:Name="btnPerfilTecnico" 
+                                 Aspect="AspectFill" 
+                                 WidthRequest="55" 
+                                 HeightRequest="55"
+                                 CornerRadius="28"
+                                 Source="dotnet_bot.png"
+                                 VerticalOptions="Center"
+                                 Clicked="OnPerfilTecnicoClicked" />
 
-            </Grid>
+                </Grid>
+
+                <!-- Botón de Verificación de Identidad (KYC) -->
+                <Button x:Name="btnVerificacionKyc"
+                        Text="🪪 Verificar mi Identidad (Obtener Sello ✔️)"
+                        Clicked="OnAbrirVerificacionKycClicked"
+                        BackgroundColor="#2D333B"
+                        TextColor="#FFC107"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        HeightRequest="38"
+                        CornerRadius="8"/>
+            </VerticalStackLayout>
         </Border>
 
         <Label Grid.Row="1" Text="Solicitudes de Trabajo Recibidas" FontAttributes="Bold" FontSize="16" TextColor="White" Margin="0,5,0,0"/>

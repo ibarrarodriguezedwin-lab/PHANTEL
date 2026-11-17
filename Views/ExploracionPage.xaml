@@ -85,7 +85,6 @@
                         <x:String>Limpiador de cisternas</x:String>
                         <x:String>Técnico en telefonía celular</x:String>
                         <x:String>Especialista en control de plagas</x:String>
-
                     </x:Array>
                 </Picker.ItemsSource>
             </Picker>
@@ -118,6 +117,11 @@
 
                             <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
                                 <Label Text="{Binding Nombre}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
+                                <Label Text="{Binding InsigniaVerificacionTexto}"
+                                       IsVisible="{Binding EstaVerificado}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="#00D2FF"/>
                                 <Label Text="{Binding Especialidad}" TextColor="#FFC107" FontSize="13" />
                                 <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa: ${0:F2}/hr'}" TextColor="Gray" FontSize="11" />
                             </StackLayout>
