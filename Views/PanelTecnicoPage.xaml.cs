@@ -170,10 +170,12 @@ namespace PHANTEL.Views
                 var photo = results?.FirstOrDefault();
                 if (photo != null && LoginPage.UsuarioActual != null)
                 {
-                    using var stream = await photo.OpenReadAsync();
-                    using var ms = new MemoryStream();
-                    await stream.CopyToAsync(ms);
-                    string base64 = Convert.ToBase64String(ms.ToArray());
+                    string base64 = await PHANTEL.Helpers.ImageHelper.ComprimirImagenABase64Async(photo, maxAncho: 400f, calidad: 0.65f);
+                    if (string.IsNullOrEmpty(base64))
+                    {
+                        await DisplayAlertAsync("Error", "No se pudo procesar la imagen seleccionada.", "OK");
+                        return;
+                    }
 
                     bool guardado = await _dbService.ActualizarFotoPerfilAsync(LoginPage.UsuarioActual.Id, base64);
                     if (guardado)

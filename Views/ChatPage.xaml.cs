@@ -250,10 +250,10 @@ namespace PHANTEL.Views
                     var foto = fotos?.FirstOrDefault();
                     if (foto != null)
                     {
-                        using var stream = await foto.OpenReadAsync();
-                        using var ms = new MemoryStream();
-                        await stream.CopyToAsync(ms);
-                        comprobanteBase64 = Convert.ToBase64String(ms.ToArray());
+                        comprobanteBase64 = await PHANTEL.Helpers.ImageHelper.ComprimirImagenABase64Async(
+                            foto,
+                            maxAncho: 700f,
+                            calidad: 0.65f);
                     }
                 }
                 catch { }

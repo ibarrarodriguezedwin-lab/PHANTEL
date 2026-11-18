@@ -10,6 +10,58 @@ namespace PHANTEL.Services
     {
         private readonly FirebaseClient _firebase = new("https://phantel-enterprises-default-rtdb.firebaseio.com/");
 
+        // --- CACHÉ EN MEMORIA PARA REDUCIR DESCARGAS DE FIREBASE ---
+        private static List<Usuario>? _cacheUsuarios;
+        private static DateTime _ultimoFetchUsuarios = DateTime.MinValue;
+
+        private static List<SolicitudCita>? _cacheSolicitudes;
+        private static DateTime _ultimoFetchSolicitudes = DateTime.MinValue;
+
+        private static readonly TimeSpan TiempoCache = TimeSpan.FromSeconds(30);
+
+        public static void InvalidarCacheUsuarios() => _cacheUsuarios = null;
+        public static void InvalidarCacheSolicitudes() => _cacheSolicitudes = null;
+
+        private async Task<List<Usuario>> ObtenerTodosUsuariosConCacheAsync()
+        {
+            if (_cacheUsuarios != null && (DateTime.Now - _ultimoFetchUsuarios) < TiempoCache)
+                return _cacheUsuarios;
+
+            var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+            _cacheUsuarios = usuarios
+                .Select(u =>
+                {
+                    var obj = u.Object;
+                    if (obj != null && obj.Id == 0) obj.Id = Math.Abs(u.Key.GetHashCode());
+                    return obj!;
+                })
+                .Where(u => u != null)
+                .ToList();
+
+            _ultimoFetchUsuarios = DateTime.Now;
+            return _cacheUsuarios;
+        }
+
+        private async Task<List<SolicitudCita>> ObtenerTodasSolicitudesConCacheAsync()
+        {
+            if (_cacheSolicitudes != null && (DateTime.Now - _ultimoFetchSolicitudes) < TiempoCache)
+                return _cacheSolicitudes;
+
+            var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+            _cacheSolicitudes = solicitudes
+                .Select(s =>
+                {
+                    var obj = s.Object;
+                    if (obj != null && obj.Id == 0) obj.Id = Math.Abs(s.Key.GetHashCode());
+                    return obj!;
+                })
+                .Where(s => s != null)
+                .ToList();
+
+            _ultimoFetchSolicitudes = DateTime.Now;
+            return _cacheSolicitudes;
+        }
+
         // --- 1. USUARIOS (REGISTRO, LOGIN, SESIÓN Y RECUPERACIÓN) ---
         public async Task<bool> RegistrarUsuarioAsync(Usuario usuario)
         {
@@ -20,7 +72,6 @@ namespace PHANTEL.Services
 
                 if (existe != null) return false;
 
-                // Cifrar la contraseña con SHA-256 antes de guardarla en Firebase
                 usuario.Password = SecurityHelper.HashPassword(usuario.Password);
 
                 var result = await _firebase.Child("Usuarios").PostAsync(usuario);
@@ -28,6 +79,7 @@ namespace PHANTEL.Services
                 usuario.Id = idUnico;
 
                 await _firebase.Child("Usuarios").Child(result.Key).PutAsync(usuario);
+                InvalidarCacheUsuarios();
                 return true;
             }
             catch (Exception ex)
@@ -59,7 +111,6 @@ namespace PHANTEL.Services
                         requiereActualizar = true;
                     }
 
-                    // Si la cuenta era vieja (texto plano), la migra automáticamente a SHA-256
                     if (u.Password.Trim() == password.Trim() && password.Trim() != passwordHash)
                     {
                         u.Password = passwordHash;
@@ -69,6 +120,7 @@ namespace PHANTEL.Services
                     if (requiereActualizar)
                         await _firebase.Child("Usuarios").Child(coincidencia.Key).PutAsync(u);
 
+                    InvalidarCacheUsuarios();
                     return u;
                 }
                 return null;
@@ -84,12 +136,9 @@ namespace PHANTEL.Services
         {
             try
             {
-                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
-                var coincidencia = usuarios.FirstOrDefault(u =>
-                    u.Object != null &&
-                    u.Object.Email.Trim().ToLower() == email.Trim().ToLower());
-
-                return coincidencia?.Object;
+                var usuarios = await ObtenerTodosUsuariosConCacheAsync();
+                return usuarios.FirstOrDefault(u =>
+                    u.Email.Trim().ToLower() == email.Trim().ToLower());
             }
             catch (Exception ex)
             {
@@ -115,6 +164,7 @@ namespace PHANTEL.Services
                         .Child("Usuarios")
                         .Child(coincidencia.Key)
                         .PutAsync(coincidencia.Object);
+                    InvalidarCacheUsuarios();
                     return true;
                 }
                 return false;
@@ -130,13 +180,8 @@ namespace PHANTEL.Services
         {
             try
             {
-                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var usuarios = await ObtenerTodosUsuariosConCacheAsync();
                 return usuarios
-                    .Select(u => {
-                        var user = u.Object;
-                        if (user.Id == 0) user.Id = Math.Abs(u.Key.GetHashCode());
-                        return user;
-                    })
                     .Where(u => u.TipoPerfil == "Técnico" && !u.CuentaSuspendida)
                     .OrderByDescending(u => u.EstadoVerificacion == "Verificado")
                     .ThenByDescending(u => u.CalificacionPromedio)
@@ -156,6 +201,7 @@ namespace PHANTEL.Services
                 var result = await _firebase.Child("Solicitudes").PostAsync(cita);
                 cita.Id = Math.Abs(result.Key.GetHashCode());
                 await _firebase.Child("Solicitudes").Child(result.Key).PutAsync(cita);
+                InvalidarCacheSolicitudes();
                 return true;
             }
             catch (Exception ex)
@@ -169,40 +215,19 @@ namespace PHANTEL.Services
         {
             try
             {
-                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var solicitudes = await ObtenerTodasSolicitudesConCacheAsync();
 
                 if (esTecnico)
                 {
                     var lista = solicitudes
-                        .Select(s => {
-                            var obj = s.Object;
-                            if (obj.Id == 0) obj.Id = Math.Abs(s.Key.GetHashCode());
-                            return obj;
-                        })
                         .Where(s => s.TecnicoId == usuarioId)
                         .ToList();
 
-                    if (!lista.Any())
-                    {
-                        lista = solicitudes
-                            .Select(s => {
-                                var obj = s.Object;
-                                if (obj.Id == 0) obj.Id = Math.Abs(s.Key.GetHashCode());
-                                return obj;
-                            })
-                            .ToList();
-                    }
-
-                    return lista;
+                    return lista.Any() ? lista : solicitudes.ToList();
                 }
                 else
                 {
                     return solicitudes
-                        .Select(s => {
-                            var obj = s.Object;
-                            if (obj.Id == 0) obj.Id = Math.Abs(s.Key.GetHashCode());
-                            return obj;
-                        })
                         .Where(s => s.ClienteId == usuarioId)
                         .ToList();
                 }
@@ -218,9 +243,8 @@ namespace PHANTEL.Services
         {
             try
             {
-                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
-                var target = solicitudes.FirstOrDefault(s => s.Object.Id == citaId || Math.Abs(s.Key.GetHashCode()) == citaId);
-                return target?.Object;
+                var solicitudes = await ObtenerTodasSolicitudesConCacheAsync();
+                return solicitudes.FirstOrDefault(s => s.Id == citaId);
             }
             catch
             {
@@ -242,6 +266,7 @@ namespace PHANTEL.Services
                         .Child(citaTarget.Key)
                         .Child("Estado")
                         .PutAsync($"\"{nuevoEstado}\"");
+                    InvalidarCacheSolicitudes();
                 }
             }
             catch (Exception ex)
@@ -269,6 +294,7 @@ namespace PHANTEL.Services
                         .Child("Solicitudes")
                         .Child(citaTarget.Key)
                         .PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
                     return true;
                 }
                 return false;
@@ -320,6 +346,7 @@ namespace PHANTEL.Services
                         .Child("Usuarios")
                         .Child(nodoUsuario.Key)
                         .PutAsync(nodoUsuario.Object);
+                    InvalidarCacheUsuarios();
                     return true;
                 }
                 return false;
@@ -361,6 +388,7 @@ namespace PHANTEL.Services
                         .Child(citaTarget.Key)
                         .Child(campo)
                         .PutAsync("true");
+                    InvalidarCacheSolicitudes();
                 }
             }
             catch (Exception ex)
@@ -379,6 +407,7 @@ namespace PHANTEL.Services
                 if (itemABorrar != null)
                 {
                     await _firebase.Child("Solicitudes").Child(itemABorrar.Key).DeleteAsync();
+                    InvalidarCacheSolicitudes();
                     return true;
                 }
                 return false;
@@ -405,6 +434,7 @@ namespace PHANTEL.Services
                     citaTarget.Object.EstadoPago = "Cotizado";
 
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
                     return true;
                 }
                 return false;
@@ -429,6 +459,7 @@ namespace PHANTEL.Services
                     citaTarget.Object.ReferenciaTransferencia = referencia;
                     citaTarget.Object.ComprobantePagoBase64 = comprobanteBase64;
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
 
                     var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
                     var tecNode = usuarios.FirstOrDefault(u =>
@@ -446,6 +477,7 @@ namespace PHANTEL.Services
 
                         tecNode.Object.SaldoEnCustodia += citaTarget.Object.MontoTotalConTraslado;
                         await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                        InvalidarCacheUsuarios();
                     }
 
                     return true;
@@ -472,6 +504,7 @@ namespace PHANTEL.Services
                     citaTarget.Object.EstadoPago = "Liberado al Técnico";
                     citaTarget.Object.Estado = "Finalizada";
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
 
                     var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
                     var tecNode = usuarios.FirstOrDefault(u =>
@@ -490,6 +523,7 @@ namespace PHANTEL.Services
                         tecNode.Object.SaldoEnCustodia = Math.Max(0m, tecNode.Object.SaldoEnCustodia - monto);
                         tecNode.Object.SaldoLiberado += monto;
                         await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                        InvalidarCacheUsuarios();
                     }
                     return true;
                 }
@@ -516,6 +550,7 @@ namespace PHANTEL.Services
                     citaTarget.Object.MotivoReporte = motivo;
 
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
                     return true;
                 }
                 return false;
@@ -532,9 +567,8 @@ namespace PHANTEL.Services
         {
             try
             {
-                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
-                var target = usuarios.FirstOrDefault(u => u.Object != null && u.Object.Id == usuarioId);
-                return target?.Object;
+                var usuarios = await ObtenerTodosUsuariosConCacheAsync();
+                return usuarios.FirstOrDefault(u => u.Id == usuarioId);
             }
             catch
             {
@@ -546,14 +580,8 @@ namespace PHANTEL.Services
         {
             try
             {
-                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var solicitudes = await ObtenerTodasSolicitudesConCacheAsync();
                 return solicitudes
-                    .Select(s =>
-                    {
-                        var obj = s.Object;
-                        if (obj.Id == 0) obj.Id = Math.Abs(s.Key.GetHashCode());
-                        return obj;
-                    })
                     .Where(s => s.EnDisputa || s.EstadoPago == "Retenido por Disputa")
                     .OrderByDescending(s => s.FechaCreacion)
                     .ToList();
@@ -595,6 +623,7 @@ namespace PHANTEL.Services
                 citaTarget.Object.MotivoReporte += $"\n[DICTAMEN ADMIN {DateTime.Now:dd/MM/yyyy HH:mm}]: {resolucionTexto}";
 
                 await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                InvalidarCacheSolicitudes();
 
                 var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
                 var tecNode = usuarios.FirstOrDefault(u =>
@@ -626,6 +655,7 @@ namespace PHANTEL.Services
                     }
 
                     await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    InvalidarCacheUsuarios();
                 }
 
                 await EnviarMensajeChatAsync(new MensajeChat
@@ -669,6 +699,7 @@ namespace PHANTEL.Services
                     tecNode.Object.ClabeInterbancaria = clabeInterbancaria.Trim();
                     tecNode.Object.SaldoLiberado = 0m;
                     await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    InvalidarCacheUsuarios();
                     return true;
                 }
                 return false;
@@ -701,6 +732,7 @@ namespace PHANTEL.Services
                     tecNode.Object.MotivoRechazoVerificacion = string.Empty;
 
                     await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    InvalidarCacheUsuarios();
                     return true;
                 }
                 return false;
@@ -716,14 +748,8 @@ namespace PHANTEL.Services
         {
             try
             {
-                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var usuarios = await ObtenerTodosUsuariosConCacheAsync();
                 return usuarios
-                    .Select(u =>
-                    {
-                        var obj = u.Object;
-                        if (obj.Id == 0) obj.Id = Math.Abs(u.Key.GetHashCode());
-                        return obj;
-                    })
                     .Where(u => u.TipoPerfil == "Técnico" && u.EstadoVerificacion == "En Revisión")
                     .ToList();
             }
@@ -752,6 +778,7 @@ namespace PHANTEL.Services
                     tecNode.Object.MotivoRechazoVerificacion = aprobar ? string.Empty : motivoRechazo;
 
                     await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
+                    InvalidarCacheUsuarios();
                     return true;
                 }
                 return false;

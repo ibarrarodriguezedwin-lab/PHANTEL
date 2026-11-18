@@ -12,7 +12,7 @@ namespace PHANTEL.Views
         private double _distanciaCalculada;
         private decimal _tarifaCalculada;
 
-        private string? _rutaFoto = null;
+        private string _fotoBase64Comprimida = string.Empty;
         private string? _rutaVideo = null;
         private string? _rutaAudio = null;
 
@@ -92,13 +92,15 @@ namespace PHANTEL.Views
 
         private async Task GuardarYMostrarFotoAsync(FileResult photo)
         {
-            var newPath = Path.Combine(FileSystem.CacheDirectory, $"{Guid.NewGuid()}_{photo.FileName}");
-            using var stream = await photo.OpenReadAsync();
-            using var newStream = File.OpenWrite(newPath);
-            await stream.CopyToAsync(newStream);
+            string base64 = await ImageHelper.ComprimirImagenABase64Async(photo, maxAncho: 700f, calidad: 0.65f);
+            if (string.IsNullOrEmpty(base64))
+            {
+                await DisplayAlertAsync("Error", "No se pudo procesar la foto seleccionada.", "OK");
+                return;
+            }
 
-            _rutaFoto = newPath;
-            imgPrevisualizacion.Source = ImageSource.FromFile(_rutaFoto);
+            _fotoBase64Comprimida = base64;
+            imgPrevisualizacion.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
             imgPrevisualizacion.IsVisible = true;
         }
 
@@ -154,18 +156,6 @@ namespace PHANTEL.Views
                 ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? "Ubicación por coordenadas GPS" : LoginPage.UsuarioActual.Direccion)
                 : entryDireccion.Text.Trim();
 
-            string fotoBase64 = string.Empty;
-            if (!string.IsNullOrEmpty(_rutaFoto) && File.Exists(_rutaFoto))
-            {
-                fotoBase64 = await FileHelper.FileToBase64Async(_rutaFoto);
-            }
-
-            string videoBase64 = string.Empty;
-            if (!string.IsNullOrEmpty(_rutaVideo) && File.Exists(_rutaVideo))
-            {
-                videoBase64 = await FileHelper.FileToBase64Async(_rutaVideo);
-            }
-
             var nuevaCita = new SolicitudCita
             {
                 ClienteId = LoginPage.UsuarioActual.Id,
@@ -178,8 +168,8 @@ namespace PHANTEL.Views
                 TarifaTraslado = _tarifaCalculada,
                 Estado = "Pendiente",
                 FechaCreacion = DateTime.Now,
-                EvidenciaRutaImagen = fotoBase64,
-                EvidenciaRutaVideo = videoBase64,
+                EvidenciaRutaImagen = _fotoBase64Comprimida,
+                EvidenciaRutaVideo = string.Empty,
                 EvidenciaRutaAudio = _rutaAudio ?? string.Empty
             };
 

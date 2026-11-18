@@ -74,11 +74,7 @@ namespace PHANTEL.Views
                 }
 
                 if (archivo == null) return null;
-
-                using var stream = await archivo.OpenReadAsync();
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                return Convert.ToBase64String(ms.ToArray());
+                return await PHANTEL.Helpers.ImageHelper.ComprimirImagenABase64Async(archivo, maxAncho: 800f, calidad: 0.70f);
             }
             catch (Exception ex)
             {
