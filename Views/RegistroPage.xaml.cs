@@ -14,9 +14,11 @@ namespace PHANTEL.Views
 
         private void OnRolChanged(object sender, EventArgs e)
         {
-            // Muestra datos técnicos solo cuando seleccionen 'Técnico / Trabajador'
             bool esTecnico = pickerRol.SelectedIndex == 1;
             layoutSeccionTecnico.IsVisible = esTecnico;
+
+            if (!esTecnico)
+                chkAceptoTerminos.IsChecked = false;
         }
 
         private async void OnRegistrarClicked(object sender, EventArgs e)
@@ -26,8 +28,8 @@ namespace PHANTEL.Views
             string pass = entryPassword.Text?.Trim() ?? "";
             string telefono = entryTelefono.Text?.Trim() ?? "";
             string direccion = entryDireccion.Text?.Trim() ?? "";
+            string codigoPostal = entryCodigoPostal.Text?.Trim() ?? "";
 
-            // Validaciones básicas de campos obligatorios
             if (pickerRol.SelectedIndex == -1)
             {
                 MostrarError("Por favor selecciona si te registras como Cliente o Técnico.");
@@ -46,18 +48,13 @@ namespace PHANTEL.Views
                 return;
             }
 
-            lblError.IsVisible = false;
-            string rolSeleccionado = pickerRol.SelectedIndex == 0 ? "Cliente" : "Técnico";
-
-            var nuevoUsuario = new Usuario
+            if (codigoPostal.Length != 5 || !codigoPostal.All(char.IsDigit))
             {
-                Nombre = nombre,
-                Email = email,
-                Password = pass,
-                Telefono = telefono,
-                Direccion = direccion,
-                TipoPerfil = rolSeleccionado
-            };
+                MostrarError("Por favor ingresa un Código Postal válido de 5 dígitos.");
+                return;
+            }
+
+            string rolSeleccionado = pickerRol.SelectedIndex == 0 ? "Cliente" : "Técnico";
 
             if (rolSeleccionado == "Técnico")
             {
@@ -67,13 +64,47 @@ namespace PHANTEL.Views
                     return;
                 }
 
+                if (!chkAceptoTerminos.IsChecked)
+                {
+                    MostrarError("Debes aceptar los Términos y Condiciones de comisión (3% sobre trabajo presupuestado y 5% por disputa) para crear tu cuenta de Técnico.");
+                    await DisplayAlertAsync(
+                        "Términos Obligatorios",
+                        "Para registrarte como Técnico en PHANTEL debes aceptar la comisión del 3% sobre tus presupuestos de trabajo (tu traslado es libre de comisión) y la penalización del 5% en disputas procedentes.",
+                        "Entendido");
+                    return;
+                }
+            }
+
+            lblError.IsVisible = false;
+
+            // Obtener coordenadas base a partir del Código Postal de residencia
+            var (latBase, lonBase) = await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync(
+                $"{codigoPostal}, Ciudad de México",
+                codigoPostal);
+
+            var nuevoUsuario = new Usuario
+            {
+                Nombre = nombre,
+                Email = email,
+                Password = pass,
+                Telefono = telefono,
+                Direccion = direccion,
+                CodigoPostal = codigoPostal,
+                Latitud = latBase,
+                Longitud = lonBase,
+                TipoPerfil = rolSeleccionado,
+                AceptoTerminosComision = rolSeleccionado == "Técnico" ? chkAceptoTerminos.IsChecked : true,
+                FechaAceptacionTerminos = rolSeleccionado == "Técnico" ? DateTime.Now : null
+            };
+
+            if (rolSeleccionado == "Técnico")
+            {
                 nuevoUsuario.Especialidad = pickerEspecialidad.SelectedItem?.ToString() ?? "Técnico General";
                 nuevoUsuario.Experiencia = entryExperiencia.Text?.Trim() ?? "1 año";
                 decimal.TryParse(entryTarifa.Text, out decimal tarifa);
                 nuevoUsuario.TarifaPorHora = tarifa > 0 ? tarifa : 150m;
             }
 
-            // Intenta registrar en Firebase (CloudDatabaseService verifica si el correo ya existe)
             bool exito = await _dbService.RegistrarUsuarioAsync(nuevoUsuario);
 
             if (!exito)
@@ -82,12 +113,10 @@ namespace PHANTEL.Views
                 return;
             }
 
-            // Asignar sesión activa
             LoginPage.UsuarioActual = nuevoUsuario;
 
-            await DisplayAlert("Éxito", $"¡Bienvenido {nombre}! Tu cuenta de {rolSeleccionado} ha sido guardada en la nube.", "Aceptar");
+            await DisplayAlertAsync("Éxito", $"¡Bienvenido {nombre}! Tu cuenta de {rolSeleccionado} ha sido guardada en la nube.", "Aceptar");
 
-            // Redirección directa según rol
             if (rolSeleccionado == "Técnico")
             {
                 Application.Current!.Windows[0].Page = new NavigationPage(new PanelTecnicoPage());

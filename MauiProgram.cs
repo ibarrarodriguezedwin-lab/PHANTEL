@@ -9,8 +9,7 @@ namespace PHANTEL
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
-                .UseMauiCommunityToolkitMediaElement()
-                // .UseMauiMaps() <-- Descomentar únicamente cuando tengas configurada tu API Key
+.UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: false)                // .UseMauiMaps() <-- Descomentar únicamente cuando tengas configurada tu API Key
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

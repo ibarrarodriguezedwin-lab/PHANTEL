@@ -69,7 +69,6 @@ namespace PHANTEL.Views
                 lblConceptoPresupuesto.Text = $"Traslado base: ${_cita.TarifaTraslado:F2} MXN (Pendiente cotización de reparación).";
             }
 
-            // Ocultar todos los botones por defecto y activar solo los que corresponden
             btnEnviarPresupuesto.IsVisible = false;
             btnPagarCustodia.IsVisible = false;
             gridAccionesCustodiaCliente.IsVisible = false;
@@ -107,7 +106,7 @@ namespace PHANTEL.Views
                     {
                         lblAdvertenciaSeguridad.Text =
                             $"⚠️ PAGO EN CUSTODIA (${_cita.MontoTotalConTraslado:F2} MXN): El cliente ya transfirió a PHANTEL (Ref: {_cita.ReferenciaTransferencia}). " +
-                            "El dinero está RETENIDO y se te liberará al finalizar sin reportes. Cualquier incumplimiento o fraude conlleva retención, multa y suspensión de cuenta.";
+                            "Al finalizar sin reportes recibirás tu traslado íntegro + tu trabajo menos 3% de comisión. En disputa procedente aplica 5% de penalización.";
                         lblAdvertenciaSeguridad.TextColor = Color.FromArgb("#FFC107");
                     }
                     else
@@ -147,7 +146,7 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- 1. TÉCNICO ENVÍA COTIZACIÓN FORMAL ---
+        // --- 1. TÉCNICO ENVÍA COTIZACIÓN FORMAL CON AVISO DE COMISIÓN (3% SOLO SOBRE TRABAJO) ---
         private async void OnEnviarPresupuestoClicked(object sender, EventArgs e)
         {
             if (LoginPage.UsuarioActual == null) return;
@@ -163,8 +162,8 @@ namespace PHANTEL.Views
 
             string montoTexto = await DisplayPromptAsync(
                 "Monto de Reparación (MXN)",
-                $"Ingresa el costo del trabajo (se sumará automáticamente el traslado de ${_cita.TarifaTraslado:F2}):",
-                accept: "Enviar Cotización",
+                $"Ingresa el costo de tu trabajo (se sumará automáticamente tu traslado íntegro de ${_cita.TarifaTraslado:F2}):",
+                accept: "Revisar Comisión",
                 cancel: "Cancelar",
                 placeholder: "Ej. 450",
                 keyboard: Keyboard.Numeric);
@@ -177,11 +176,32 @@ namespace PHANTEL.Views
                 return;
             }
 
+            decimal totalServicio = monto + _cita.TarifaTraslado;
+            decimal comisionPhantel = Math.Round(monto * 0.03m, 2); // 3% solo sobre el trabajo presupuestado
+            decimal netoTotalTecnico = (monto - comisionPhantel) + _cita.TarifaTraslado;
+
+            bool confirmarEnvio = await DisplayAlertAsync(
+                "💼 Aviso de Comisión PHANTEL (3%)",
+                $"Antes de enviar tu cotización formal, recuerda cómo se aplica la comisión:\n\n" +
+                $"• Presupuesto por tu trabajo: ${monto:F2} MXN\n" +
+                $"• Comisión PHANTEL (3% solo sobre tu trabajo): -${comisionPhantel:F2} MXN\n" +
+                $"• Traslado estimado (100% libre de comisión): +${_cita.TarifaTraslado:F2} MXN\n" +
+                $"• Tu ganancia neta al aceptar y liberar el cliente: ${netoTotalTecnico:F2} MXN\n\n" +
+                $"⚠️ Nota: En caso de disputa procedente aplica una penalización del 5% sobre el presupuesto.\n\n" +
+                $"¿Deseas enviar esta cotización al cliente?",
+                "✅ Aceptar y Enviar",
+                "Cancelar");
+
+            if (!confirmarEnvio) return;
+
             bool guardado = await _dbService.EnviarPresupuestoAsync(_cita.Id, concepto.Trim(), monto);
             if (guardado)
             {
                 _cita.ConceptoPresupuesto = concepto.Trim();
                 _cita.MontoPresupuesto = monto;
+                _cita.PorcentajeComisionAplicado = 0.03m;
+                _cita.MontoComisionPhantel = comisionPhantel;
+                _cita.MontoNetoTecnico = netoTotalTecnico;
                 _cita.EstadoPago = "Cotizado";
                 ActualizarTarjetaPresupuestoUI();
 
@@ -190,7 +210,7 @@ namespace PHANTEL.Views
                     $"• Concepto: {concepto.Trim()}\n" +
                     $"• Mano de obra / refacciones: ${monto:F2} MXN\n" +
                     $"• Tarifa de traslado: ${_cita.TarifaTraslado:F2} MXN\n" +
-                    $"• TOTAL PROTEGIDO: ${_cita.MontoTotalConTraslado:F2} MXN\n\n" +
+                    $"• TOTAL PROTEGIDO: ${totalServicio:F2} MXN\n\n" +
                     $"Puedes realizar tu transferencia protegida desde el botón verde arriba.";
 
                 await EnviarMensajeSistemaAsync(msgSistema);
@@ -270,8 +290,8 @@ namespace PHANTEL.Views
                     $"🔒 PAGO EN CUSTODIA REGISTRADO (${_cita.MontoTotalConTraslado:F2} MXN)\n" +
                     $"• Referencia SPEI: {folioRastreo.Trim()}\n" +
                     $"• Estado: RETENIDO POR PHANTEL\n\n" +
-                    $"⚠️ AVISO AL TÉCNICO: El pago ha sido asegurado en garantía. Se liberará a tu cuenta únicamente cuando el cliente confirme que el servicio concluyó sin problemas. " +
-                    $"En caso de abandono, cobro indebido o mal servicio, el dinero permanecerá retenido para reembolso al cliente y se aplicará penalización/suspensión a tu perfil.";
+                    $"⚠️ AVISO AL TÉCNICO: El pago ha sido asegurado en garantía. Se liberará a tu cuenta cuando el cliente confirme el trabajo (traslado íntegro + trabajo menos 3% de comisión). " +
+                    $"En disputa procedente aplica penalización del 5% sobre el presupuesto y/o suspensión.";
 
                 await EnviarMensajeSistemaAsync(advertenciaChat);
                 await DisplayAlertAsync("¡Pago Protegido!", "Tu transferencia quedó registrada en custodia. El técnico ya recibió la notificación.", "OK");
@@ -287,7 +307,7 @@ namespace PHANTEL.Views
         {
             bool confirmar = await DisplayAlertAsync(
                 "✅ Liberar Pago al Técnico",
-                $"¿Confirmas que el servicio se realizó correctamente y sin problemas?\n\nSe liberarán ${_cita.MontoTotalConTraslado:F2} MXN a la cuenta del técnico. Esta acción no se puede deshacer.",
+                $"¿Confirmas que el servicio se realizó correctamente y sin problemas?\n\nSe liberarán ${_cita.MontoTotalConTraslado:F2} MXN (traslado íntegro + trabajo menos 3% de comisión) al técnico. Esta acción no se puede deshacer.",
                 "Sí, liberar dinero",
                 "Aún no");
 
@@ -296,11 +316,20 @@ namespace PHANTEL.Views
             bool liberado = await _dbService.LiberarPagoATecnicoAsync(_cita.Id);
             if (liberado)
             {
+                decimal comision = Math.Round(_cita.MontoPresupuesto * 0.03m, 2);
+                decimal neto = (_cita.MontoPresupuesto - comision) + _cita.TarifaTraslado;
+
                 _cita.EstadoPago = "Liberado al Técnico";
                 _cita.Estado = "Finalizada";
                 ActualizarTarjetaPresupuestoUI();
 
-                await EnviarMensajeSistemaAsync($"✅ PAGO LIBERADO: El cliente confirmó satisfacción con el servicio. Se liberaron ${_cita.MontoTotalConTraslado:F2} MXN al técnico.");
+                await EnviarMensajeSistemaAsync(
+                    $"✅ PAGO LIBERADO: El cliente confirmó satisfacción con el servicio.\n" +
+                    $"• Traslado (100% íntegro): ${_cita.TarifaTraslado:F2} MXN\n" +
+                    $"• Presupuesto de trabajo: ${_cita.MontoPresupuesto:F2} MXN\n" +
+                    $"• Comisión PHANTEL (3% sobre trabajo): -${comision:F2} MXN\n" +
+                    $"• Neto liberado al técnico: ${neto:F2} MXN");
+
                 await DisplayAlertAsync("¡Listo!", "El pago ha sido liberado al técnico y la cita quedó finalizada.", "OK");
             }
             else
@@ -346,7 +375,7 @@ namespace PHANTEL.Views
                     $"🚨 PAGO CONGELADO POR DISPUTA:\n" +
                     $"• Motivo: {motivo}\n" +
                     $"• Monto retenido: ${_cita.MontoTotalConTraslado:F2} MXN\n" +
-                    $"• Acción: Los fondos quedan bloqueados hasta resolución de Administración PHANTEL y aplicación de penalización.");
+                    $"• Acción: Los fondos quedan bloqueados hasta resolución de Administración PHANTEL (aplica penalización del 5% en disputas procedentes).");
 
                 bool abrirWhats = await DisplayAlertAsync(
                     "🔒 Dinero Protegido y Retenido",
@@ -401,7 +430,6 @@ namespace PHANTEL.Views
                             _mensajes.Add(msgUi);
                             listMensajes.ScrollTo(_mensajes.Count - 1);
 
-                            // Si el mensaje nuevo es una cotización, pago, disputa o resolución admin, actualiza la tarjeta superior en vivo
                             if (msg.Texto.StartsWith("💰") || msg.Texto.StartsWith("🔒") || msg.Texto.StartsWith("✅") || msg.Texto.StartsWith("🚨") || msg.Texto.StartsWith("RESOLUCIÓN OFICIAL"))
                             {
                                 await RefrescarEstadoPresupuestoAsync();

@@ -42,7 +42,8 @@ namespace PHANTEL.Views
                     ? $"👨‍🔧 {tecnicoActual.Nombre} ✔️"
                     : $"👨‍🔧 {tecnicoActual.Nombre}";
 
-                lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1}";
+                string cpTexto = string.IsNullOrWhiteSpace(tecnicoActual.CodigoPostal) ? "Sin CP" : $"CP {tecnicoActual.CodigoPostal}";
+                lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1} | 📍 {cpTexto}";
 
                 ActualizarBotonVerificacionKyc();
 
@@ -119,6 +120,7 @@ namespace PHANTEL.Views
                 $"Técnico: {u.Nombre}",
                 "Cancelar",
                 null,
+                "📍 Actualizar Código Postal",
                 "🪪 Verificación de Identidad (INE)",
                 "📷 Editar Foto de Perfil",
                 "📋 Historial de Citas",
@@ -126,6 +128,10 @@ namespace PHANTEL.Views
 
             switch (opcion)
             {
+                case "📍 Actualizar Código Postal":
+                    await ActualizarCodigoPostalTecnicoAsync();
+                    break;
+
                 case "🪪 Verificación de Identidad (INE)":
                     await Navigation.PushAsync(new VerificacionTecnicoPage());
                     break;
@@ -155,6 +161,54 @@ namespace PHANTEL.Views
                     LoginPage.UsuarioActual = null;
                     Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
                     break;
+            }
+        }
+
+        private async Task ActualizarCodigoPostalTecnicoAsync()
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u == null) return;
+
+            string nuevoCp = await DisplayPromptAsync(
+                "Actualizar Código Postal",
+                "Ingresa tu Código Postal de residencia (5 dígitos):",
+                accept: "Guardar",
+                cancel: "Cancelar",
+                initialValue: u.CodigoPostal,
+                maxLength: 5,
+                keyboard: Keyboard.Numeric);
+
+            if (string.IsNullOrWhiteSpace(nuevoCp)) return;
+
+            nuevoCp = nuevoCp.Trim();
+            if (nuevoCp.Length != 5 || !nuevoCp.All(char.IsDigit))
+            {
+                await DisplayAlertAsync("CP Inválido", "Ingresa exactamente 5 dígitos numéricos.", "OK");
+                return;
+            }
+
+            var (lat, lon) = await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync(
+                $"{nuevoCp}, Ciudad de México",
+                nuevoCp);
+
+            bool actualizado = await _dbService.ActualizarCodigoPostalUsuarioAsync(
+                u.Id,
+                u.Email,
+                nuevoCp,
+                lat,
+                lon);
+
+            if (actualizado)
+            {
+                u.CodigoPostal = nuevoCp;
+                u.Latitud = lat;
+                u.Longitud = lon;
+                lblEspecialidad.Text = $"Especialidad: {u.Especialidad} | ⭐ {u.CalificacionPromedio:F1} | 📍 CP {nuevoCp}";
+                await DisplayAlertAsync("Actualizado", $"Tu Código Postal base ahora es {nuevoCp}.", "OK");
+            }
+            else
+            {
+                await DisplayAlertAsync("Error", "No se pudo actualizar el Código Postal en la nube.", "OK");
             }
         }
 

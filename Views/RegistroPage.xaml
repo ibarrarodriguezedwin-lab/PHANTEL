@@ -38,6 +38,13 @@
             <Entry x:Name="entryPassword" Placeholder="Contraseña de acceso" IsPassword="True" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
             <Entry x:Name="entryTelefono" Placeholder="Número telefónico de contacto" Keyboard="Telephone" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
             <Entry x:Name="entryDireccion" Placeholder="Dirección / Colonia o Alcaldía" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+            <Entry x:Name="entryCodigoPostal" 
+                   Placeholder="Código Postal de residencia (Ej. 14000) *" 
+                   Keyboard="Numeric" 
+                   MaxLength="5" 
+                   TextColor="White" 
+                   PlaceholderColor="Gray" 
+                   BackgroundColor="#252526"/>
 
             <!-- Campos Exclusivos si se selecciona Técnico -->
             <VerticalStackLayout x:Name="layoutSeccionTecnico" IsVisible="False" Spacing="12">
@@ -81,7 +88,6 @@
                                 <x:String>Limpiador de cisternas</x:String>
                                 <x:String>Técnico en telefonía celular</x:String>
                                 <x:String>Especialista en control de plagas</x:String>
-
                             </x:Array>
                         </Picker.ItemsSource>
                     </Picker>
@@ -89,6 +95,47 @@
 
                 <Entry x:Name="entryExperiencia" Placeholder="Años de experiencia (Ej. 3 años)" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
                 <Entry x:Name="entryTarifa" Placeholder="Tarifa estimada por servicio ($ MXN)" Keyboard="Numeric" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+
+                <!-- Términos y Condiciones Obligatorios de Comisiones PHANTEL -->
+                <Border Stroke="#FFC107"
+                        StrokeThickness="1"
+                        BackgroundColor="#252526"
+                        Padding="12"
+                        Margin="0,5,0,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10"/>
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="⚖️ Condiciones de Servicio y Comisiones PHANTEL"
+                               FontAttributes="Bold"
+                               FontSize="13"
+                               TextColor="#FFC107"/>
+
+                        <Label Text="• Traslado ($8/km): El pago por traslado se entrega 100% íntegro para cubrir tu transporte hacia el domicilio."
+                               FontSize="12"
+                               TextColor="#E0E6ED"/>
+
+                        <Label Text="• Comisión de Plataforma (3%): Una vez que el cliente acepte tu presupuesto formal de reparación, PHANTEL Enterprises retiene el 3% únicamente sobre el monto de tu trabajo."
+                               FontSize="12"
+                               TextColor="#E0E6ED"/>
+
+                        <Label Text="• Penalización por Disputas (5%): En caso de disputa procedente por abandono, incumplimiento o mal servicio, se aplicará una penalización adicional del 5% sobre el monto del presupuesto."
+                               FontSize="12"
+                               TextColor="#E0E6ED"/>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,4,0,0">
+                            <CheckBox x:Name="chkAceptoTerminos"
+                                      Grid.Column="0"
+                                      Color="#28A745"
+                                      VerticalOptions="Center"/>
+                            <Label Grid.Column="1"
+                                   Text="He leído y acepto las condiciones de comisión y penalización."
+                                   FontSize="12"
+                                   TextColor="White"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
             </VerticalStackLayout>
 
             <!-- Mensaje de Error -->

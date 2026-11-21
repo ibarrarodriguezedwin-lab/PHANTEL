@@ -15,42 +15,85 @@ namespace PHANTEL.Views
         private string _fotoBase64Comprimida = string.Empty;
         private string? _rutaVideo = null;
         private string? _rutaAudio = null;
+        private CancellationTokenSource? _ctsGeocoding;
 
         public NuevaSolicitudPage(Usuario tecnico)
         {
             InitializeComponent();
             _tecnico = tecnico;
             lblTecnicoInfo.Text = $"Atención con: {tecnico.Nombre} ({tecnico.Especialidad})";
+
+            if (entryDireccion != null)
+                entryDireccion.TextChanged += OnDireccionDestinoChanged;
+
             CalcularGeolocalizacion();
         }
 
         private async void CalcularGeolocalizacion()
         {
+            await RecalcularTarifaDesdeCpTecnicoAsync(entryDireccion?.Text);
+        }
+
+        private async void OnDireccionDestinoChanged(object? sender, TextChangedEventArgs e)
+        {
+            _ctsGeocoding?.Cancel();
+            _ctsGeocoding = new CancellationTokenSource();
+            var token = _ctsGeocoding.Token;
+
             try
             {
-                var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(10));
-                var location = await Geolocation.Default.GetLocationAsync(request);
-
-                double latCliente = location?.Latitude ?? 19.3452;
-                double lonCliente = location?.Longitude ?? -99.1384;
-
-                _distanciaCalculada = DatabaseService.CalcularDistanciaKm(latCliente, lonCliente, _tecnico.Latitud, _tecnico.Longitud);
-                _tarifaCalculada = DatabaseService.CalcularTarifaTraslado(_distanciaCalculada);
-
-                lblDistancia.Text = $"Distancia estimada al técnico: {_distanciaCalculada:F1} km";
-                lblTarifa.Text = $"Tarifa de traslado estimada: ${_tarifaCalculada:F2} MXN";
+                await Task.Delay(700, token);
+                await RecalcularTarifaDesdeCpTecnicoAsync(e.NewTextValue);
             }
-            catch
+            catch (TaskCanceledException) { }
+        }
+
+        private async Task RecalcularTarifaDesdeCpTecnicoAsync(string? direccionDestino)
+        {
+            // 1. Origen: Código Postal base del Técnico que realizará el traslado (ej. 14270)
+            string cpTecnico = !string.IsNullOrWhiteSpace(_tecnico.CodigoPostal)
+                ? _tecnico.CodigoPostal.Trim()
+                : (LoginPage.UsuarioActual?.CodigoPostal ?? string.Empty);
+
+            var (latOrigen, lonOrigen) = (Math.Abs(_tecnico.Latitud) > 0.1 && Math.Abs(_tecnico.Longitud) > 0.1)
+                ? (_tecnico.Latitud, _tecnico.Longitud)
+                : await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync($"{cpTecnico}, Ciudad de México", cpTecnico);
+
+            // 2. Destino: Domicilio del servicio escrito por el cliente (o su CP base si aún no escribe dirección)
+            string cpClienteRespaldo = LoginPage.UsuarioActual?.CodigoPostal ?? string.Empty;
+
+            (double latDestino, double lonDestino) destinoCoords;
+            if (!string.IsNullOrWhiteSpace(direccionDestino) && direccionDestino.Trim().Length >= 5)
             {
-                double latCliente = 19.3452;
-                double lonCliente = -99.1384;
-
-                _distanciaCalculada = DatabaseService.CalcularDistanciaKm(latCliente, lonCliente, _tecnico.Latitud, _tecnico.Longitud);
-                _tarifaCalculada = DatabaseService.CalcularTarifaTraslado(_distanciaCalculada);
-
-                lblDistancia.Text = $"Distancia estimada: {_distanciaCalculada:F1} km";
-                lblTarifa.Text = $"Tarifa de traslado: ${_tarifaCalculada:F2} MXN";
+                destinoCoords = await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync(
+                    direccionDestino.Trim(),
+                    cpClienteRespaldo);
             }
+            else if (!string.IsNullOrWhiteSpace(cpClienteRespaldo))
+            {
+                destinoCoords = await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync(
+                    $"{cpClienteRespaldo}, Ciudad de México",
+                    cpClienteRespaldo);
+            }
+            else
+            {
+                destinoCoords = (latOrigen, lonOrigen);
+            }
+
+            _distanciaCalculada = DatabaseService.CalcularDistanciaKm(
+                latOrigen,
+                lonOrigen,
+                destinoCoords.latDestino,
+                destinoCoords.lonDestino);
+
+            _tarifaCalculada = DatabaseService.CalcularTarifaTraslado(_distanciaCalculada);
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                string origenTexto = string.IsNullOrWhiteSpace(cpTecnico) ? "base del técnico" : $"CP técnico {cpTecnico}";
+                lblDistancia.Text = $"Distancia desde {origenTexto}: {_distanciaCalculada:F1} km";
+                lblTarifa.Text = $"Tarifa de traslado ($8/km): ${_tarifaCalculada:F2} MXN";
+            });
         }
 
         private async void OnTomarFotoClicked(object sender, EventArgs e)
@@ -148,12 +191,14 @@ namespace PHANTEL.Views
                 return;
             }
 
+            await RecalcularTarifaDesdeCpTecnicoAsync(entryDireccion.Text);
+
             DateTime fechaBase = pickerFecha.Date ?? DateTime.Today;
             TimeSpan horaSeleccionada = pickerHora.Time ?? new TimeSpan(10, 0, 0);
             DateTime fechaProgramada = fechaBase.Date.Add(horaSeleccionada);
 
             string direccionFinal = string.IsNullOrWhiteSpace(entryDireccion.Text)
-                ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? "Ubicación por coordenadas GPS" : LoginPage.UsuarioActual.Direccion)
+                ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? $"Zona CP {LoginPage.UsuarioActual.CodigoPostal}" : LoginPage.UsuarioActual.Direccion)
                 : entryDireccion.Text.Trim();
 
             var nuevaCita = new SolicitudCita

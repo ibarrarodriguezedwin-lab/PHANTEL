@@ -62,7 +62,7 @@ namespace PHANTEL.Services
             return _cacheSolicitudes;
         }
 
-        // --- 1. USUARIOS (REGISTRO, LOGIN, SESIÓN Y RECUPERACIÓN) ---
+        // --- 1. USUARIOS (REGISTRO, LOGIN, SESIÓN, CP Y RECUPERACIÓN) ---
         public async Task<bool> RegistrarUsuarioAsync(Usuario usuario)
         {
             try
@@ -144,6 +144,42 @@ namespace PHANTEL.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR SESION]: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<bool> ActualizarCodigoPostalUsuarioAsync(int usuarioId, string email, string nuevoCp, double lat, double lon)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var nodo = usuarios.FirstOrDefault(u =>
+                    u.Object != null &&
+                    ((usuarioId != 0 && u.Object.Id == usuarioId) ||
+                     (!string.IsNullOrWhiteSpace(email) && u.Object.Email.Trim().ToLower() == email.Trim().ToLower())));
+
+                if (nodo != null)
+                {
+                    if (nodo.Object.Id == 0)
+                        nodo.Object.Id = Math.Abs(nodo.Key.GetHashCode());
+
+                    nodo.Object.CodigoPostal = nuevoCp.Trim();
+                    nodo.Object.Latitud = lat;
+                    nodo.Object.Longitud = lon;
+
+                    await _firebase
+                        .Child("Usuarios")
+                        .Child(nodo.Key)
+                        .PutAsync(nodo.Object);
+
+                    InvalidarCacheUsuarios();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR ACTUALIZAR CP]: {ex.Message}");
+                return false;
             }
         }
 
@@ -419,7 +455,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 5. PRESUPUESTOS Y PAGO EN CUSTODIA (ESTILO MERCADO LIBRE) ---
+        // --- 5. PRESUPUESTOS, COMISIONES (3% SOLO SOBRE TRABAJO) Y PAGO EN CUSTODIA ---
         public async Task<bool> EnviarPresupuestoAsync(int citaId, string concepto, decimal monto)
         {
             try
@@ -429,8 +465,14 @@ namespace PHANTEL.Services
 
                 if (citaTarget != null)
                 {
+                    decimal comision3Porciento = Math.Round(monto * 0.03m, 2);
+                    decimal netoTotalTecnico = (monto - comision3Porciento) + citaTarget.Object.TarifaTraslado;
+
                     citaTarget.Object.ConceptoPresupuesto = concepto;
                     citaTarget.Object.MontoPresupuesto = monto;
+                    citaTarget.Object.PorcentajeComisionAplicado = 0.03m;
+                    citaTarget.Object.MontoComisionPhantel = comision3Porciento;
+                    citaTarget.Object.MontoNetoTecnico = netoTotalTecnico;
                     citaTarget.Object.EstadoPago = "Cotizado";
 
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
@@ -500,9 +542,19 @@ namespace PHANTEL.Services
 
                 if (citaTarget != null && !citaTarget.Object.EnDisputa && !citaTarget.Object.ResueltaPorAdmin)
                 {
-                    decimal monto = citaTarget.Object.MontoTotalConTraslado;
+                    decimal totalBruto = citaTarget.Object.MontoTotalConTraslado;
+                    decimal presupuestoTrabajo = citaTarget.Object.MontoPresupuesto;
+                    decimal trasladoIntegro = citaTarget.Object.TarifaTraslado;
+
+                    decimal comision3Porciento = Math.Round(presupuestoTrabajo * 0.03m, 2);
+                    decimal netoTecnico = (presupuestoTrabajo - comision3Porciento) + trasladoIntegro;
+
+                    citaTarget.Object.PorcentajeComisionAplicado = 0.03m;
+                    citaTarget.Object.MontoComisionPhantel = comision3Porciento;
+                    citaTarget.Object.MontoNetoTecnico = netoTecnico;
                     citaTarget.Object.EstadoPago = "Liberado al Técnico";
                     citaTarget.Object.Estado = "Finalizada";
+
                     await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
                     InvalidarCacheSolicitudes();
 
@@ -520,8 +572,8 @@ namespace PHANTEL.Services
                         if (tecNode.Object.Id == 0)
                             tecNode.Object.Id = Math.Abs(tecNode.Key.GetHashCode());
 
-                        tecNode.Object.SaldoEnCustodia = Math.Max(0m, tecNode.Object.SaldoEnCustodia - monto);
-                        tecNode.Object.SaldoLiberado += monto;
+                        tecNode.Object.SaldoEnCustodia = Math.Max(0m, tecNode.Object.SaldoEnCustodia - totalBruto);
+                        tecNode.Object.SaldoLiberado += netoTecnico;
                         await _firebase.Child("Usuarios").Child(tecNode.Key).PutAsync(tecNode.Object);
                         InvalidarCacheUsuarios();
                     }
@@ -562,7 +614,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 6. PANEL ADMINISTRADOR: AUDITORÍA, COMUNICACIÓN BILATERAL Y RESOLUCIÓN ---
+        // --- 6. PANEL ADMINISTRADOR: AUDITORÍA, PENALIZACIÓN (5% SOBRE PRESUPUESTO) Y RESOLUCIÓN ---
         public async Task<Usuario?> ObtenerUsuarioPorIdAsync(int usuarioId)
         {
             try
@@ -609,11 +661,25 @@ namespace PHANTEL.Services
                 if (citaTarget == null) return false;
 
                 decimal totalOriginal = citaTarget.Object.MontoTotalConTraslado;
+                decimal baseTrabajo = citaTarget.Object.MontoPresupuesto > 0
+                    ? citaTarget.Object.MontoPresupuesto
+                    : totalOriginal;
+
+                decimal parteTrabajoLiberada = Math.Max(0m, montoLiberadoTecnico - citaTarget.Object.TarifaTraslado);
+                decimal comisionBase = Math.Round(parteTrabajoLiberada * 0.03m, 2);
+                decimal multaDisputa5Porciento = montoReembolsadoCliente > 0
+                    ? Math.Round(baseTrabajo * 0.05m, 2)
+                    : 0m;
+
+                decimal netoFinalTecnico = Math.Max(0m, montoLiberadoTecnico - comisionBase - multaDisputa5Porciento);
 
                 citaTarget.Object.EnDisputa = false;
                 citaTarget.Object.ResueltaPorAdmin = true;
                 citaTarget.Object.Estado = "Finalizada";
-                citaTarget.Object.PenalizacionAplicada = montoReembolsadoCliente;
+                citaTarget.Object.PorcentajeComisionAplicado = montoReembolsadoCliente > 0 ? 0.08m : 0.03m;
+                citaTarget.Object.MontoComisionPhantel = comisionBase + multaDisputa5Porciento;
+                citaTarget.Object.MontoNetoTecnico = netoFinalTecnico;
+                citaTarget.Object.PenalizacionAplicada = montoReembolsadoCliente + multaDisputa5Porciento;
                 citaTarget.Object.DictamenAdmin = resolucionTexto;
 
                 citaTarget.Object.EstadoPago = montoLiberadoTecnico > 0
@@ -640,7 +706,7 @@ namespace PHANTEL.Services
                         tecNode.Object.Id = Math.Abs(tecNode.Key.GetHashCode());
 
                     tecNode.Object.SaldoEnCustodia = Math.Max(0m, tecNode.Object.SaldoEnCustodia - totalOriginal);
-                    tecNode.Object.SaldoLiberado += montoLiberadoTecnico;
+                    tecNode.Object.SaldoLiberado = Math.Max(0m, tecNode.Object.SaldoLiberado + montoLiberadoTecnico - comisionBase - multaDisputa5Porciento);
 
                     if (penalizarReputacion)
                     {
@@ -664,7 +730,9 @@ namespace PHANTEL.Services
                     EmisorId = 0,
                     EmisorNombre = "⚖️ ADMINISTRACIÓN PHANTEL",
                     Texto = $"RESOLUCIÓN OFICIAL DE DISPUTA (CASO CERRADO):\n" +
-                            $"• Liberado al técnico: ${montoLiberadoTecnico:F2} MXN\n" +
+                            $"• Monto bruto técnico: ${montoLiberadoTecnico:F2} MXN\n" +
+                            $"• Comisión (3%) + Penalización disputa (5%): -${(comisionBase + multaDisputa5Porciento):F2} MXN\n" +
+                            $"• Neto acreditado al técnico: ${netoFinalTecnico:F2} MXN\n" +
                             $"• Reembolsado al cliente: ${montoReembolsadoCliente:F2} MXN\n" +
                             $"• Sanción: {(suspenderTecnico ? "CUENTA SUSPENDIDA" : (penalizarReputacion ? "Penalización en reputación (-0.5 ★)" : "Sin sanción"))}\n" +
                             $"• Dictamen: {resolucionTexto}",

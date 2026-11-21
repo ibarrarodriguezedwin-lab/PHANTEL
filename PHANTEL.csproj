@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
@@ -31,8 +31,7 @@
 		<ApplicationTitle>PHANTEL</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.phantel</ApplicationId>
-
+		<ApplicationId>com.edwinibarra.PhantelSigner</ApplicationId>
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
@@ -45,6 +44,11 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)'=='net10.0-ios'">
+	  <ProvisioningType>manual</ProvisioningType>
+	  <_SkipXcodeVersionCheck>true</_SkipXcodeVersionCheck>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -66,7 +70,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="7.0.0" />
+		<PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="9.0.0" />
 		<PackageReference Include="FirebaseDatabase.net" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />

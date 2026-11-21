@@ -14,6 +14,7 @@ namespace PHANTEL.Models
 
         public string Telefono { get; set; } = string.Empty;
         public string Direccion { get; set; } = string.Empty;
+        public string CodigoPostal { get; set; } = string.Empty;
         public string Experiencia { get; set; } = string.Empty;
         public decimal TarifaPorHora { get; set; }
 
@@ -22,7 +23,7 @@ namespace PHANTEL.Models
         public double CalificacionPromedio { get; set; } = 5.0;
         public string FotoPerfil { get; set; } = string.Empty;
 
-        // --- CONTROL FINANCIERO Y REPUTACIÓN (CUSTODIA / PENALIZACIONES) ---
+        // --- CONTROL FINANCIERO, COMISIONES Y REPUTACIÓN ---
         public string ClabeInterbancaria { get; set; } = string.Empty;
         public decimal SaldoEnCustodia { get; set; } = 0m;
         public decimal SaldoLiberado { get; set; } = 0m;
@@ -30,6 +31,9 @@ namespace PHANTEL.Models
         public bool CuentaSuspendida { get; set; } = false;
         public string MotivoSuspension { get; set; } = string.Empty;
 
+        // --- ACEPTACIÓN DE TÉRMINOS DE COMISIÓN (3% TRABAJO / 5% DISPUTA) ---
+        public bool AceptoTerminosComision { get; set; } = false;
+        public DateTime? FechaAceptacionTerminos { get; set; }
 
         // --- VERIFICACIÓN DE IDENTIDAD (KYC / TÉCNICO VERIFICADO) ---
         public string EstadoVerificacion { get; set; } = "No Verificado";
@@ -71,9 +75,13 @@ namespace PHANTEL.Models
         public bool CalificadaPorCliente { get; set; } = false;
         public bool CalificadaPorTecnico { get; set; } = false;
 
-        // --- PRESUPUESTO Y PAGO PROTEGIDO (ESTILO MERCADO LIBRE) ---
+        // --- PRESUPUESTO, COMISIONES PHANTEL Y PAGO PROTEGIDO ---
         public string ConceptoPresupuesto { get; set; } = string.Empty;
         public decimal MontoPresupuesto { get; set; } = 0m;
+        public decimal PorcentajeComisionAplicado { get; set; } = 0.03m;
+        public decimal MontoComisionPhantel { get; set; } = 0m;
+        public decimal MontoNetoTecnico { get; set; } = 0m;
+
         public string EstadoPago { get; set; } = "Sin Cotizar";
         // Valores: "Sin Cotizar", "Cotizado", "En Custodia (Retenido)", "Liberado al Técnico", "Retenido por Disputa", "Fondos Liquidados (Cerrado)", "Reembolsado al Cliente (Cerrado)"
         public string ReferenciaTransferencia { get; set; } = string.Empty;
