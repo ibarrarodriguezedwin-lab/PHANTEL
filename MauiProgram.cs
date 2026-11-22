@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Maui;
+using Plugin.LocalNotification;
 
 namespace PHANTEL
 {
@@ -9,7 +10,9 @@ namespace PHANTEL
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
-.UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: false)                // .UseMauiMaps() <-- Descomentar únicamente cuando tengas configurada tu API Key
+                .UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: false)                // .UseMauiMaps() <-- Descomentar únicamente cuando tengas configurada tu API Key
+                .UseLocalNotification()
+
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

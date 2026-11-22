@@ -38,6 +38,9 @@ namespace PHANTEL
 
                         LoginPage.UsuarioActual = usuario;
 
+                        // Activar notificaciones push en tiempo real al restaurar sesión
+                        await NotificacionRealtimeService.IniciarEscuchaAsync(usuario);
+
                         MainThread.BeginInvokeOnMainThread(() =>
                         {
                             if (usuario.TipoPerfil == "Admin")

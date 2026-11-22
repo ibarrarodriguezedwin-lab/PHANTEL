@@ -78,6 +78,9 @@ namespace PHANTEL.Views
                 // Guardar sesión persistente en el dispositivo
                 Preferences.Default.Set("SesionEmail", usuario.Email.Trim().ToLower());
 
+                // Activar escucha de notificaciones push en tiempo real (chats, solicitudes, KYC y reportes)
+                await NotificacionRealtimeService.IniciarEscuchaAsync(usuario);
+
                 PausarVideoSeguro();
 
                 if (usuario.CuentaSuspendida)

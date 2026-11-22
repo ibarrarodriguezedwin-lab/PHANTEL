@@ -117,6 +117,7 @@ namespace PHANTEL.Views
                     break;
 
                 case "🚪 Cerrar Sesión":
+                    NotificacionRealtimeService.DetenerEscucha();
                     Preferences.Default.Remove("SesionEmail");
                     LoginPage.UsuarioActual = null;
                     Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());

@@ -56,6 +56,7 @@ namespace PHANTEL.Views
 
         private void OnCerrarSesionAdminClicked(object sender, EventArgs e)
         {
+            NotificacionRealtimeService.DetenerEscucha();
             Preferences.Default.Remove("SesionEmail");
             LoginPage.UsuarioActual = null;
             Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
