@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Views;
 using PHANTEL.Models;
 using PHANTEL.Services;
 
@@ -14,14 +15,56 @@ namespace PHANTEL.Views
             InitializeComponent();
         }
 
+        protected override async void OnAppearing()
+        {
+            base.OnAppearing();
+            await IniciarVideoFondoAsync();
+        }
+
+        private async Task IniciarVideoFondoAsync()
+        {
+            try
+            {
+                if (mediaFondo == null) return;
+
+                string rutaCacheVideo = Path.Combine(FileSystem.CacheDirectory, "fondo_login_cache.mp4");
+
+                if (!File.Exists(rutaCacheVideo))
+                {
+                    using var stream = await FileSystem.OpenAppPackageFileAsync("fondo_login.mp4");
+                    using var fileStream = File.Create(rutaCacheVideo);
+                    await stream.CopyToAsync(fileStream);
+                }
+
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    mediaFondo.Source = MediaSource.FromFile(rutaCacheVideo);
+                    mediaFondo.Volume = 1.0;
+                    mediaFondo.Play();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MEDIA INIT FALLBACK]: {ex.Message}");
+                // Respaldo si el archivo está en Resources/Raw o Embed
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    mediaFondo.Source = MediaSource.FromResource("fondo_login.mp4");
+                    mediaFondo.Play();
+                });
+            }
+        }
+
         private void OnMediaOpened(object? sender, EventArgs e)
         {
-            MainThread.BeginInvokeOnMainThread(() =>
+            MainThread.BeginInvokeOnMainThread(async () =>
             {
                 try
                 {
                     if (mediaFondo != null)
                     {
+                        await Task.Delay(100);
+                        mediaFondo.InvalidateMeasure();
                         mediaFondo.Volume = 1.0;
                         mediaFondo.Play();
                     }
@@ -47,7 +90,6 @@ namespace PHANTEL.Views
                 {
                     mediaFondo.Pause();
                     mediaFondo.Stop();
-                    mediaFondo.Handler?.DisconnectHandler();
                 }
             }
             catch (Exception ex)
@@ -75,13 +117,12 @@ namespace PHANTEL.Views
                 lblError.IsVisible = false;
                 UsuarioActual = usuario;
 
-                // Guardar sesión persistente en el dispositivo
                 Preferences.Default.Set("SesionEmail", usuario.Email.Trim().ToLower());
 
-                // Activar escucha de notificaciones push en tiempo real (chats, solicitudes, KYC y reportes)
                 await NotificacionRealtimeService.IniciarEscuchaAsync(usuario);
 
                 PausarVideoSeguro();
+                mediaFondo?.Handler?.DisconnectHandler();
 
                 if (usuario.CuentaSuspendida)
                 {

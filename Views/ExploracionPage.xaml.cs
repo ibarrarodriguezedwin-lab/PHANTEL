@@ -9,15 +9,10 @@ namespace PHANTEL.Views
         private readonly CloudDatabaseService _dbService = new();
         private List<Usuario> _todosLosTecnicos = new();
 
-        // Especialidad elegida con los iconos ("Todos" = sin filtro)
         private string _especialidadSeleccionada = "Todos";
-
-        // Ubicación del cliente (se obtiene solo cuando elige "Más cercanos")
+        private int _indiceOrdenSeleccionado = 0; // 0 = Recomendados, 1 = Mejor calificados, 2 = Más cercanos
         private (double Lat, double Lon)? _ubicacionCliente;
 
-        // --- CARRUSEL DE ICONOS (solo clientes) ---
-        // "Nombre" debe ser idéntico a la Especialidad guardada en la base de datos.
-        // Para usar PNG propios, llena Imagen = "plomero.png".
         private readonly List<CategoriaIcono> _categorias = new()
         {
             new() { Nombre = "Todos",                                 NombreCorto = "Todos",            Emoji = "🧰", EstaSeleccionada = true },
@@ -57,7 +52,6 @@ namespace PHANTEL.Views
         {
             InitializeComponent();
             carruselCategorias.ItemsSource = _categorias;
-            pickerOrden.SelectedIndex = 0; // "Recomendados"
         }
 
         protected override async void OnAppearing()
@@ -68,9 +62,6 @@ namespace PHANTEL.Views
             await CargarTecnicosAsync();
         }
 
-        /// <summary>
-        /// El carrusel solo se muestra a clientes. Técnicos y administradores no lo ven.
-        /// </summary>
         private void ConfigurarCarruselSegunRol()
         {
             string tipo = LoginPage.UsuarioActual?.TipoPerfil ?? "Cliente";
@@ -108,7 +99,6 @@ namespace PHANTEL.Views
         {
             try
             {
-                // Ya vienen ordenados: primero los técnicos con EstadoVerificacion == "Verificado" y luego por calificación
                 _todosLosTecnicos = await _dbService.ObtenerTecnicosAsync();
                 AplicarFiltros();
             }
@@ -118,14 +108,12 @@ namespace PHANTEL.Views
             }
         }
 
-        /// <summary>
-        /// 1) Filtra por especialidad (iconos) y texto (buscador).
-        /// 2) Ordena según el Picker "Ordenar por".
-        /// </summary>
         private void AplicarFiltros()
         {
             string especialidad = _especialidadSeleccionada;
-            string textoBusqueda = searchBarTecnicos.Text?.Trim().ToLower() ?? "";
+            string textoBusqueda = entryBuscarTecnico.Text?.Trim().ToLower() ?? "";
+
+            btnLimpiarRapido.IsVisible = !string.IsNullOrEmpty(textoBusqueda) || especialidad != "Todos";
 
             var filtrados = _todosLosTecnicos.Where(t =>
             {
@@ -140,28 +128,21 @@ namespace PHANTEL.Views
                 return cumpleEspecialidad && cumpleTexto;
             });
 
-            IEnumerable<Usuario> ordenados = pickerOrden.SelectedIndex switch
+            IEnumerable<Usuario> ordenados = _indiceOrdenSeleccionado switch
             {
-                // Mejor calificados
                 1 => filtrados.OrderByDescending(t => t.CalificacionPromedio)
                               .ThenByDescending(t => t.EstaVerificado),
 
-                // Más cercanos (solo si ya tenemos la ubicación del cliente)
                 2 when _ubicacionCliente != null => filtrados.OrderBy(t => DistanciaKm(t)),
 
-                // Recomendados: verificados primero y luego por calificación
                 _ => filtrados.OrderByDescending(t => t.EstaVerificado)
                               .ThenByDescending(t => t.CalificacionPromedio)
             };
 
             listTecnicos.ItemsSource = ordenados.ToList();
-
             ActualizarSeleccionIconos(especialidad);
         }
 
-        /// <summary>
-        /// Resalta en el carrusel el icono que coincide con la especialidad elegida.
-        /// </summary>
         private void ActualizarSeleccionIconos(string especialidad)
         {
             foreach (var cat in _categorias)
@@ -170,11 +151,8 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- DISTANCIA / UBICACIÓN ---
-
         private double DistanciaKm(Usuario tecnico)
         {
-            // Técnicos sin ubicación guardada se van al final
             if (_ubicacionCliente == null || (tecnico.Latitud == 0 && tecnico.Longitud == 0))
                 return double.MaxValue;
 
@@ -184,7 +162,7 @@ namespace PHANTEL.Views
 
         private static double Haversine(double lat1, double lon1, double lat2, double lon2)
         {
-            const double R = 6371.0; // radio de la Tierra en km
+            const double R = 6371.0;
             double dLat = (lat2 - lat1) * Math.PI / 180.0;
             double dLon = (lon2 - lon1) * Math.PI / 180.0;
             double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
@@ -195,12 +173,10 @@ namespace PHANTEL.Views
 
         private async Task<(double Lat, double Lon)?> ObtenerUbicacionClienteAsync()
         {
-            // 1) Si el cliente ya tiene ubicación guardada en su perfil, se usa esa
             var u = LoginPage.UsuarioActual;
             if (u != null && (u.Latitud != 0 || u.Longitud != 0))
                 return (u.Latitud, u.Longitud);
 
-            // 2) Si no, se pide la ubicación actual del dispositivo
             try
             {
                 var loc = await Geolocation.Default.GetLastKnownLocationAsync()
@@ -218,54 +194,73 @@ namespace PHANTEL.Views
             return null;
         }
 
-        // --- EVENTOS DE BÚSQUEDA, ORDEN Y LIMPIAR ---
+        private void OnSearchTextChanged(object? sender, TextChangedEventArgs e) => AplicarFiltros();
 
-        private void OnSearchTextChanged(object sender, TextChangedEventArgs e) => AplicarFiltros();
-
-        private async void OnOrdenChanged(object? sender, EventArgs e)
+        private async void OnOrdenarPillTapped(object? sender, TappedEventArgs e)
         {
-            // "Más cercanos": necesita la ubicación del cliente
-            if (pickerOrden.SelectedIndex == 2 && _ubicacionCliente == null)
-            {
-                _ubicacionCliente = await ObtenerUbicacionClienteAsync();
+            string opcion = await DisplayActionSheetAsync(
+                "Ordenar técnicos por:",
+                "Cancelar",
+                null,
+                "⭐ Recomendados",
+                "🏆 Mejor calificados",
+                "📍 Más cercanos");
 
-                if (_ubicacionCliente == null)
-                {
-                    await DisplayAlertAsync("Ubicación no disponible",
-                        "No pudimos obtener tu ubicación. Activa el permiso de ubicación para ordenar por cercanía.",
-                        "OK");
-                    pickerOrden.SelectedIndex = 0; // vuelve a "Recomendados"
+            switch (opcion)
+            {
+                case "⭐ Recomendados":
+                    _indiceOrdenSeleccionado = 0;
+                    lblOrdenActual.Text = "Recomendados";
+                    break;
+
+                case "🏆 Mejor calificados":
+                    _indiceOrdenSeleccionado = 1;
+                    lblOrdenActual.Text = "Mejor calificados";
+                    break;
+
+                case "📍 Más cercanos":
+                    if (_ubicacionCliente == null)
+                    {
+                        _ubicacionCliente = await ObtenerUbicacionClienteAsync();
+                        if (_ubicacionCliente == null)
+                        {
+                            await DisplayAlertAsync("Ubicación no disponible",
+                                "No pudimos obtener tu ubicación. Activa el permiso para ordenar por cercanía.",
+                                "OK");
+                            return;
+                        }
+                    }
+                    _indiceOrdenSeleccionado = 2;
+                    lblOrdenActual.Text = "Más cercanos";
+                    break;
+
+                default:
                     return;
-                }
             }
 
             AplicarFiltros();
         }
 
-        private void OnLimpiarFiltrosClicked(object sender, EventArgs e)
+        private void OnLimpiarFiltrosClicked(object? sender, EventArgs e)
         {
-            searchBarTecnicos.Text = string.Empty;
+            entryBuscarTecnico.Text = string.Empty;
             _especialidadSeleccionada = "Todos";
-            pickerOrden.SelectedIndex = 0; // "Recomendados"
+            _indiceOrdenSeleccionado = 0;
+            lblOrdenActual.Text = "Recomendados";
             AplicarFiltros();
         }
-
-        // --- CARRUSEL DE ICONOS: AL TOCAR UN ICONO SE FILTRA POR ESA ESPECIALIDAD ---
 
         private void OnCategoriaTapped(object? sender, TappedEventArgs e)
         {
             if (sender is not BindableObject vista || vista.BindingContext is not CategoriaIcono categoria)
                 return;
 
-            // Tocar de nuevo el mismo icono quita el filtro
             _especialidadSeleccionada = _especialidadSeleccionada == categoria.Nombre
                 ? "Todos"
                 : categoria.Nombre;
 
             AplicarFiltros();
         }
-
-        // --- MANEJO DEL MENÚ DE PERFIL DEL CLIENTE ---
 
         private async void OnPerfilClienteClicked(object sender, EventArgs e)
         {
@@ -334,8 +329,6 @@ namespace PHANTEL.Views
                 await DisplayAlertAsync("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
             }
         }
-
-        // --- SOLICITUDES DE TÉCNICOS ---
 
         private async void OnSolicitarClicked(object sender, EventArgs e)
         {

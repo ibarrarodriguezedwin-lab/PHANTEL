@@ -1,81 +1,148 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:PHANTEL.Controls"
              x:Class="PHANTEL.Views.MisSolicitudesPage"
+             BackgroundColor="#121316"
              Title="Gestión de Citas">
 
-    <Grid Padding="15">
-        <CollectionView x:Name="listSolicitudes">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Stroke="#6200EE" Margin="0,5" Padding="12">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10"/>
-                        </Border.StrokeShape>
-                        <VerticalStackLayout Spacing="6">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}" FontAttributes="Bold" TextColor="#007ACC"/>
-                                <Label Grid.Column="1" Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}" FontAttributes="Bold" TextColor="Green"/>
-                            </Grid>
+    <Grid>
+        <Grid RowDefinitions="Auto, *" Padding="16,12,16,0" RowSpacing="12">
 
-                            <Label Text="{Binding DescripcionFalla}" FontAttributes="Italic"/>
-                            <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}" FontSize="12" TextColor="Gray"/>
+            <!-- Encabezado Liquid Glass -->
+            <Border Grid.Row="0"
+                    Stroke="#2EFFFFFF"
+                    StrokeThickness="1"
+                    Padding="14,12"
+                    BackgroundColor="#14FFFFFF">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Mis Citas y Servicios"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           TextColor="White"/>
+                    <Label Text="Consulta el estado, chat en vivo y pagos protegidos"
+                           FontSize="12"
+                           TextColor="#A1A7B3"/>
+                </VerticalStackLayout>
+            </Border>
 
-                            <!-- Estado del Pago Protegido / Dictamen -->
-                            <Label Text="{Binding EstadoPago, StringFormat='🛡️ Pago: {0}'}"
-                                   FontSize="12"
-                                   FontAttributes="Bold"
-                                   TextColor="#00D2FF"/>
+            <!-- Lista de Citas con estética Liquid Glass -->
+            <CollectionView Grid.Row="1" x:Name="listSolicitudes">
+                <CollectionView.Footer>
+                    <!-- Margen inferior para que la barra flotante no tape la última tarjeta -->
+                    <BoxView HeightRequest="95" Color="Transparent"/>
+                </CollectionView.Footer>
 
-                            <Label Text="{Binding DictamenAdmin, StringFormat='⚖️ Dictamen Admin: {0}'}"
-                                   IsVisible="{Binding ResueltaPorAdmin}"
-                                   FontSize="12"
-                                   TextColor="#FFC107"/>
+                <CollectionView.EmptyView>
+                    <Label Text="Aún no tienes citas registradas."
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Margin="0,40"
+                           TextColor="#9CA3AF"/>
+                </CollectionView.EmptyView>
 
-                            <!-- Botones Separados: Finalizar Trabajo (Calificar) y Eliminar Cita -->
-                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
-                                <Button Grid.Column="0"
-                                        Text="✅ Calificar al Técnico"
-                                        Clicked="OnFinalizarTrabajoClienteClicked"
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="#2AFFFFFF"
+                                StrokeThickness="1"
+                                Margin="0,6"
+                                Padding="14"
+                                BackgroundColor="#14FFFFFF">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18"/>
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="6">
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
+                                           FontAttributes="Bold"
+                                           FontSize="14"
+                                           TextColor="#00D2FF"/>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}"
+                                           FontAttributes="Bold"
+                                           FontSize="15"
+                                           TextColor="#28A745"/>
+                                </Grid>
+
+                                <Label Text="{Binding DescripcionFalla}"
+                                       FontAttributes="Italic"
+                                       TextColor="White"
+                                       FontSize="14"/>
+                                <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}"
+                                       FontSize="12"
+                                       TextColor="#9CA3AF"/>
+
+                                <!-- Estado del Pago Protegido / Dictamen -->
+                                <Label Text="{Binding EstadoPago, StringFormat='🛡️ Pago: {0}'}"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="#00D2FF"/>
+
+                                <Label Text="{Binding DictamenAdmin, StringFormat='⚖️ Dictamen Admin: {0}'}"
+                                       IsVisible="{Binding ResueltaPorAdmin}"
+                                       FontSize="12"
+                                       TextColor="#FFC107"/>
+
+                                <!-- Botones Separados: Calificar y Eliminar Cita -->
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,8,0,0">
+                                    <Button Grid.Column="0"
+                                            Text="✅ Calificar"
+                                            Clicked="OnFinalizarTrabajoClienteClicked"
+                                            CommandParameter="{Binding .}"
+                                            IsEnabled="{Binding MostrarBotonCalificar}"
+                                            BackgroundColor="#28A745"
+                                            TextColor="White"
+                                            CornerRadius="14"
+                                            HeightRequest="40"
+                                            FontAttributes="Bold"/>
+
+                                    <Button Grid.Column="1"
+                                            Text="🗑️ Eliminar"
+                                            Clicked="OnEliminarCitaClicked"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#DC3545"
+                                            TextColor="White"
+                                            CornerRadius="14"
+                                            HeightRequest="40"
+                                            FontAttributes="Bold"/>
+                                </Grid>
+
+                                <!-- Abrir Chat Directo con el Técnico -->
+                                <Button Text="💬 Abrir Chat con el Técnico"
+                                        Clicked="OnAbrirChatClicked"
                                         CommandParameter="{Binding .}"
-                                        IsEnabled="{Binding MostrarBotonCalificar}"
-                                        BackgroundColor="#28A745"
+                                        BackgroundColor="#17A2B8"
                                         TextColor="White"
-                                        FontAttributes="Bold"/>
+                                        CornerRadius="14"
+                                        HeightRequest="42"
+                                        FontAttributes="Bold"
+                                        Margin="0,4,0,0"/>
 
-                                <Button Grid.Column="1"
-                                        Text="🗑️ Eliminar Cita"
-                                        Clicked="OnEliminarCitaClicked"
+                                <!-- Botón de Denuncia / Reembolso -->
+                                <Button Text="🚨 Reportar Problema / Reembolso"
+                                        Clicked="OnReportarProblemaClicked"
                                         CommandParameter="{Binding .}"
-                                        BackgroundColor="#DC3545"
+                                        IsVisible="{Binding MostrarBotonReportar}"
+                                        IsEnabled="{Binding MostrarBotonReportar}"
+                                        BackgroundColor="#E67E22"
                                         TextColor="White"
-                                        FontAttributes="Bold"/>
-                            </Grid>
+                                        CornerRadius="14"
+                                        HeightRequest="42"
+                                        FontAttributes="Bold"
+                                        Margin="0,4,0,0"/>
 
-                            <!-- Abrir Chat Directo con el Técnico -->
-                            <Button Text="💬 Abrir Chat con el Técnico"
-                                    Clicked="OnAbrirChatClicked"
-                                    CommandParameter="{Binding .}"
-                                    BackgroundColor="#17A2B8"
-                                    TextColor="White"
-                                    FontAttributes="Bold"
-                                    Margin="0,5,0,0"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
 
-                            <!-- Botón de Denuncia / Reembolso (Inhabilitado si Admin ya cerró o hay disputa) -->
-                            <Button Text="🚨 Reportar Problema / Reembolso"
-                                    Clicked="OnReportarProblemaClicked"
-                                    CommandParameter="{Binding .}"
-                                    IsVisible="{Binding MostrarBotonReportar}"
-                                    IsEnabled="{Binding MostrarBotonReportar}"
-                                    BackgroundColor="#E67E22"
-                                    TextColor="White"
-                                    FontAttributes="Bold"
-                                    Margin="0,5,0,0"/>
-
-                        </VerticalStackLayout>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <!-- Barra flotante Liquid Glass sincronizada en la pestaña "Mis Citas" -->
+        <controls:LiquidGlassTabBar TabActivo="MisCitas"/>
     </Grid>
 </ContentPage>

@@ -3,41 +3,48 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="PHANTEL.Views.LoginPage"
-             BackgroundColor="Black"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="#0B0F17"
              Title="Acceso PHANTEL">
 
     <Grid HorizontalOptions="Fill" VerticalOptions="Fill">
 
-        <!-- 1. VIDEO DE FONDO EN BUCLE (ARRANQUE SEGURO CON MEDIAOPENED) -->
+        <!-- 1. VIDEO DE FONDO EN BUCLE (CON ZINDEX Y REPRODUCCIÓN NATIVA EN ANDROID) -->
         <toolkit:MediaElement x:Name="mediaFondo"
-                              Source="embed://fondo_login.mp4"
+                              ZIndex="0"
                               Aspect="AspectFill"
-                              ShouldAutoPlay="False"
+                              ShouldAutoPlay="True"
                               ShouldLoopPlayback="True"
                               ShouldShowPlaybackControls="False"
+                              ShouldMute="False"
                               Volume="1.0"
                               InputTransparent="True"
                               HorizontalOptions="Fill"
                               VerticalOptions="Fill"
                               MediaOpened="OnMediaOpened" />
 
-        <!-- 2. CAPA OSCURA MUY LIGERA PARA NO TAPAR EL VIDEO -->
-        <BoxView Color="Black" Opacity="0.25" HorizontalOptions="Fill" VerticalOptions="Fill" />
+        <!-- 2. CAPA OSCURA MUY LIGERA PARA CONTRASTE DEL CRISTAL -->
+        <BoxView ZIndex="1"
+                 Color="Black"
+                 Opacity="0.28"
+                 InputTransparent="True"
+                 HorizontalOptions="Fill"
+                 VerticalOptions="Fill" />
 
         <!-- 3. TARJETA EN EFECTO LIQUID GLASS / CRISTAL FLOTANTE -->
-        <ScrollView VerticalOptions="Center">
+        <ScrollView ZIndex="2" VerticalOptions="Center">
             <Grid Padding="25">
 
                 <!-- Tarjeta Principal Glassmorphism -->
-                <Border Stroke="#80007ACC" 
-                        StrokeThickness="1.5" 
+                <Border Stroke="#45FFFFFF" 
+                        StrokeThickness="1.2" 
                         Padding="25" 
-                        BackgroundColor="#2B1A2433" 
+                        BackgroundColor="#38121824" 
                         MaximumWidthRequest="380" 
                         HorizontalOptions="Center">
 
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="20"/>
+                        <RoundRectangle CornerRadius="24"/>
                     </Border.StrokeShape>
 
                     <VerticalStackLayout Spacing="15">
@@ -57,9 +64,9 @@
                                Margin="0,-5,0,10"/>
 
                         <!-- Campo Correo (Estilo Cristal) -->
-                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#20FFFFFF" Padding="12,2">
+                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#22FFFFFF" Padding="12,2">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="10"/>
+                                <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
                             <Entry x:Name="entryEmail" 
                                    Placeholder="Correo electrónico" 
@@ -70,9 +77,9 @@
                         </Border>
 
                         <!-- Campo Contraseña (Estilo Cristal) -->
-                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#20FFFFFF" Padding="12,2">
+                        <Border Stroke="#40FFFFFF" StrokeThickness="1" BackgroundColor="#22FFFFFF" Padding="12,2">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="10"/>
+                                <RoundRectangle CornerRadius="14"/>
                             </Border.StrokeShape>
                             <Entry x:Name="entryPassword" 
                                    Placeholder="Contraseña" 
@@ -95,8 +102,8 @@
                                 BackgroundColor="#0088FF" 
                                 TextColor="White" 
                                 FontAttributes="Bold" 
-                                CornerRadius="10" 
-                                HeightRequest="45" 
+                                CornerRadius="14" 
+                                HeightRequest="46" 
                                 Margin="0,10,0,0"/>
 
                         <!-- Botón Recuperar Contraseña -->

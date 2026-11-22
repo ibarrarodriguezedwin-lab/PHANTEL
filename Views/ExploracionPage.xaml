@@ -3,8 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              xmlns:models="clr-namespace:PHANTEL.Models"
+             xmlns:controls="clr-namespace:PHANTEL.Controls"
              x:Class="PHANTEL.Views.ExploracionPage"
-             BackgroundColor="#1E1E1E"
+             BackgroundColor="black"
              Title="PHANTEL - Buscar Técnico">
 
     <ContentPage.Resources>
@@ -14,157 +15,264 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- Fila 3 = carrusel de iconos, Fila 4 = lista de técnicos -->
-    <Grid RowDefinitions="Auto, Auto, Auto, Auto, *" Padding="15" RowSpacing="10">
+    <Grid>
+        <!-- Fila 0: Saludo | Fila 1: Pestañas Uber | Fila 2: Buscador Píldora | Fila 3: Lista Técnicos -->
+        <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="16,12,16,0" RowSpacing="12">
 
-        <!-- Encabezado de Usuario Cliente con Clic Directo -->
-        <Border Grid.Row="0" Stroke="#007ACC" Padding="12" BackgroundColor="#252526">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="10"/>
-            </Border.StrokeShape>
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
-                    <Label x:Name="lblClienteNombre" Text="Hola, Cliente" FontAttributes="Bold" FontSize="17" TextColor="White"/>
-                    <Label Text="¿Qué servicio técnico necesitas hoy?" TextColor="Gray" FontSize="12"/>
-                </VerticalStackLayout>
+            <!-- 1. Encabezado Liquid Glass -->
+            <Border Grid.Row="0"
+                    Stroke="#2EFFFFFF"
+                    StrokeThickness="1"
+                    Padding="14,10"
+                    BackgroundColor="#14FFFFFF">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="20"/>
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
+                        <Label x:Name="lblClienteNombre"
+                               Text="Hola, Cliente"
+                               FontAttributes="Bold"
+                               FontSize="17"
+                               TextColor="White"/>
+                        <Label Text="¿Qué servicio técnico necesitas hoy?"
+                               TextColor="#A1A7B3"
+                               FontSize="12"/>
+                    </VerticalStackLayout>
 
-                <!-- Avatar Circular del Cliente (cierre autocontenido /> ) -->
-                <ImageButton Grid.Column="1"
-                             x:Name="btnPerfilCliente"
-                             Aspect="AspectFill"
-                             WidthRequest="48"
-                             HeightRequest="48"
-                             CornerRadius="24"
-                             Source="dotnet_bot.png"
-                             VerticalOptions="Center"
-                             Clicked="OnPerfilClienteClicked" />
-            </Grid>
-        </Border>
-
-        <!-- SearchBar -->
-        <SearchBar Grid.Row="1" x:Name="searchBarTecnicos" 
-                   Placeholder="Buscar por nombre..." 
-                   TextColor="White"
-                   PlaceholderColor="Gray"
-                   BackgroundColor="#252526"
-                   TextChanged="OnSearchTextChanged" />
-
-        <!-- Ordenar resultados (la especialidad se elige con los iconos de abajo) -->
-        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="8">
-            <Picker x:Name="pickerOrden" Title="Ordenar por"
-                    TitleColor="Gray" TextColor="White"
-                    SelectedIndexChanged="OnOrdenChanged">
-                <Picker.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Recomendados</x:String>
-                        <x:String>Mejor calificados</x:String>
-                        <x:String>Más cercanos</x:String>
-                    </x:Array>
-                </Picker.ItemsSource>
-            </Picker>
-            <Button Grid.Column="1" Text="Limpiar" Clicked="OnLimpiarFiltrosClicked" BackgroundColor="#2D2D30" TextColor="White"/>
-        </Grid>
-
-        <!-- Carrusel de iconos por especialidad (solo visible para clientes; se controla en el code-behind) -->
-        <CollectionView Grid.Row="3"
-                        x:Name="carruselCategorias"
-                        IsVisible="False"
-                        ItemsLayout="HorizontalList"
-                        SelectionMode="None"
-                        HeightRequest="136"
-                        HorizontalScrollBarVisibility="Never">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:CategoriaIcono">
-                    <Border WidthRequest="104"
-                            Margin="0,0,8,0"
-                            Padding="4,8"
-                            BackgroundColor="#252526"
-                            Stroke="Transparent"
-                            StrokeThickness="2">
+                    <Border Grid.Column="1"
+                            Stroke="#55FFFFFF"
+                            StrokeThickness="1.2"
+                            WidthRequest="46"
+                            HeightRequest="46"
+                            Padding="0"
+                            VerticalOptions="Center">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14"/>
+                            <RoundRectangle CornerRadius="23"/>
                         </Border.StrokeShape>
+                        <ImageButton x:Name="btnPerfilCliente"
+                                     Aspect="AspectFill"
+                                     WidthRequest="46"
+                                     HeightRequest="46"
+                                     Source="dotnet_bot.png"
+                                     Clicked="OnPerfilClienteClicked" />
+                    </Border>
+                </Grid>
+            </Border>
 
-                        <!-- Resalta el icono seleccionado -->
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding EstaSeleccionada}" Value="True">
-                                <Setter Property="Stroke" Value="#007ACC"/>
-                                <Setter Property="BackgroundColor" Value="#1F3A52"/>
-                            </DataTrigger>
-                        </Border.Triggers>
+            <!-- 2. Pestañas Horizontales Compactas Estilo Uber -->
+            <Grid Grid.Row="1" RowDefinitions="Auto, 1">
+                <CollectionView Grid.Row="0"
+                                x:Name="carruselCategorias"
+                                IsVisible="False"
+                                ItemsLayout="HorizontalList"
+                                SelectionMode="None"
+                                HeightRequest="46"
+                                HorizontalScrollBarVisibility="Never">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:CategoriaIcono">
+                            <VerticalStackLayout Margin="0,0,22,0"
+                                                 Spacing="6"
+                                                 VerticalOptions="End">
+                                <VerticalStackLayout.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnCategoriaTapped"/>
+                                </VerticalStackLayout.GestureRecognizers>
 
+                                <!-- Icono pequeño + Texto alineados horizontalmente -->
+                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="2,4,2,0">
+                                    <Grid WidthRequest="26" HeightRequest="26" VerticalOptions="Center">
+                                        <Label Text="{Binding Emoji}"
+                                               FontSize="20"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               IsVisible="{Binding SoloEmoji}"/>
+                                        <Image Source="{Binding Imagen}"
+                                               WidthRequest="26"
+                                               HeightRequest="26"
+                                               Aspect="AspectFit"
+                                               IsVisible="{Binding TieneImagen}"/>
+                                    </Grid>
+
+                                    <Label Text="{Binding NombreCorto}"
+                                           FontSize="15"
+                                           FontAttributes="Bold"
+                                           TextColor="{Binding ColorTexto}"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Indicador inferior blanco estilo Uber -->
+                                <BoxView HeightRequest="3.5"
+                                         CornerRadius="2"
+                                         Color="White"
+                                         IsVisible="{Binding EstaSeleccionada}"
+                                         HorizontalOptions="Fill"/>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Línea divisoria sutil estilo Uber -->
+                <BoxView Grid.Row="1" HeightRequest="1" Color="#24FFFFFF" HorizontalOptions="Fill"/>
+            </Grid>
+
+            <!-- 3. Barra de Búsqueda Píldora Redondeada Liquid Glass (debajo de los iconos) -->
+            <Border Grid.Row="2"
+                    Stroke="#3AFFFFFF"
+                    StrokeThickness="1.2"
+                    BackgroundColor="#1AFFFFFF"
+                    HeightRequest="52"
+                    Padding="14,0,8,0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="26"/>
+                </Border.StrokeShape>
+
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="8" VerticalOptions="Center">
+                    <!-- Icono lupa -->
+                    <Label Grid.Column="0"
+                           Text="🔍"
+                           FontSize="16"
+                           TextColor="White"
+                           VerticalOptions="Center"/>
+
+                    <!-- Campo de búsqueda sin bordes nativos -->
+                    <Entry Grid.Column="1"
+                       x:Name="entryBuscarTecnico"
+                       Placeholder="Buscar técnico..."
+                       PlaceholderColor="#9CA3AF"
+                       TextColor="White"
+                       BackgroundColor="Transparent"
+                       FontSize="13"
+                       VerticalOptions="Center"
+                       TextChanged="OnSearchTextChanged"/>
+
+                    <!-- Botón limpiar rápido (solo aparece cuando hay filtro/texto) -->
+                    <Button Grid.Column="2"
+                            x:Name="btnLimpiarRapido"
+                            Text="✕"
+                            IsVisible="False"
+                            Clicked="OnLimpiarFiltrosClicked"
+                            BackgroundColor="Transparent"
+                            TextColor="#9CA3AF"
+                            FontSize="14"
+                            WidthRequest="32"
+                            HeightRequest="32"
+                            Padding="0"
+                            VerticalOptions="Center"/>
+
+                    <!-- Cápsula interna estilo "Más tarde" de Uber para Ordenar / Filtrar -->
+                    <Border Grid.Column="3"
+                            Stroke="#30FFFFFF"
+                            StrokeThickness="1"
+                            BackgroundColor="#24FFFFFF"
+                            HeightRequest="36"
+                            Padding="12,0"
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="18"/>
+                        </Border.StrokeShape>
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCategoriaTapped"/>
+                            <TapGestureRecognizer Tapped="OnOrdenarPillTapped"/>
                         </Border.GestureRecognizers>
 
-                        <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                            <Grid WidthRequest="72" HeightRequest="72">
-                                <!-- Emoji provisional (se oculta si el icono tiene Imagen PNG/SVG) -->
-                                <Label Text="{Binding Emoji}"
-                                       FontSize="50"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"
-                                       IsVisible="{Binding SoloEmoji}"/>
-                                <!-- Imagen propia (Resources/Images) -->
-                                <Image Source="{Binding Imagen}"
-                                       Aspect="AspectFit"
-                                       IsVisible="{Binding TieneImagen}"/>
-                            </Grid>
-                            <Label Text="{Binding NombreCorto}"
-                                   FontSize="11"
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Label Text="⇅" FontSize="13" TextColor="White" VerticalOptions="Center"/>
+                            <Label x:Name="lblOrdenActual"
+                                   Text="Recomendados"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
                                    TextColor="White"
-                                   HorizontalTextAlignment="Center"
-                                   MaxLines="2"
-                                   LineBreakMode="TailTruncation"/>
-                        </VerticalStackLayout>
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
                     </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                </Grid>
+            </Border>
 
-        <!-- Lista de Técnicos Disponibles -->
-        <CollectionView Grid.Row="4" x:Name="listTecnicos" SelectionMode="Single"
-                        SelectionChanged="OnTecnicoSeleccionado">
-            <CollectionView.EmptyView>
-                <Label Text="No se encontraron técnicos con los filtros seleccionados." 
-                       HorizontalOptions="Center" VerticalOptions="Center" Margin="0,30" TextColor="Gray"/>
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Stroke="#007ACC" StrokeThickness="1" Margin="0,5" Padding="12" BackgroundColor="#252526">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="8" />
-                        </Border.StrokeShape>
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+            <!-- 4. Lista de Técnicos Disponibles (Tarjetas Liquid Glass) -->
+            <CollectionView Grid.Row="3"
+                            x:Name="listTecnicos"
+                            SelectionMode="Single"
+                            SelectionChanged="OnTecnicoSeleccionado">
+                <CollectionView.Footer>
+                    <!-- Espacio inferior para que la barra flotante no tape al último técnico -->
+                    <BoxView HeightRequest="95" Color="Transparent"/>
+                </CollectionView.Footer>
 
-                            <!-- Foto de Perfil del Técnico procesada desde Base64 -->
-                            <Border Grid.Column="0" Stroke="#007ACC" WidthRequest="50" HeightRequest="50">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="25"/>
-                                </Border.StrokeShape>
-                                <Image Source="{Binding FotoPerfil, Converter={StaticResource AvatarConverter}}" 
-                                       WidthRequest="50" HeightRequest="50" Aspect="AspectFill" />
-                            </Border>
+                <CollectionView.EmptyView>
+                    <Label Text="No se encontraron técnicos con los filtros seleccionados." 
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"
+                           Margin="0,30"
+                           TextColor="#9CA3AF"/>
+                </CollectionView.EmptyView>
 
-                            <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                                <Label Text="{Binding Nombre}" FontAttributes="Bold" FontSize="16" TextColor="White"/>
-                                <Label Text="{Binding InsigniaVerificacionTexto}"
-                                       IsVisible="{Binding EstaVerificado}"
-                                       FontSize="11"
-                                       FontAttributes="Bold"
-                                       TextColor="#00D2FF"/>
-                                <Label Text="{Binding Especialidad}" TextColor="#FFC107" FontSize="13" />
-                                <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa base: ${0:F2}/hr'}" TextColor="Gray" FontSize="11" />
-                            </StackLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Stroke="#2AFFFFFF"
+                                StrokeThickness="1"
+                                Margin="0,5"
+                                Padding="12"
+                                BackgroundColor="#14FFFFFF">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18" />
+                            </Border.StrokeShape>
 
-                            <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="5">
-                                <Label Text="{Binding CalificacionPromedio, StringFormat='⭐ {0:F1}'}" FontAttributes="Bold" TextColor="#28A745" HorizontalOptions="End"/>
-                                <Button Text="Solicitar" Clicked="OnSolicitarClicked" CommandParameter="{Binding .}" BackgroundColor="#007ACC" TextColor="White" HeightRequest="36" Padding="12,0"/>
-                            </StackLayout>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12">
+                                <!-- Foto de Perfil del Técnico -->
+                                <Border Grid.Column="0"
+                                        Stroke="#45FFFFFF"
+                                        StrokeThickness="1.2"
+                                        WidthRequest="52"
+                                        HeightRequest="52">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="26"/>
+                                    </Border.StrokeShape>
+                                    <Image Source="{Binding FotoPerfil, Converter={StaticResource AvatarConverter}}" 
+                                           WidthRequest="52"
+                                           HeightRequest="52"
+                                           Aspect="AspectFill" />
+                                </Border>
+
+                                <StackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                    <Label Text="{Binding Nombre}"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="White"/>
+                                    <Label Text="{Binding InsigniaVerificacionTexto}"
+                                           IsVisible="{Binding EstaVerificado}"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           TextColor="#00D2FF"/>
+                                    <Label Text="{Binding Especialidad}"
+                                           TextColor="#FFC107"
+                                           FontSize="13" />
+                                    <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa base: ${0:F2}/hr'}"
+                                           TextColor="#9CA3AF"
+                                           FontSize="11" />
+                                </StackLayout>
+
+                                <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="6">
+                                    <Label Text="{Binding CalificacionPromedio, StringFormat='⭐ {0:F1}'}"
+                                           FontAttributes="Bold"
+                                           TextColor="#28A745"
+                                           HorizontalOptions="End"/>
+                                    <Button Text="Solicitar"
+                                            Clicked="OnSolicitarClicked"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#007ACC"
+                                            TextColor="White"
+                                            FontAttributes="Bold"
+                                            CornerRadius="16"
+                                            HeightRequest="34"
+                                            Padding="14,0"/>
+                                </StackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+
+        <!-- Barra flotante Liquid Glass estilo Uber / iOS 26 -->
+        <controls:LiquidGlassTabBar TabActivo="Explorar"/>
     </Grid>
 </ContentPage>

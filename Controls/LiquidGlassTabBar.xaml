@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="PHANTEL.Controls.LiquidGlassTabBar"
+             HorizontalOptions="Center"
+             VerticalOptions="End"
+             Margin="24,0,24,18">
+
+    <!-- Cápsula externa flotante Liquid Glass -->
+    <Border Stroke="#38FFFFFF"
+            StrokeThickness="1.2"
+            BackgroundColor="#E61A1C20"
+            Padding="6"
+            HeightRequest="66"
+            WidthRequest="290">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="33"/>
+        </Border.StrokeShape>
+        <Border.Shadow>
+            <Shadow Brush="Black" Offset="0,8" Radius="20" Opacity="0.55"/>
+        </Border.Shadow>
+
+        <Grid ColumnDefinitions="*, *" ColumnSpacing="6">
+
+            <!-- PESTAÑA 1: EXPLORAR -->
+            <Border x:Name="pillExplorar"
+                    Grid.Column="0"
+                    Stroke="#2AFFFFFF"
+                    StrokeThickness="1"
+                    BackgroundColor="#26FFFFFF"
+                    Padding="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="27"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnExplorarTapped"/>
+                </Border.GestureRecognizers>
+
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label x:Name="iconExplorar"
+                           Text="🏠"
+                           FontSize="19"
+                           HorizontalOptions="Center"/>
+                    <Label x:Name="lblExplorar"
+                           Text="Explorar"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- PESTAÑA 2: MIS CITAS -->
+            <Border x:Name="pillMisCitas"
+                    Grid.Column="1"
+                    Stroke="Transparent"
+                    StrokeThickness="1"
+                    BackgroundColor="Transparent"
+                    Padding="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="27"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnMisCitasTapped"/>
+                </Border.GestureRecognizers>
+
+                <VerticalStackLayout Spacing="2" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label x:Name="iconMisCitas"
+                           Text="📋"
+                           FontSize="19"
+                           HorizontalOptions="Center"/>
+                    <Label x:Name="lblMisCitas"
+                           Text="Mis Citas"
+                           FontSize="12"
+                           FontAttributes="None"
+                           TextColor="#9CA3AF"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
+
+        </Grid>
+    </Border>
+</ContentView>
