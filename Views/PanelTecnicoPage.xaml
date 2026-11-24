@@ -4,138 +4,200 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.PanelTecnicoPage"
-             BackgroundColor="#1E1E1E"
+             BackgroundColor="#121212"
              Title="PHANTEL - Panel de Atención Técnica">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- Instancia del Convertidor de Base64 a Imagen -->
             <helpers:Base64ToImageConverter x:Key="Base64ToImageConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, *" Padding="15" RowSpacing="10">
+    <Grid RowDefinitions="Auto, Auto, *" Padding="20,16,20,0" RowSpacing="12">
 
-        <!-- Encabezado del Técnico con Avatar Clicable y Estado KYC -->
-        <Border Grid.Row="0" Stroke="#007ACC" Padding="15" BackgroundColor="#1E1E1E">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="10"/>
-            </Border.StrokeShape>
-            <VerticalStackLayout Spacing="10">
-                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+        <!-- Encabezado -->
+        <VerticalStackLayout Grid.Row="0" Spacing="14">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="14">
+                <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                    <Label x:Name="lblBienvenida"
+                           Text="Bienvenido"
+                           FontAttributes="Bold"
+                           FontSize="24"
+                           TextColor="#F2F2F7"
+                           MaxLines="1"
+                           LineBreakMode="TailTruncation"/>
+                    <Label x:Name="lblEspecialidad"
+                           Text="Especialidad:"
+                           TextColor="#8E8E93"
+                           FontSize="13"/>
+                    <!-- Estado de disponibilidad: al tocarlo abre Configuración -->
+                    <Label x:Name="lblDisponibilidad"
+                           Text=""
+                           FontAttributes="Bold"
+                           FontSize="13"
+                           TextColor="#34C759">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnDisponibilidadTapped"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
 
-                    <!-- Datos de Bienvenida -->
-                    <VerticalStackLayout Grid.Column="0" Spacing="5" VerticalOptions="Center">
-                        <Label x:Name="lblBienvenida" Text="Bienvenido" FontAttributes="Bold" FontSize="18" TextColor="White"/>
-                        <Label x:Name="lblEspecialidad" Text="Especialidad:" TextColor="Gray" FontSize="14"/>
-                    </VerticalStackLayout>
-
-                    <!-- Avatar Circular del Técnico (abre DisplayActionSheet al dar clic) -->
-                    <ImageButton Grid.Column="1"
-                                 x:Name="btnPerfilTecnico" 
-                                 Aspect="AspectFill" 
-                                 WidthRequest="55" 
-                                 HeightRequest="55"
-                                 CornerRadius="28"
+                <Border Grid.Column="1"
+                        StrokeThickness="0"
+                        BackgroundColor="#2C2C2E"
+                        WidthRequest="56"
+                        HeightRequest="56"
+                        Padding="0"
+                        VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="28"/>
+                    </Border.StrokeShape>
+                    <ImageButton x:Name="btnPerfilTecnico"
+                                 Aspect="AspectFill"
+                                 WidthRequest="56"
+                                 HeightRequest="56"
                                  Source="dotnet_bot.png"
-                                 VerticalOptions="Center"
                                  Clicked="OnPerfilTecnicoClicked" />
+                </Border>
+            </Grid>
 
-                </Grid>
+            <Button x:Name="btnVerificacionKyc"
+                    Text="Verifica tu identidad para obtener el sello"
+                    Clicked="OnAbrirVerificacionKycClicked"
+                    BackgroundColor="#1C1C1E"
+                    TextColor="#E0A030"
+                    FontSize="13"
+                    FontAttributes="Bold"
+                    HeightRequest="42"
+                    CornerRadius="8"/>
+        </VerticalStackLayout>
 
-                <!-- Botón de Verificación de Identidad (KYC) -->
-                <Button x:Name="btnVerificacionKyc"
-                        Text="🪪 Verificar mi Identidad (Obtener Sello ✔️)"
-                        Clicked="OnAbrirVerificacionKycClicked"
-                        BackgroundColor="#2D333B"
-                        TextColor="#FFC107"
-                        FontSize="13"
-                        FontAttributes="Bold"
-                        HeightRequest="38"
-                        CornerRadius="8"/>
-            </VerticalStackLayout>
-        </Border>
+        <Label Grid.Row="1"
+               Text="Solicitudes de trabajo"
+               FontAttributes="Bold"
+               FontSize="17"
+               TextColor="#F2F2F7"
+               Margin="0,6,0,0"/>
 
-        <Label Grid.Row="1" Text="Solicitudes de Trabajo Recibidas" FontAttributes="Bold" FontSize="16" TextColor="White" Margin="0,5,0,0"/>
-
-        <!-- CollectionView de Solicitudes -->
+        <!-- Solicitudes -->
         <CollectionView Grid.Row="2" x:Name="listCitasTecnico" SelectionMode="None">
             <CollectionView.EmptyView>
-                <Label Text="No tienes solicitudes pendientes por el momento." HorizontalOptions="Center" Margin="0,20" TextColor="Gray"/>
+                <Label Text="No tienes solicitudes por el momento."
+                       HorizontalOptions="Center"
+                       Margin="0,24"
+                       TextColor="#8E8E93"/>
             </CollectionView.EmptyView>
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#007ACC" Margin="0,5" Padding="12" BackgroundColor="#252526">
+                    <Border BackgroundColor="#1C1C1E" StrokeThickness="0" Margin="0,6" Padding="16">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="8"/>
+                            <RoundRectangle CornerRadius="12"/>
                         </Border.StrokeShape>
-                        <VerticalStackLayout Spacing="10">
-                            <!-- Encabezado de la Tarjeta con Estado y Cobro -->
+
+                        <VerticalStackLayout Spacing="8">
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}" FontAttributes="Bold" TextColor="#28A745"/>
-                                <Label Grid.Column="1" Text="{Binding TarifaTraslado, StringFormat='Cobro Traslado: ${0:F2}'}" FontAttributes="Bold" TextColor="#007ACC"/>
+                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
+                                       FontAttributes="Bold"
+                                       FontSize="13"
+                                       TextColor="#34C759"/>
+                                <Label Grid.Column="1"
+                                       Text="{Binding TarifaTraslado, StringFormat='Traslado ${0:F2}'}"
+                                       FontSize="13"
+                                       TextColor="#B0B0B5"/>
                             </Grid>
 
-                            <!-- Información General de la Cita -->
-                            <Label Text="{Binding DescripcionFalla, StringFormat='Falla reportada: {0}'}" TextColor="White" FontAttributes="Bold"/>
+                            <Label Text="{Binding DescripcionFalla}"
+                                   TextColor="#F2F2F7"
+                                   FontAttributes="Bold"
+                                   FontSize="16"/>
 
-                            <!-- Dirección del Domicilio ingresada por el Cliente -->
-                            <Label Text="{Binding DireccionCliente, StringFormat='📍 Dirección: {0}'}" TextColor="#FFC107" FontSize="13" FontAttributes="Bold"/>
+                            <Label Text="{Binding DireccionCliente}"
+                                   TextColor="#B0B0B5"
+                                   FontSize="14"/>
 
-                            <!-- Fecha y Hora Programada por el Cliente -->
-                            <Label Text="{Binding FechaHoraProgramada, StringFormat='📅 Cita Programada: {0:dd/MM/yyyy HH:mm hrs}'}" TextColor="#A5A6F6" FontAttributes="Bold" FontSize="13"/>
+                            <Label Text="{Binding FechaHoraProgramada, StringFormat='Cita: {0:dd/MM/yyyy HH:mm} h'}"
+                                   TextColor="#F2F2F7"
+                                   FontSize="13"/>
 
-                            <Label Text="{Binding DistanciaKm, StringFormat='Distancia estimada al cliente: {0:F1} km'}" TextColor="Gray" FontSize="12"/>
-                            <Label Text="{Binding FechaCreacion, StringFormat='Solicitado el: {0:dd/MM/yyyy HH:mm}'}" TextColor="Gray" FontSize="11"/>
+                            <Label Text="{Binding DistanciaKm, StringFormat='A {0:F1} km del cliente'}"
+                                   TextColor="#8E8E93"
+                                   FontSize="12"/>
+                            <Label Text="{Binding FechaCreacion, StringFormat='Solicitada el {0:dd/MM/yyyy HH:mm}'}"
+                                   TextColor="#8E8E93"
+                                   FontSize="12"/>
 
-                            <!-- Evidencia en Foto desde la Nube -->
-                            <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}" 
-                                   HeightRequest="220" 
+                            <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}"
+                                   HeightRequest="220"
                                    MaximumWidthRequest="350"
                                    Aspect="AspectFit"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"
-                                   Margin="0,10"/>
+                                   Margin="0,8"/>
 
-                            <!-- Video de Evidencia -->
-                            <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}" 
-                                                  HeightRequest="180" 
-                                                  ShouldAutoPlay="False" 
-                                                  ShouldShowPlaybackControls="True" 
+                            <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}"
+                                                  HeightRequest="180"
+                                                  ShouldAutoPlay="False"
+                                                  ShouldShowPlaybackControls="True"
                                                   Volume="1.0" />
 
-                            <!-- Botones Independientes: Aceptar Cita y Finalizar Trabajo -->
-                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
-                                <Button Grid.Column="0" Text="✅ Aceptar Cita" 
-                                  Clicked="OnAceptarCitaClicked" 
-                                  CommandParameter="{Binding .}" 
-                                  BackgroundColor="#28A745" TextColor="White"/>
+                            <!-- Acciones principales -->
+                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,6,0,0">
+                                <Button Grid.Column="0"
+                                        Text="Aceptar cita"
+                                        Clicked="OnAceptarCitaClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="#007ACC"
+                                        TextColor="White"
+                                        FontAttributes="Bold"
+                                        CornerRadius="8"
+                                        HeightRequest="44"/>
 
-                                <Button Grid.Column="1" Text="🏁 Finalizar Trabajo" 
-                                  Clicked="OnFinalizarTrabajoClicked" 
-                                  CommandParameter="{Binding .}" 
-                                  BackgroundColor="#17A2B8" TextColor="White" FontAttributes="Bold"/>
+                                <Button Grid.Column="1"
+                                        Text="Finalizar trabajo"
+                                        Clicked="OnFinalizarTrabajoClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Transparent"
+                                        BorderColor="#3A3A3C"
+                                        BorderWidth="1"
+                                        TextColor="#F2F2F7"
+                                        FontAttributes="Bold"
+                                        CornerRadius="8"
+                                        HeightRequest="44"/>
                             </Grid>
 
-                            <!-- Abrir Chat Directo / Retroalimentación con el Cliente -->
-                            <Button Text="💬 Chat / Retroalimentación Directa" 
-                                    Clicked="OnAbrirChatClicked" 
-                                    CommandParameter="{Binding .}" 
-                                    BackgroundColor="#6C757D" TextColor="White"/>
+                            <!-- Acciones secundarias -->
+                            <Grid ColumnDefinitions="*, *, *">
+                                <Button Grid.Column="0"
+                                        Text="Chat con el cliente"
+                                        Clicked="OnAbrirChatClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#4DA3E0"
+                                        FontSize="13"
+                                        Padding="0"
+                                        HeightRequest="36"/>
 
-                            <!-- Botones Independientes: Ver Ruta en Maps y Eliminar Cita -->
-                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
-                                <Button Grid.Column="0" Text="🌐 Ver Ruta Maps" 
-                                        Clicked="OnAbrirGoogleMapsWebClicked" 
-                                        CommandParameter="{Binding .}" 
-                                        BackgroundColor="#007ACC" TextColor="White"/>
+                                <Button Grid.Column="1"
+                                        Text="Ver ruta"
+                                        Clicked="OnAbrirGoogleMapsWebClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#4DA3E0"
+                                        FontSize="13"
+                                        Padding="0"
+                                        HeightRequest="36"/>
 
-                                <Button Grid.Column="1" Text="🗑️ Eliminar Cita" 
-                                        Clicked="OnEliminarCitaClicked" 
-                                        CommandParameter="{Binding .}" 
-                                        BackgroundColor="#DC3545" TextColor="White" FontAttributes="Bold"/>
+                                <Button Grid.Column="2"
+                                        Text="Eliminar"
+                                        Clicked="OnEliminarCitaClicked"
+                                        CommandParameter="{Binding .}"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#E5534B"
+                                        FontSize="13"
+                                        Padding="0"
+                                        HeightRequest="36"/>
                             </Grid>
-
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

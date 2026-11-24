@@ -264,34 +264,8 @@ namespace PHANTEL.Views
 
         private async void OnPerfilClienteClicked(object sender, EventArgs e)
         {
-            var u = LoginPage.UsuarioActual;
-            if (u == null) return;
-
-            string opcion = await DisplayActionSheetAsync(
-                $"Cuenta: {u.Nombre}",
-                "Cancelar",
-                null,
-                "📷 Editar Foto de Perfil",
-                "📋 Historial de Citas",
-                "🚪 Cerrar Sesión");
-
-            switch (opcion)
-            {
-                case "📷 Editar Foto de Perfil":
-                    await CambiarFotoPerfilAsync();
-                    break;
-
-                case "📋 Historial de Citas":
-                    await Navigation.PushAsync(new MisSolicitudesPage());
-                    break;
-
-                case "🚪 Cerrar Sesión":
-                    NotificacionRealtimeService.DetenerEscucha();
-                    Preferences.Default.Remove("SesionEmail");
-                    LoginPage.UsuarioActual = null;
-                    Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
-                    break;
-            }
+            if (LoginPage.UsuarioActual == null) return;
+            await Navigation.PushAsync(new ConfiguracionPage());
         }
 
         private async Task CambiarFotoPerfilAsync()

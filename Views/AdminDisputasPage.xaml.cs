@@ -17,7 +17,7 @@ namespace PHANTEL.Views
             base.OnAppearing();
 
             if (LoginPage.UsuarioActual != null)
-                lblAdminBienvenida.Text = $"⚖️ Admin: {LoginPage.UsuarioActual.Nombre}";
+                lblAdminBienvenida.Text = $"Administrador: {LoginPage.UsuarioActual.Nombre}";
 
             await CargarDisputasYVerificacionesAsync();
         }
@@ -31,14 +31,19 @@ namespace PHANTEL.Views
             if (btnValidarTecnicosKyc != null)
             {
                 btnValidarTecnicosKyc.Text = pendientesKyc.Count > 0
-                    ? $"🪪 Validar Identidad de Técnicos ({pendientesKyc.Count} pendiente{(pendientesKyc.Count == 1 ? "" : "s")})"
-                    : "🪪 Validar Identidad de Técnicos (Sin pendientes)";
+                    ? $"Verificaciones de identidad ({pendientesKyc.Count} pendiente{(pendientesKyc.Count == 1 ? "" : "s")})"
+                    : "Verificaciones de identidad (sin pendientes)";
             }
         }
 
         private async void OnAbrirValidacionesKycClicked(object sender, EventArgs e)
         {
             await Navigation.PushAsync(new AdminVerificacionesPage());
+        }
+
+        private async void OnAbrirConfiguracionAdminClicked(object sender, EventArgs e)
+        {
+            await Navigation.PushAsync(new ConfiguracionPage());
         }
 
         private async void OnAuditarDisputaClicked(object sender, EventArgs e)

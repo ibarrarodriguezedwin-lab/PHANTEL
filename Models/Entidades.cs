@@ -23,6 +23,10 @@ namespace PHANTEL.Models
         public double CalificacionPromedio { get; set; } = 5.0;
         public string FotoPerfil { get; set; } = string.Empty;
 
+        // --- PREFERENCIAS Y DISPONIBILIDAD ---
+        public bool Disponible { get; set; } = true;   // Técnico: false = pausado, no aparece a los clientes
+        public string Idioma { get; set; } = "es";     // "es" o "en"
+
         // --- CONTROL FINANCIERO, COMISIONES Y REPUTACIÓN ---
         public string ClabeInterbancaria { get; set; } = string.Empty;
         public decimal SaldoEnCustodia { get; set; } = 0m;

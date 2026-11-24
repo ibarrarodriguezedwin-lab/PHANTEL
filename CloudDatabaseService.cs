@@ -218,7 +218,7 @@ namespace PHANTEL.Services
             {
                 var usuarios = await ObtenerTodosUsuariosConCacheAsync();
                 return usuarios
-                    .Where(u => u.TipoPerfil == "Técnico" && !u.CuentaSuspendida)
+                    .Where(u => u.TipoPerfil == "Técnico" && !u.CuentaSuspendida && u.Disponible)
                     .OrderByDescending(u => u.EstadoVerificacion == "Verificado")
                     .ThenByDescending(u => u.CalificacionPromedio)
                     .ToList();

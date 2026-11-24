@@ -98,6 +98,9 @@
 	  <MauiXaml Update="Views\ChatPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\ConfiguracionPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\CuentaSuspendidaPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

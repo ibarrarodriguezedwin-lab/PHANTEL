@@ -38,14 +38,13 @@ namespace PHANTEL.Views
                     }
                 }
 
-                lblBienvenida.Text = tecnicoActual.EstaVerificado
-                    ? $"👨‍🔧 {tecnicoActual.Nombre} ✔️"
-                    : $"👨‍🔧 {tecnicoActual.Nombre}";
+                lblBienvenida.Text = tecnicoActual.Nombre;
 
                 string cpTexto = string.IsNullOrWhiteSpace(tecnicoActual.CodigoPostal) ? "Sin CP" : $"CP {tecnicoActual.CodigoPostal}";
-                lblEspecialidad.Text = $"Especialidad: {tecnicoActual.Especialidad} | ⭐ {tecnicoActual.CalificacionPromedio:F1} | 📍 {cpTexto}";
+                lblEspecialidad.Text = $"{tecnicoActual.Especialidad}, calificación {tecnicoActual.CalificacionPromedio:F1}, {cpTexto}";
 
                 ActualizarBotonVerificacionKyc();
+                ActualizarEstadoDisponibilidad();
 
                 if (!string.IsNullOrEmpty(tecnicoActual.FotoPerfil))
                 {
@@ -82,24 +81,20 @@ namespace PHANTEL.Views
             switch (u.EstadoVerificacion)
             {
                 case "Verificado":
-                    btnVerificacionKyc.Text = "✔️ Técnico Verificado PHANTEL";
-                    btnVerificacionKyc.TextColor = Color.FromArgb("#28A745");
-                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#16281E");
+                    btnVerificacionKyc.Text = "Identidad verificada";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#34C759");
                     break;
                 case "En Revisión":
-                    btnVerificacionKyc.Text = "⏳ Verificación de Identidad en Revisión";
-                    btnVerificacionKyc.TextColor = Color.FromArgb("#00D2FF");
-                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#162430");
+                    btnVerificacionKyc.Text = "Verificación en revisión";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#4DA3E0");
                     break;
                 case "Rechazado":
-                    btnVerificacionKyc.Text = "❌ Verificación Rechazada - Subir INE de nuevo";
-                    btnVerificacionKyc.TextColor = Color.FromArgb("#FF6B6B");
-                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#2E181A");
+                    btnVerificacionKyc.Text = "Verificación rechazada, sube tu INE de nuevo";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#E5534B");
                     break;
                 default:
-                    btnVerificacionKyc.Text = "🪪 Verificar mi Identidad (Obtener Sello ✔️)";
-                    btnVerificacionKyc.TextColor = Color.FromArgb("#FFC107");
-                    btnVerificacionKyc.BackgroundColor = Color.FromArgb("#2D333B");
+                    btnVerificacionKyc.Text = "Verifica tu identidad para obtener el sello";
+                    btnVerificacionKyc.TextColor = Color.FromArgb("#E0A030");
                     break;
             }
         }
@@ -113,56 +108,8 @@ namespace PHANTEL.Views
 
         private async void OnPerfilTecnicoClicked(object sender, EventArgs e)
         {
-            var u = LoginPage.UsuarioActual;
-            if (u == null) return;
-
-            string opcion = await DisplayActionSheetAsync(
-                $"Técnico: {u.Nombre}",
-                "Cancelar",
-                null,
-                "📍 Actualizar Código Postal",
-                "🪪 Verificación de Identidad (INE)",
-                "📷 Editar Foto de Perfil",
-                "📋 Historial de Citas",
-                "🚪 Cerrar Sesión");
-
-            switch (opcion)
-            {
-                case "📍 Actualizar Código Postal":
-                    await ActualizarCodigoPostalTecnicoAsync();
-                    break;
-
-                case "🪪 Verificación de Identidad (INE)":
-                    await Navigation.PushAsync(new VerificacionTecnicoPage());
-                    break;
-
-                case "📷 Editar Foto de Perfil":
-                    await CambiarFotoPerfilTecnicoAsync();
-                    break;
-
-                case "📋 Historial de Citas":
-                    var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(u.Id, esTecnico: true);
-                    var historial = citas.Where(c => c.Estado == "Finalizada" || c.Estado == "Rechazada").ToList();
-
-                    if (historial.Count == 0)
-                    {
-                        await DisplayAlertAsync("Historial de Citas", "Aún no tienes citas finalizadas o rechazadas en tu historial.", "OK");
-                    }
-                    else
-                    {
-                        string resumen = string.Join("\n\n", historial.Select(c =>
-                            $"• Cita #{c.Id} [{c.Estado}]\n  Falla: {c.DescripcionFalla}\n  Traslado: ${c.TarifaTraslado:F2}"));
-                        await DisplayAlertAsync("Historial de Citas", resumen, "Cerrar");
-                    }
-                    break;
-               
-                case "🚪 Cerrar Sesión":
-                    NotificacionRealtimeService.DetenerEscucha();
-                    Preferences.Default.Remove("SesionEmail");
-                    LoginPage.UsuarioActual = null;
-                    Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());
-                    break;
-            }
+            if (LoginPage.UsuarioActual == null) return;
+            await Navigation.PushAsync(new ConfiguracionPage());
         }
 
         private async Task ActualizarCodigoPostalTecnicoAsync()
@@ -249,6 +196,26 @@ namespace PHANTEL.Views
             {
                 await DisplayAlertAsync("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
             }
+        }
+
+        // --- ESTADO DE DISPONIBILIDAD (se cambia en Configuración) ---
+
+        private void ActualizarEstadoDisponibilidad()
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u == null || lblDisponibilidad == null) return;
+
+            lblDisponibilidad.Text = u.Disponible
+                ? "Disponible para recibir trabajos"
+                : "En pausa, los clientes no te ven";
+            lblDisponibilidad.TextColor = u.Disponible
+                ? Color.FromArgb("#34C759")
+                : Color.FromArgb("#E0A030");
+        }
+
+        private async void OnDisponibilidadTapped(object? sender, TappedEventArgs e)
+        {
+            await Navigation.PushAsync(new ConfiguracionPage());
         }
 
         // --- ACCIONES INDEPENDIENTES SOBRE CITA ---

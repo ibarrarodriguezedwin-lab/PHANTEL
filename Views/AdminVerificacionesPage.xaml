@@ -3,20 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PHANTEL.Views.AdminVerificacionesPage"
              BackgroundColor="#121212"
-             Title="Validación de Técnicos (KYC)">
+             Title="Verificación de técnicos">
 
-    <Grid RowDefinitions="Auto, *" Padding="15" RowSpacing="12">
-        <Label Grid.Row="0"
-               Text="🪪 Solicitudes de Verificación Pendientes"
-               FontSize="18"
-               FontAttributes="Bold"
-               TextColor="#00D2FF"/>
+    <Grid RowDefinitions="Auto, *" Padding="20,16,20,0" RowSpacing="12">
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label Text="Solicitudes pendientes"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="#F2F2F7"/>
+            <Label Text="Revisa el INE de cada técnico y aprueba o rechaza."
+                   FontSize="13"
+                   TextColor="#8E8E93"/>
+        </VerticalStackLayout>
 
         <CollectionView Grid.Row="1" x:Name="listPendientes">
             <CollectionView.EmptyView>
                 <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Padding="30">
-                    <Label Text="✅ No hay técnicos pendientes de verificación."
-                           TextColor="#B0C4DE"
+                    <Label Text="No hay técnicos pendientes de verificación."
+                           TextColor="#8E8E93"
                            FontSize="15"
                            HorizontalOptions="Center"/>
                 </VerticalStackLayout>
@@ -24,19 +28,25 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#007ACC" Margin="0,6" Padding="14" BackgroundColor="#1C1C1E" StrokeShape="RoundRectangle 12">
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding Nombre}" FontSize="16" FontAttributes="Bold" TextColor="White"/>
-                            <Label Text="{Binding Email}" FontSize="13" TextColor="#B0C4DE"/>
-                            <Label Text="{Binding Especialidad, StringFormat='Especialidad: {0}'}" FontSize="13" TextColor="#00D2FF"/>
+                    <Border BackgroundColor="#1C1C1E" StrokeThickness="0" Margin="0,6" Padding="16">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
 
-                            <Button Text="🔍 Revisar INE y Dictaminar"
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="{Binding Nombre}" FontSize="16" FontAttributes="Bold" TextColor="#F2F2F7"/>
+                            <Label Text="{Binding Email}" FontSize="13" TextColor="#8E8E93"/>
+                            <Label Text="{Binding Especialidad}" FontSize="14" TextColor="#B0B0B5"/>
+
+                            <Button Text="Revisar INE y decidir"
                                     Clicked="OnRevisarDocumentosClicked"
                                     CommandParameter="{Binding .}"
                                     BackgroundColor="#007ACC"
                                     TextColor="White"
                                     FontAttributes="Bold"
-                                    CornerRadius="8"/>
+                                    CornerRadius="8"
+                                    HeightRequest="44"
+                                    Margin="0,8,0,0"/>
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
