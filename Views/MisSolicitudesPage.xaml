@@ -3,33 +3,33 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:PHANTEL.Controls"
              x:Class="PHANTEL.Views.MisSolicitudesPage"
-             BackgroundColor="#121316"
+             BackgroundColor="#121212"
              Title="Gestión de Citas">
 
     <Grid>
-        <Grid RowDefinitions="Auto, *" Padding="16,12,16,0" RowSpacing="12">
+        <Grid RowDefinitions="Auto, *" Padding="20,16,20,0" RowSpacing="14">
 
-            <!-- Encabezado Liquid Glass -->
+            <!-- Encabezado Minimalista -->
             <Border Grid.Row="0"
-                    Stroke="#2EFFFFFF"
+                    Stroke="#2C2C2E"
                     StrokeThickness="1"
-                    Padding="14,12"
-                    BackgroundColor="#14FFFFFF">
+                    Padding="16,14"
+                    BackgroundColor="#1C1C1E">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="20"/>
+                    <RoundRectangle CornerRadius="16"/>
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="2">
                     <Label Text="Mis Citas y Servicios"
                            FontAttributes="Bold"
-                           FontSize="18"
-                           TextColor="White"/>
+                           FontSize="20"
+                           TextColor="#F2F2F7"/>
                     <Label Text="Consulta el estado, chat en vivo y pagos protegidos"
                            FontSize="12"
-                           TextColor="#A1A7B3"/>
+                           TextColor="#8E8E93"/>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Lista de Citas con estética Liquid Glass -->
+            <!-- Lista de Citas -->
             <CollectionView Grid.Row="1" x:Name="listSolicitudes">
                 <CollectionView.Footer>
                     <!-- Margen inferior para que la barra flotante no tape la última tarjeta -->
@@ -41,99 +41,194 @@
                            HorizontalOptions="Center"
                            VerticalOptions="Center"
                            Margin="0,40"
-                           TextColor="#9CA3AF"/>
+                           TextColor="#8E8E93"/>
                 </CollectionView.EmptyView>
 
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Border Stroke="#2AFFFFFF"
+                        <Border Stroke="#2C2C2E"
                                 StrokeThickness="1"
                                 Margin="0,6"
-                                Padding="14"
-                                BackgroundColor="#14FFFFFF">
+                                Padding="16"
+                                BackgroundColor="#1C1C1E">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="18"/>
+                                <RoundRectangle CornerRadius="16"/>
                             </Border.StrokeShape>
 
-                            <VerticalStackLayout Spacing="6">
-                                <Grid ColumnDefinitions="*, Auto">
-                                    <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
-                                           FontAttributes="Bold"
-                                           FontSize="14"
-                                           TextColor="#00D2FF"/>
+                            <VerticalStackLayout Spacing="10">
+                                <!-- Fila Superior: Estado y Precio Elegante en Blanco -->
+                                <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                    <Border Grid.Column="0"
+                                            HorizontalOptions="Start"
+                                            StrokeThickness="0"
+                                            BackgroundColor="#252528"
+                                            Padding="10,4">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="8"/>
+                                        </Border.StrokeShape>
+                                        <Label Text="{Binding Estado}"
+                                               FontAttributes="Bold"
+                                               FontSize="12"
+                                               TextColor="#4DA3E0"/>
+                                    </Border>
+
                                     <Label Grid.Column="1"
                                            Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}"
                                            FontAttributes="Bold"
-                                           FontSize="15"
-                                           TextColor="#28A745"/>
+                                           FontSize="17"
+                                           TextColor="#F2F2F7"
+                                           VerticalOptions="Center"/>
                                 </Grid>
 
-                                <Label Text="{Binding DescripcionFalla}"
-                                       FontAttributes="Italic"
-                                       TextColor="White"
-                                       FontSize="14"/>
-                                <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}"
-                                       FontSize="12"
-                                       TextColor="#9CA3AF"/>
+                                <!-- Descripción y Fecha -->
+                                <VerticalStackLayout Spacing="3">
+                                    <Label Text="{Binding DescripcionFalla}"
+                                           TextColor="#F2F2F7"
+                                           FontSize="15"/>
+                                    <Label Text="{Binding FechaCreacion, StringFormat='{0:dd/MM/yyyy · HH:mm} hrs'}"
+                                           FontSize="12"
+                                           TextColor="#8E8E93"/>
+                                </VerticalStackLayout>
 
-                                <!-- Estado del Pago Protegido / Dictamen -->
-                                <Label Text="{Binding EstadoPago, StringFormat='🛡️ Pago: {0}'}"
-                                       FontSize="12"
-                                       FontAttributes="Bold"
-                                       TextColor="#00D2FF"/>
+                                <!-- Estado del Pago Protegido con ícono vectorial -->
+                                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                    <Path Data="M 12,1 L 3,5 L 3,11 C 3,16.55 6.84,21.74 12,23 C 17.16,21.74 21,16.55 21,11 L 21,5 L 12,1 Z"
+                                          Fill="#4DA3E0"
+                                          Aspect="Uniform"
+                                          WidthRequest="13"
+                                          HeightRequest="13"
+                                          VerticalOptions="Center"/>
+                                    <Label Text="{Binding EstadoPago, StringFormat='Pago: {0}'}"
+                                           FontSize="12"
+                                           FontAttributes="Bold"
+                                           TextColor="#B0B0B5"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
 
-                                <Label Text="{Binding DictamenAdmin, StringFormat='⚖️ Dictamen Admin: {0}'}"
-                                       IsVisible="{Binding ResueltaPorAdmin}"
-                                       FontSize="12"
-                                       TextColor="#FFC107"/>
+                                <!-- Dictamen Admin (si existe) -->
+                                <Border IsVisible="{Binding ResueltaPorAdmin}"
+                                        Stroke="#3A321C"
+                                        StrokeThickness="1"
+                                        BackgroundColor="#221E14"
+                                        Padding="10,8">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding DictamenAdmin, StringFormat='Dictamen Admin: {0}'}"
+                                           FontSize="12"
+                                           TextColor="#E0A030"/>
+                                </Border>
 
-                                <!-- Botones Separados: Calificar y Eliminar Cita -->
-                                <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,8,0,0">
-                                    <Button Grid.Column="0"
-                                            Text="✅ Calificar"
-                                            Clicked="OnFinalizarTrabajoClienteClicked"
-                                            CommandParameter="{Binding .}"
-                                            IsEnabled="{Binding MostrarBotonCalificar}"
-                                            BackgroundColor="#28A745"
-                                            TextColor="White"
-                                            CornerRadius="14"
-                                            HeightRequest="40"
-                                            FontAttributes="Bold"/>
+                                <!-- Botones Secundarios: Calificar y Eliminar -->
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,4,0,0">
+                                    <!-- Botón Calificar -->
+                                    <Border Grid.Column="0"
+                                            Stroke="#38383C"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#252528"
+                                            HeightRequest="42"
+                                            IsEnabled="{Binding MostrarBotonCalificar}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnFinalizarTrabajoClienteTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                            <Path Data="M 12,17.27 L 18.18,21 L 16.54,13.97 L 22,9.24 L 14.81,8.63 L 12,2 L 9.19,8.63 L 2,9.24 L 7.46,13.97 L 5.82,21 Z"
+                                                  Fill="#E0A030"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="15"
+                                                  HeightRequest="15"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Calificar"
+                                                   TextColor="#F2F2F7"
+                                                   FontSize="13"
+                                                   FontAttributes="Bold"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
 
-                                    <Button Grid.Column="1"
-                                            Text="🗑️ Eliminar"
-                                            Clicked="OnEliminarCitaClicked"
-                                            CommandParameter="{Binding .}"
-                                            BackgroundColor="#DC3545"
-                                            TextColor="White"
-                                            CornerRadius="14"
-                                            HeightRequest="40"
-                                            FontAttributes="Bold"/>
+                                    <!-- Botón Eliminar -->
+                                    <Border Grid.Column="1"
+                                            Stroke="#3D2226"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#22181A"
+                                            HeightRequest="42">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnEliminarCitaTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                            <Path Data="M 6,19 C 6,20.1 6.9,21 8,21 L 16,21 C 17.1,21 18,20.1 18,19 L 18,7 L 6,7 L 6,19 Z M 19,4 L 15.5,4 L 14.5,3 L 9.5,3 L 8.5,4 L 5,4 L 5,6 L 19,6 L 19,4 Z"
+                                                  Fill="#FF6B6B"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="15"
+                                                  HeightRequest="15"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Eliminar"
+                                                   TextColor="#FF6B6B"
+                                                   FontSize="13"
+                                                   FontAttributes="Bold"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
                                 </Grid>
 
-                                <!-- Abrir Chat Directo con el Técnico -->
-                                <Button Text="💬 Abrir Chat con el Técnico"
-                                        Clicked="OnAbrirChatClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="#17A2B8"
-                                        TextColor="White"
-                                        CornerRadius="14"
+                                <!-- Botón Principal: Abrir Chat con el Técnico -->
+                                <Border StrokeThickness="0"
+                                        BackgroundColor="#0088FF"
+                                        HeightRequest="44">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAbrirChatTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                        <Path Data="M 20,2 L 4,2 C 2.9,2 2,2.9 2,4 L 2,22 L 6,18 L 20,18 C 21.1,18 22,17.1 22,16 L 22,4 C 22,2.9 21.1,2 20,2 Z"
+                                              Fill="White"
+                                              Aspect="Uniform"
+                                              WidthRequest="16"
+                                              HeightRequest="16"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="Abrir Chat con el Técnico"
+                                               TextColor="White"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+
+                                <!-- Botón Reportar Problema / Reembolso -->
+                                <Border Stroke="#4A351C"
+                                        StrokeThickness="1"
+                                        BackgroundColor="#241C14"
                                         HeightRequest="42"
-                                        FontAttributes="Bold"
-                                        Margin="0,4,0,0"/>
-
-                                <!-- Botón de Denuncia / Reembolso -->
-                                <Button Text="🚨 Reportar Problema / Reembolso"
-                                        Clicked="OnReportarProblemaClicked"
-                                        CommandParameter="{Binding .}"
                                         IsVisible="{Binding MostrarBotonReportar}"
-                                        IsEnabled="{Binding MostrarBotonReportar}"
-                                        BackgroundColor="#E67E22"
-                                        TextColor="White"
-                                        CornerRadius="14"
-                                        HeightRequest="42"
-                                        FontAttributes="Bold"
-                                        Margin="0,4,0,0"/>
+                                        IsEnabled="{Binding MostrarBotonReportar}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnReportarProblemaTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                        <Path Data="M 1,21 L 23,21 L 12,2 L 1,21 Z M 13,18 L 11,18 L 11,16 L 13,16 L 13,18 Z M 13,14 L 11,14 L 11,10 L 13,10 L 13,14 Z"
+                                              Fill="#F59E0B"
+                                              Aspect="Uniform"
+                                              WidthRequest="15"
+                                              HeightRequest="15"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="Reportar Problema / Reembolso"
+                                               TextColor="#F59E0B"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
 
                             </VerticalStackLayout>
                         </Border>

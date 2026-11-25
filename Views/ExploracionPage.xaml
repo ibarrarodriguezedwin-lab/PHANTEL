@@ -16,6 +16,30 @@
     </ContentPage.Resources>
 
     <Grid>
+        <!-- MARCA DE AGUA MONOGRAMA PP DIRECTO EN XAML -->
+        <Grid InputTransparent="True" IsClippedToBounds="True">
+            <Grid WidthRequest="240"
+                  HeightRequest="260"
+                  Opacity="0.06"
+                  HorizontalOptions="End"
+                  VerticalOptions="End"
+                  Margin="0,0,-25,55">
+                <Label Text="P"
+                       FontFamily="Georgia"
+                       FontSize="230"
+                       TextColor="White"
+                       HorizontalOptions="Start"
+                       VerticalOptions="End"/>
+                <Label Text="P"
+                       FontFamily="Georgia"
+                       FontSize="230"
+                       TextColor="#4DA3E0"
+                       Margin="42,0,0,28"
+                       HorizontalOptions="Start"
+                       VerticalOptions="End"/>
+            </Grid>
+        </Grid>
+
         <!-- Fila 0: saludo | 1: oficios | 2: búsqueda | 3: filtros | 4: técnicos -->
         <Grid RowDefinitions="Auto, Auto, Auto, Auto, *" Padding="20,16,20,0" RowSpacing="12">
 

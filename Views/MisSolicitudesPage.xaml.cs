@@ -32,31 +32,42 @@ namespace PHANTEL.Views
         }
 
         // 1. FINALIZAR TRABAJO, CALIFICAR AL TÉCNICO Y LIBERAR PAGO EN AUTOMÁTICO
-        private async void OnFinalizarTrabajoClienteClicked(object sender, EventArgs e)
+        private void OnFinalizarTrabajoClienteTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarFinalizarTrabajoCliente(cita);
+        }
+
+        private void OnFinalizarTrabajoClienteClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarFinalizarTrabajoCliente(cita);
+        }
+
+        private async void ProcesarFinalizarTrabajoCliente(SolicitudCita cita)
+        {
+            if (!cita.MostrarBotonCalificar)
+                return;
+
+            if (cita.ResueltaPorAdmin || cita.EnDisputa)
             {
-                if (cita.ResueltaPorAdmin || cita.EnDisputa)
-                {
-                    await DisplayAlertAsync("Caso cerrado / en revisión", "Esta cita ya fue gestionada por Administración PHANTEL y no admite calificación manual.", "OK");
-                    return;
-                }
-
-                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
-                {
-                    await DisplayAlertAsync("Atención", "El técnico debe aceptar la solicitud antes de poder finalizar el trabajo.", "OK");
-                    return;
-                }
-
-                if (cita.CalificadaPorCliente)
-                {
-                    await DisplayAlertAsync("Aviso", "Este servicio ya fue finalizado y calificado.", "OK");
-                    return;
-                }
-
-                await AbrirModalCalificarTecnicoAsync(cita);
+                await DisplayAlertAsync("Caso cerrado / en revisión", "Esta cita ya fue gestionada por Administración PHANTEL y no admite calificación manual.", "OK");
+                return;
             }
+
+            if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
+            {
+                await DisplayAlertAsync("Atención", "El técnico debe aceptar la solicitud antes de poder finalizar el trabajo.", "OK");
+                return;
+            }
+
+            if (cita.CalificadaPorCliente)
+            {
+                await DisplayAlertAsync("Aviso", "Este servicio ya fue finalizado y calificado.", "OK");
+                return;
+            }
+
+            await AbrirModalCalificarTecnicoAsync(cita);
         }
 
         private async Task AbrirModalCalificarTecnicoAsync(SolicitudCita cita)
@@ -123,42 +134,70 @@ namespace PHANTEL.Views
         }
 
         // 2. ELIMINAR CITA
-        private async void OnEliminarCitaClicked(object sender, EventArgs e)
+        private void OnEliminarCitaTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarEliminarCita(cita);
+        }
+
+        private void OnEliminarCitaClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarEliminarCita(cita);
+        }
+
+        private async void ProcesarEliminarCita(SolicitudCita cita)
+        {
+            bool confirmar = await DisplayAlertAsync("Eliminar Cita", "¿Deseas eliminar esta solicitud de tus citas?", "Sí, eliminar", "Cancelar");
+            if (confirmar)
             {
-                bool confirmar = await DisplayAlertAsync("⚠️ Eliminar Cita", "¿Deseas eliminar esta solicitud de tus citas?", "Sí, eliminar", "Cancelar");
-                if (confirmar)
-                {
-                    await _dbService.EliminarSolicitudAsync(cita.Id);
-                    await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada.", "OK");
-                    CargarSolicitudes();
-                }
+                await _dbService.EliminarSolicitudAsync(cita.Id);
+                await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada.", "OK");
+                CargarSolicitudes();
             }
         }
 
         // 3. CHAT DIRECTO CON EL TÉCNICO
-        private async void OnAbrirChatClicked(object sender, EventArgs e)
+        private void OnAbrirChatTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
-            {
-                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
-                {
-                    await DisplayAlertAsync("Atención", "El técnico debe aceptar la cita primero para iniciar la conversación por chat.", "OK");
-                    return;
-                }
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarAbrirChat(cita);
+        }
 
-                await Navigation.PushAsync(new ChatPage(cita));
+        private void OnAbrirChatClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarAbrirChat(cita);
+        }
+
+        private async void ProcesarAbrirChat(SolicitudCita cita)
+        {
+            if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
+            {
+                await DisplayAlertAsync("Atención", "El técnico debe aceptar la cita primero para iniciar la conversación por chat.", "OK");
+                return;
             }
+
+            await Navigation.PushAsync(new ChatPage(cita));
         }
 
         // 4. REPORTAR PROBLEMA / REEMBOLSO (WHATSAPP O LLAMADA A ADMINISTRACIÓN)
-        private async void OnReportarProblemaClicked(object sender, EventArgs e)
+        private void OnReportarProblemaTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is not SolicitudCita cita) return;
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarReportarProblema(cita);
+        }
+
+        private void OnReportarProblemaClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarReportarProblema(cita);
+        }
+
+        private async void ProcesarReportarProblema(SolicitudCita cita)
+        {
+            if (!cita.MostrarBotonReportar)
+                return;
 
             if (cita.ResueltaPorAdmin || cita.EnDisputa)
             {
@@ -173,8 +212,8 @@ namespace PHANTEL.Views
                 $"Soporte y Reembolsos - Cita #{cita.Id}",
                 "Cancelar",
                 null,
-                "💬 Mensaje Directo por WhatsApp",
-                "📞 Llamar a un Administrador");
+                "Mensaje Directo por WhatsApp",
+                "Llamar a un Administrador");
 
             if (string.IsNullOrEmpty(opcion) || opcion == "Cancelar")
                 return;
@@ -182,7 +221,7 @@ namespace PHANTEL.Views
             var cliente = LoginPage.UsuarioActual;
             string nombreCliente = cliente?.Nombre ?? "Cliente";
 
-            if (opcion == "💬 Mensaje Directo por WhatsApp")
+            if (opcion == "Mensaje Directo por WhatsApp")
             {
                 await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "WhatsApp");
                 CargarSolicitudes();
@@ -206,7 +245,7 @@ namespace PHANTEL.Views
                     await DisplayAlertAsync("Error", $"No se pudo abrir WhatsApp en este dispositivo: {ex.Message}", "OK");
                 }
             }
-            else if (opcion == "📞 Llamar a un Administrador")
+            else if (opcion == "Llamar a un Administrador")
             {
                 await _dbService.MarcarCitaEnDisputaAsync(cita.Id, "Llamada Telefónica");
                 CargarSolicitudes();

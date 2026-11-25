@@ -4,86 +4,300 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              x:Class="PHANTEL.Views.NuevaSolicitudPage"
-             BackgroundColor="#1E1E1E"
+             BackgroundColor="#121212"
              Title="Agendar Servicio">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
+        <VerticalStackLayout Padding="20,16,20,30" Spacing="16" MaximumWidthRequest="760" HorizontalOptions="Fill">
 
-            <Label x:Name="lblTecnicoInfo" Text="Atención con: " FontSize="18" FontAttributes="Bold" TextColor="White"/>
+            <!-- Encabezado del técnico -->
+            <Border StrokeThickness="0" BackgroundColor="#1C1C1E" Padding="16,14">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="SOLICITUD DE SERVICIO"
+                           FontSize="10"
+                           FontAttributes="Bold"
+                           CharacterSpacing="1"
+                           TextColor="#4DA3E0"/>
+                    <Label x:Name="lblTecnicoInfo"
+                           Text="Atención con: "
+                           FontSize="17"
+                           FontAttributes="Bold"
+                           TextColor="#F2F2F7"/>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Descripción de la Falla -->
-            <Label Text="Descripción del Problema:" TextColor="LightGray" FontAttributes="Bold"/>
-            <Editor x:Name="editorDescripcion" Placeholder="Escribe a detalle la falla técnica..." HeightRequest="100" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
-            <Label x:Name="lblErrorDescripcion" Text="Por favor describe la falla antes de enviar." TextColor="#FF6B6B" IsVisible="False" FontSize="12"/>
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Descripción del problema"
+                       TextColor="#B0B0B5"
+                       FontSize="13"
+                       FontAttributes="Bold"/>
+                <Border StrokeThickness="0" BackgroundColor="#1C1C1E" Padding="12,8">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Editor x:Name="editorDescripcion"
+                            Placeholder="Escribe a detalle la falla técnica..."
+                            HeightRequest="105"
+                            BackgroundColor="Transparent"
+                            TextColor="#F2F2F7"
+                            PlaceholderColor="#6E6E73"
+                            FontSize="14"/>
+                </Border>
+                <Label x:Name="lblErrorDescripcion"
+                       Text="Por favor describe la falla antes de enviar."
+                       TextColor="#FF6B6B"
+                       IsVisible="False"
+                       FontSize="12"/>
+            </VerticalStackLayout>
 
             <!-- Dónde se atiende (solo si el técnico atiende en ambos lugares) -->
             <VerticalStackLayout x:Name="layoutSelectorModalidad" IsVisible="False" Spacing="8">
-                <Label Text="¿Dónde quieres la atención?" TextColor="LightGray" FontAttributes="Bold"/>
+                <Label Text="¿Dónde quieres la atención?"
+                       TextColor="#B0B0B5"
+                       FontSize="13"
+                       FontAttributes="Bold"/>
                 <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
-                    <Button x:Name="btnModDomicilio" Grid.Column="0" Text="En mi domicilio" Clicked="OnModalidadDomicilioClicked" CornerRadius="8" HeightRequest="44"/>
-                    <Button x:Name="btnModLocal" Grid.Column="1" Text="En su local" Clicked="OnModalidadLocalClicked" CornerRadius="8" HeightRequest="44"/>
+                    <Button x:Name="btnModDomicilio"
+                            Grid.Column="0"
+                            Text="En mi domicilio"
+                            Clicked="OnModalidadDomicilioClicked"
+                            CornerRadius="12"
+                            HeightRequest="46"
+                            FontAttributes="Bold"/>
+                    <Button x:Name="btnModLocal"
+                            Grid.Column="1"
+                            Text="En su local"
+                            Clicked="OnModalidadLocalClicked"
+                            CornerRadius="12"
+                            HeightRequest="46"
+                            FontAttributes="Bold"/>
                 </Grid>
             </VerticalStackLayout>
 
             <!-- Dirección del servicio a domicilio -->
-            <VerticalStackLayout x:Name="layoutDomicilioDireccion" Spacing="15">
-                <Label Text="Dirección / Domicilio del Servicio:" TextColor="LightGray" FontAttributes="Bold"/>
-                <Entry x:Name="entryDireccion" Placeholder="Ej. Av. Insurgentes Sur 123, Col. Centro" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
+            <VerticalStackLayout x:Name="layoutDomicilioDireccion" Spacing="6">
+                <Label Text="Dirección o domicilio del servicio"
+                       TextColor="#B0B0B5"
+                       FontSize="13"
+                       FontAttributes="Bold"/>
+                <Border StrokeThickness="0" BackgroundColor="#1C1C1E" Padding="14,2" HeightRequest="48">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Entry x:Name="entryDireccion"
+                           Placeholder="Ej. Av. Insurgentes Sur 123, Col. Centro"
+                           BackgroundColor="Transparent"
+                           TextColor="#F2F2F7"
+                           PlaceholderColor="#6E6E73"
+                           FontSize="14"
+                           VerticalOptions="Center"/>
+                </Border>
             </VerticalStackLayout>
 
             <!-- Datos del local del técnico -->
-            <Border x:Name="layoutLocalInfo" IsVisible="False" Stroke="#3A3A3C" BackgroundColor="#252526" Padding="15">
+            <Border x:Name="layoutLocalInfo" IsVisible="False" Stroke="#2C2C2E" StrokeThickness="1" BackgroundColor="#1C1C1E" Padding="15">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="8"/>
+                    <RoundRectangle CornerRadius="12"/>
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="4">
-                    <Label Text="Atención en el local del técnico" TextColor="White" FontAttributes="Bold"/>
-                    <Label x:Name="lblLocalDireccion" TextColor="LightGray" FontSize="14"/>
-                    <Label x:Name="lblLocalHorario" TextColor="Gray" FontSize="12"/>
-                    <Label Text="Sin costo de traslado." TextColor="#28A745" FontSize="12"/>
+                    <Label Text="Atención en el local del técnico" TextColor="#F2F2F7" FontAttributes="Bold"/>
+                    <Label x:Name="lblLocalDireccion" TextColor="#B0B0B5" FontSize="14"/>
+                    <Label x:Name="lblLocalHorario" TextColor="#8E8E93" FontSize="12"/>
+                    <Label Text="Sin costo de traslado." TextColor="#30D158" FontSize="12" FontAttributes="Bold"/>
                 </VerticalStackLayout>
             </Border>
 
             <!-- Programar Fecha y Hora -->
-            <Label x:Name="lblCuando" Text="¿Cuándo necesitas la visita del técnico?" TextColor="LightGray" FontAttributes="Bold" Margin="0,5,0,0"/>
-            <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
-                <VerticalStackLayout Grid.Column="0" Spacing="5">
-                    <Label Text="Día:" TextColor="Gray" FontSize="12"/>
-                    <DatePicker x:Name="pickerFecha" MinimumDate="{x:Static sys:DateTime.Today}" BackgroundColor="#252526" TextColor="White"/>
-                </VerticalStackLayout>
+            <VerticalStackLayout Spacing="8">
+                <Label x:Name="lblCuando"
+                       Text="¿Cuándo necesitas la visita del técnico?"
+                       TextColor="#B0B0B5"
+                       FontSize="13"
+                       FontAttributes="Bold"/>
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                    <Border Grid.Column="0" StrokeThickness="0" BackgroundColor="#1C1C1E" Padding="14,8">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Día" TextColor="#8E8E93" FontSize="11"/>
+                            <DatePicker x:Name="pickerFecha"
+                                        MinimumDate="{x:Static sys:DateTime.Today}"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#F2F2F7"
+                                        FontSize="14"/>
+                        </VerticalStackLayout>
+                    </Border>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="5">
-                    <Label Text="Hora estimada:" TextColor="Gray" FontSize="12"/>
-                    <TimePicker x:Name="pickerHora" Time="10:00:00" BackgroundColor="#252526" TextColor="White"/>
-                </VerticalStackLayout>
-            </Grid>
+                    <Border Grid.Column="1" StrokeThickness="0" BackgroundColor="#1C1C1E" Padding="14,8">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Hora estimada" TextColor="#8E8E93" FontSize="11"/>
+                            <TimePicker x:Name="pickerHora"
+                                        Time="10:00:00"
+                                        BackgroundColor="Transparent"
+                                        TextColor="#F2F2F7"
+                                        FontSize="14"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
 
             <!-- Tarjeta de Distancia y Tarifa -->
-            <Border x:Name="cardTarifa" Stroke="#28A745" BackgroundColor="#252526" Padding="15" Margin="0,5,0,0">
+            <Border x:Name="cardTarifa" Stroke="#2A3F32" StrokeThickness="1" BackgroundColor="#16211B" Padding="16,14">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="8"/>
+                    <RoundRectangle CornerRadius="12"/>
                 </Border.StrokeShape>
-                <VerticalStackLayout Spacing="5">
-                    <Label x:Name="lblDistancia" Text="Calculando distancia..." TextColor="White" FontSize="14"/>
-                    <Label x:Name="lblTarifa" Text="Calculando tarifa..." TextColor="#28A745" FontAttributes="Bold" FontSize="16"/>
+                <VerticalStackLayout Spacing="4">
+                    <Label x:Name="lblDistancia"
+                           Text="Calculando distancia..."
+                           TextColor="#D1D1D6"
+                           FontSize="13"/>
+                    <Label x:Name="lblTarifa"
+                           Text="Calculando tarifa..."
+                           TextColor="#30D158"
+                           FontAttributes="Bold"
+                           FontSize="16"/>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Adjuntar Evidencias (2x2 con Cámara y Galería) -->
-            <Label Text="Adjuntar Evidencia Multimedios:" TextColor="LightGray" FontAttributes="Bold"/>
-            <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, *" RowSpacing="10" ColumnSpacing="10">
-                <Button Grid.Row="0" Grid.Column="0" Text="📷 Cámara" Clicked="OnTomarFotoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
-                <Button Grid.Row="0" Grid.Column="1" Text="🖼️ Galería" Clicked="OnSeleccionarFotoGaleriaClicked" BackgroundColor="#82CFFD" TextColor="Black" FontAttributes="Bold"/>
-                <Button Grid.Row="1" Grid.Column="0" Text="🎥 Video" Clicked="OnGrabarVideoClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
-                <Button Grid.Row="1" Grid.Column="1" Text="🎙️ Audio" Clicked="OnGrabarAudioClicked" BackgroundColor="#A5A6F6" TextColor="Black" FontAttributes="Bold"/>
-            </Grid>
+            <!-- Adjuntar Evidencia con Iconos Minimalistas (4 mosaicos en una fila) -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Adjuntar evidencia (opcional)"
+                       TextColor="#B0B0B5"
+                       FontSize="13"
+                       FontAttributes="Bold"/>
+
+                <Grid ColumnDefinitions="*, *, *, *" ColumnSpacing="10">
+                    <!-- 1. Cámara -->
+                    <Border Grid.Column="0"
+                            Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            BackgroundColor="#1C1C1E"
+                            HeightRequest="76">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnTomarFotoClicked"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+                            <Path Data="M 9,3 L 7.17,5 L 4,5 C 2.9,5 2,5.9 2,7 L 2,19 C 2,20.1 2.9,21 4,21 L 20,21 C 21.1,21 22,20.1 22,19 L 22,7 C 22,5.9 21.1,5 20,5 L 16.83,5 L 15,3 L 9,3 Z M 12,18 C 9.24,18 7,15.76 7,13 C 7,10.24 9.24,8 12,8 C 14.76,8 17,10.24 17,13 C 17,15.76 14.76,18 12,18 Z M 12,10 C 10.34,10 9,11.34 9,13 C 9,14.66 10.34,16 12,16 C 13.66,16 15,14.66 15,13 C 15,11.34 13.66,10 12,10 Z"
+                                  Fill="#4DA3E0"
+                                  Aspect="Uniform"
+                                  WidthRequest="24"
+                                  HeightRequest="24"
+                                  HorizontalOptions="Center"/>
+                            <Label Text="Cámara"
+                                   TextColor="#E5E5EA"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 2. Galería -->
+                    <Border Grid.Column="1"
+                            Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            BackgroundColor="#1C1C1E"
+                            HeightRequest="76">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSeleccionarFotoGaleriaClicked"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+                            <Path Data="M 21,19 L 21,5 C 21,3.9 20.1,3 19,3 L 5,3 C 3.9,3 3,3.9 3,5 L 3,19 C 3,20.1 3.9,21 5,21 L 19,21 C 20.1,21 21,20.1 21,19 Z M 8.5,13.5 L 11,16.51 L 14.5,12 L 19,18 L 5,18 L 8.5,13.5 Z"
+                                  Fill="#4DA3E0"
+                                  Aspect="Uniform"
+                                  WidthRequest="24"
+                                  HeightRequest="24"
+                                  HorizontalOptions="Center"/>
+                            <Label Text="Galería"
+                                   TextColor="#E5E5EA"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 3. Video -->
+                    <Border Grid.Column="2"
+                            Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            BackgroundColor="#1C1C1E"
+                            HeightRequest="76">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnGrabarVideoClicked"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+                            <Path Data="M 17,10.5 L 17,7 C 17,6.45 16.55,6 16,6 L 4,6 C 3.45,6 3,6.45 3,7 L 3,17 C 3,17.55 3.45,18 4,18 L 16,18 C 16.55,18 17,17.55 17,17 L 17,13.5 L 21,17.5 L 21,6.5 L 17,10.5 Z"
+                                  Fill="#4DA3E0"
+                                  Aspect="Uniform"
+                                  WidthRequest="24"
+                                  HeightRequest="24"
+                                  HorizontalOptions="Center"/>
+                            <Label Text="Video"
+                                   TextColor="#E5E5EA"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- 4. Audio -->
+                    <Border Grid.Column="3"
+                            Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            BackgroundColor="#1C1C1E"
+                            HeightRequest="76">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="14"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnGrabarAudioClicked"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="6">
+                            <Path Data="M 12,14 C 13.66,14 14.99,12.66 14.99,11 L 15,5 C 15,3.34 13.66,2 12,2 C 10.34,2 9,3.34 9,5 L 9,11 C 9,12.66 10.34,14 12,14 Z M 17.3,11 C 17.3,14 14.76,16.1 12,16.1 C 9.24,16.1 6.7,14 6.7,11 L 5,11 C 5,14.41 7.72,17.23 11,17.72 L 11,21 L 13,21 L 13,17.72 C 16.28,17.24 19,14.42 19,11 L 17.3,11 Z"
+                                  Fill="#4DA3E0"
+                                  Aspect="Uniform"
+                                  WidthRequest="24"
+                                  HeightRequest="24"
+                                  HorizontalOptions="Center"/>
+                            <Label Text="Audio"
+                                   TextColor="#E5E5EA"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+            </VerticalStackLayout>
 
             <Image x:Name="imgPrevisualizacion" HeightRequest="150" Aspect="AspectFit" IsVisible="False"/>
             <toolkit:MediaElement x:Name="mediaVideoPrevisualizacion" HeightRequest="180" ShouldAutoPlay="False" ShouldShowPlaybackControls="True" IsVisible="False"/>
 
             <!-- Botón de Confirmación -->
-            <Button Text="Confirmar y Agendar Cita" Clicked="OnAgendarCitaClicked" BackgroundColor="#007ACC" TextColor="White" FontAttributes="Bold" FontSize="16" HeightRequest="50" Margin="0,15,0,20"/>
+            <Button Text="Confirmar y Agendar Cita"
+                    Clicked="OnAgendarCitaClicked"
+                    BackgroundColor="#0088FF"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="15"
+                    CornerRadius="14"
+                    HeightRequest="52"
+                    Margin="0,12,0,10"/>
 
         </VerticalStackLayout>
     </ScrollView>
