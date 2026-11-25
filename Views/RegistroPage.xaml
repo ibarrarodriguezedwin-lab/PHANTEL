@@ -96,6 +96,31 @@
                 <Entry x:Name="entryExperiencia" Placeholder="Años de experiencia (Ej. 3 años)" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
                 <Entry x:Name="entryTarifa" Placeholder="Tarifa estimada por servicio ($ MXN)" Keyboard="Numeric" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
 
+                <Label Text="¿Cómo atiendes a tus clientes? *" TextColor="LightGray" FontAttributes="Bold"/>
+                <Border Stroke="#007ACC" StrokeThickness="1" BackgroundColor="#252526" Padding="5,0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <Picker x:Name="pickerModalidad"
+                            Title="-- Selecciona la modalidad --"
+                            SelectedIndexChanged="OnModalidadChanged"
+                            TextColor="White"
+                            TitleColor="Gray">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>A domicilio (voy con el cliente)</x:String>
+                                <x:String>En local fijo (el cliente viene a mí)</x:String>
+                                <x:String>Ambos (local y domicilio)</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                </Border>
+
+                <VerticalStackLayout x:Name="layoutLocal" IsVisible="False" Spacing="12">
+                    <Entry x:Name="entryDireccionLocal" Placeholder="Dirección de tu local (calle, número, colonia) *" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+                    <Entry x:Name="entryHorarioLocal" Placeholder="Horario del local (Ej. Lun a Sáb 10:00 a 19:00)" TextColor="White" PlaceholderColor="Gray" BackgroundColor="#252526"/>
+                </VerticalStackLayout>
+
                 <!-- Términos y Condiciones Obligatorios de Comisiones PHANTEL -->
                 <Border Stroke="#FFC107"
                         StrokeThickness="1"

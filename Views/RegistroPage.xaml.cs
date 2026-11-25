@@ -64,6 +64,18 @@ namespace PHANTEL.Views
                     return;
                 }
 
+                if (pickerModalidad.SelectedIndex == -1)
+                {
+                    MostrarError("Indica si atiendes a domicilio, en local fijo o ambos.");
+                    return;
+                }
+
+                if (pickerModalidad.SelectedIndex >= 1 && (entryDireccionLocal.Text?.Trim().Length ?? 0) < 8)
+                {
+                    MostrarError("Escribe la dirección completa de tu local.");
+                    return;
+                }
+
                 if (!chkAceptoTerminos.IsChecked)
                 {
                     MostrarError("Debes aceptar los Términos y Condiciones de comisión (3% sobre trabajo presupuestado y 5% por disputa) para crear tu cuenta de Técnico.");
@@ -103,6 +115,19 @@ namespace PHANTEL.Views
                 nuevoUsuario.Experiencia = entryExperiencia.Text?.Trim() ?? "1 año";
                 decimal.TryParse(entryTarifa.Text, out decimal tarifa);
                 nuevoUsuario.TarifaPorHora = tarifa > 0 ? tarifa : 150m;
+
+                nuevoUsuario.Modalidad = pickerModalidad.SelectedIndex switch
+                {
+                    1 => "Local",
+                    2 => "Ambos",
+                    _ => "Domicilio"
+                };
+
+                if (pickerModalidad.SelectedIndex >= 1)
+                {
+                    nuevoUsuario.DireccionLocal = entryDireccionLocal.Text?.Trim() ?? "";
+                    nuevoUsuario.HorarioLocal = entryHorarioLocal.Text?.Trim() ?? "";
+                }
             }
 
             bool exito = await _dbService.RegistrarUsuarioAsync(nuevoUsuario);
@@ -125,6 +150,12 @@ namespace PHANTEL.Views
             {
                 Application.Current!.Windows[0].Page = new AppShell();
             }
+        }
+
+        private void OnModalidadChanged(object sender, EventArgs e)
+        {
+            // Local o Ambos: pedir la dirección del local
+            layoutLocal.IsVisible = pickerModalidad.SelectedIndex >= 1;
         }
 
         private void MostrarError(string mensaje)

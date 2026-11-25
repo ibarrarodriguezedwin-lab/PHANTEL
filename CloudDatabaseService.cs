@@ -22,6 +22,79 @@ namespace PHANTEL.Services
         public static void InvalidarCacheUsuarios() => _cacheUsuarios = null;
         public static void InvalidarCacheSolicitudes() => _cacheSolicitudes = null;
 
+        // --- CALIFICACIONES REALES (promedio, número de reseñas y lista por técnico) ---
+        private static List<Calificacion>? _cacheCalificaciones;
+        private static DateTime _ultimoFetchCalificaciones = DateTime.MinValue;
+
+        public static void InvalidarCacheCalificaciones() => _cacheCalificaciones = null;
+
+        private async Task<List<Calificacion>> ObtenerTodasCalificacionesConCacheAsync()
+        {
+            if (_cacheCalificaciones != null && (DateTime.Now - _ultimoFetchCalificaciones) < TiempoCache)
+                return _cacheCalificaciones;
+
+            var todas = await _firebase.Child("Calificaciones").OnceAsync<Calificacion>();
+            _cacheCalificaciones = todas
+                .Where(c => c.Object != null)
+                .Select(c => c.Object)
+                .ToList();
+
+            _ultimoFetchCalificaciones = DateTime.Now;
+            return _cacheCalificaciones;
+        }
+
+        // Una reseña es del técnico si coincide su Id o su correo (el correo no cambia entre sesiones)
+        private static bool CalificacionEsDe(Calificacion c, Usuario t) =>
+            (t.Id != 0 && c.TecnicoId == t.Id) ||
+            (!string.IsNullOrWhiteSpace(c.TecnicoEmail) && !string.IsNullOrWhiteSpace(t.Email) &&
+             c.TecnicoEmail.Trim().ToLower() == t.Email.Trim().ToLower());
+
+        public async Task<List<Calificacion>> ObtenerCalificacionesTecnicoAsync(Usuario tecnico)
+        {
+            try
+            {
+                var todas = await ObtenerTodasCalificacionesConCacheAsync();
+                return todas
+                    .Where(c => CalificacionEsDe(c, tecnico))
+                    .OrderByDescending(c => c.Fecha ?? DateTime.MinValue)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR LISTA RESEÑAS]: {ex.Message}");
+                return new List<Calificacion>();
+            }
+        }
+
+        private async Task AplicarResumenCalificacionesAsync(IEnumerable<Usuario> tecnicos)
+        {
+            try
+            {
+                var todas = await ObtenerTodasCalificacionesConCacheAsync();
+
+                foreach (var t in tecnicos)
+                {
+                    var propias = todas.Where(c => CalificacionEsDe(c, t)).ToList();
+
+                    if (propias.Count > 0)
+                    {
+                        double promedio = Math.Round(propias.Average(c => c.Puntuacion), 1);
+                        t.TotalCalificaciones = propias.Count;
+                        t.CalificacionPromedio = Math.Max(1.0, Math.Min(5.0, promedio + t.AjusteReputacion));
+                    }
+                    else
+                    {
+                        t.TotalCalificaciones = 0;
+                        t.CalificacionPromedio = 0.0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR RESUMEN CALIFICACIONES]: {ex.Message}");
+            }
+        }
+
         private async Task<List<Usuario>> ObtenerTodosUsuariosConCacheAsync()
         {
             if (_cacheUsuarios != null && (DateTime.Now - _ultimoFetchUsuarios) < TiempoCache)
@@ -137,8 +210,13 @@ namespace PHANTEL.Services
             try
             {
                 var usuarios = await ObtenerTodosUsuariosConCacheAsync();
-                return usuarios.FirstOrDefault(u =>
+                var encontrado = usuarios.FirstOrDefault(u =>
                     u.Email.Trim().ToLower() == email.Trim().ToLower());
+
+                if (encontrado != null && encontrado.TipoPerfil == "Técnico")
+                    await AplicarResumenCalificacionesAsync(new[] { encontrado });
+
+                return encontrado;
             }
             catch (Exception ex)
             {
@@ -217,10 +295,15 @@ namespace PHANTEL.Services
             try
             {
                 var usuarios = await ObtenerTodosUsuariosConCacheAsync();
-                return usuarios
+                var tecnicos = usuarios
                     .Where(u => u.TipoPerfil == "Técnico" && !u.CuentaSuspendida && u.Disponible)
+                    .ToList();
+
+                await AplicarResumenCalificacionesAsync(tecnicos);
+
+                return tecnicos
                     .OrderByDescending(u => u.EstadoVerificacion == "Verificado")
-                    .ThenByDescending(u => u.CalificacionPromedio)
+                    .ThenByDescending(u => u.PuntajeRecomendacion)
                     .ToList();
             }
             catch
@@ -400,6 +483,7 @@ namespace PHANTEL.Services
             try
             {
                 await _firebase.Child("Calificaciones").PostAsync(calificacion);
+                InvalidarCacheCalificaciones();
                 return true;
             }
             catch (Exception ex)
@@ -711,7 +795,7 @@ namespace PHANTEL.Services
                     if (penalizarReputacion)
                     {
                         tecNode.Object.ReportesAcumulados += 1;
-                        tecNode.Object.CalificacionPromedio = Math.Max(1.0, tecNode.Object.CalificacionPromedio - 0.5);
+                        tecNode.Object.AjusteReputacion -= 0.5;   // se descuenta del promedio calculado con las reseñas
                     }
 
                     if (suspenderTecnico)

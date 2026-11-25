@@ -129,6 +129,16 @@
             ["cfg.rol"] = "Rol",
             ["cfg.crearperfil"] = "Crear perfil",
             ["cfg.crearperfil.conf"] = "Para crear otro perfil se cerrará tu sesión actual. ¿Continuar?",
+            ["cfg.modalidad"] = "Modalidad de atención",
+            ["mod.domicilio"] = "A domicilio",
+            ["mod.local"] = "En local fijo",
+            ["mod.ambos"] = "Local y domicilio",
+            ["cfg.dirlocal"] = "Dirección del local",
+            ["cfg.dirlocal.msg"] = "Calle, número y colonia de tu local.",
+            ["cfg.dirlocal.invalido"] = "Escribe una dirección más completa.",
+            ["cfg.horario"] = "Horario del local",
+            ["cfg.horario.msg"] = "Ejemplo: lunes a sábado de 10:00 a 19:00.",
+            ["cfg.resenas"] = "Mis reseñas",
         };
 
         // ------------------------------------------------------------------
@@ -221,6 +231,16 @@
             ["cfg.rol"] = "Role",
             ["cfg.crearperfil"] = "Create profile",
             ["cfg.crearperfil.conf"] = "To create another profile, your current session will be closed. Continue?",
+            ["cfg.modalidad"] = "Service type",
+            ["mod.domicilio"] = "At the customer's home",
+            ["mod.local"] = "At my shop",
+            ["mod.ambos"] = "Shop and home visits",
+            ["cfg.dirlocal"] = "Shop address",
+            ["cfg.dirlocal.msg"] = "Street, number and neighborhood of your shop.",
+            ["cfg.dirlocal.invalido"] = "Enter a more complete address.",
+            ["cfg.horario"] = "Shop hours",
+            ["cfg.horario.msg"] = "Example: Monday to Saturday, 10:00 to 19:00.",
+            ["cfg.resenas"] = "My reviews",
         };
 
         // ------------------------------------------------------------------
@@ -313,6 +333,16 @@
             ["cfg.rol"] = "Rôle",
             ["cfg.crearperfil"] = "Créer un profil",
             ["cfg.crearperfil.conf"] = "Pour créer un autre profil, votre session actuelle sera fermée. Continuer ?",
+            ["cfg.modalidad"] = "Mode d'intervention",
+            ["mod.domicilio"] = "À domicile",
+            ["mod.local"] = "En atelier",
+            ["mod.ambos"] = "Atelier et domicile",
+            ["cfg.dirlocal"] = "Adresse de l'atelier",
+            ["cfg.dirlocal.msg"] = "Rue, numéro et quartier de votre atelier.",
+            ["cfg.dirlocal.invalido"] = "Saisissez une adresse plus complète.",
+            ["cfg.horario"] = "Horaires de l'atelier",
+            ["cfg.horario.msg"] = "Exemple : du lundi au samedi, de 10 h à 19 h.",
+            ["cfg.resenas"] = "Mes avis",
         };
 
         // ------------------------------------------------------------------
@@ -405,6 +435,16 @@
             ["cfg.rol"] = "Função",
             ["cfg.crearperfil"] = "Criar perfil",
             ["cfg.crearperfil.conf"] = "Para criar outro perfil, sua sessão atual será encerrada. Continuar?",
+            ["cfg.modalidad"] = "Modalidade de atendimento",
+            ["mod.domicilio"] = "A domicílio",
+            ["mod.local"] = "Em local fixo",
+            ["mod.ambos"] = "Local fixo e domicílio",
+            ["cfg.dirlocal"] = "Endereço do local",
+            ["cfg.dirlocal.msg"] = "Rua, número e bairro do seu local.",
+            ["cfg.dirlocal.invalido"] = "Digite um endereço mais completo.",
+            ["cfg.horario"] = "Horário do local",
+            ["cfg.horario.msg"] = "Exemplo: segunda a sábado, das 10h às 19h.",
+            ["cfg.resenas"] = "Minhas avaliações",
         };
 
         // ------------------------------------------------------------------
@@ -497,6 +537,16 @@
             ["cfg.rol"] = "Rolle",
             ["cfg.crearperfil"] = "Profil erstellen",
             ["cfg.crearperfil.conf"] = "Um ein weiteres Profil zu erstellen, wird Ihre aktuelle Sitzung beendet. Fortfahren?",
+            ["cfg.modalidad"] = "Art der Leistung",
+            ["mod.domicilio"] = "Beim Kunden vor Ort",
+            ["mod.local"] = "In meiner Werkstatt",
+            ["mod.ambos"] = "Werkstatt und Hausbesuch",
+            ["cfg.dirlocal"] = "Adresse der Werkstatt",
+            ["cfg.dirlocal.msg"] = "Straße, Hausnummer und Stadtteil Ihrer Werkstatt.",
+            ["cfg.dirlocal.invalido"] = "Geben Sie eine vollständigere Adresse ein.",
+            ["cfg.horario"] = "Öffnungszeiten",
+            ["cfg.horario.msg"] = "Beispiel: Montag bis Samstag, 10:00 bis 19:00 Uhr.",
+            ["cfg.resenas"] = "Meine Bewertungen",
         };
 
         // ------------------------------------------------------------------
@@ -589,6 +639,16 @@
             ["cfg.rol"] = "Ruolo",
             ["cfg.crearperfil"] = "Crea profilo",
             ["cfg.crearperfil.conf"] = "Per creare un altro profilo, la tua sessione attuale verrà chiusa. Continuare?",
+            ["cfg.modalidad"] = "Modalità di servizio",
+            ["mod.domicilio"] = "A domicilio",
+            ["mod.local"] = "In sede fissa",
+            ["mod.ambos"] = "Sede e domicilio",
+            ["cfg.dirlocal"] = "Indirizzo della sede",
+            ["cfg.dirlocal.msg"] = "Via, numero e quartiere della tua sede.",
+            ["cfg.dirlocal.invalido"] = "Inserisci un indirizzo più completo.",
+            ["cfg.horario"] = "Orari della sede",
+            ["cfg.horario.msg"] = "Esempio: dal lunedì al sabato, dalle 10:00 alle 19:00.",
+            ["cfg.resenas"] = "Le mie recensioni",
         };
 
         // ------------------------------------------------------------------
@@ -681,6 +741,16 @@
             ["cfg.rol"] = "角色",
             ["cfg.crearperfil"] = "创建档案",
             ["cfg.crearperfil.conf"] = "创建其他档案将会退出当前登录，是否继续？",
+            ["cfg.modalidad"] = "服务方式",
+            ["mod.domicilio"] = "上门服务",
+            ["mod.local"] = "固定店铺",
+            ["mod.ambos"] = "店铺和上门均可",
+            ["cfg.dirlocal"] = "店铺地址",
+            ["cfg.dirlocal.msg"] = "店铺的街道、门牌号和街区。",
+            ["cfg.dirlocal.invalido"] = "请输入更完整的地址。",
+            ["cfg.horario"] = "营业时间",
+            ["cfg.horario.msg"] = "例如：周一至周六 10:00–19:00。",
+            ["cfg.resenas"] = "我的评价",
         };
     }
 }

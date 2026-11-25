@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:helpers="clr-namespace:PHANTEL.Helpers"
+             x:Class="PHANTEL.Views.PerfilTecnicoPage"
+             BackgroundColor="#121212"
+             Shell.NavBarIsVisible="True"
+             Shell.BackgroundColor="#121212"
+             Shell.ForegroundColor="#F2F2F7"
+             Shell.TitleColor="#F2F2F7"
+             Title="Perfil del técnico">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <helpers:AvatarConverter x:Key="AvatarConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*, Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,16,20,24" Spacing="20">
+
+                <!-- Datos del técnico -->
+                <Grid ColumnDefinitions="Auto, *" ColumnSpacing="16">
+                    <Border Grid.Column="0"
+                            StrokeThickness="0"
+                            BackgroundColor="#2C2C2E"
+                            WidthRequest="76"
+                            HeightRequest="76"
+                            VerticalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="38"/>
+                        </Border.StrokeShape>
+                        <Image Source="{Binding FotoPerfil, Converter={StaticResource AvatarConverter}}"
+                               WidthRequest="76"
+                               HeightRequest="76"
+                               Aspect="AspectFill"/>
+                    </Border>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
+                        <Label Text="{Binding Nombre}"
+                               FontSize="22"
+                               FontAttributes="Bold"
+                               TextColor="#F2F2F7"/>
+                        <HorizontalStackLayout Spacing="8">
+                            <Label Text="{Binding Especialidad}" FontSize="15" TextColor="#B0B0B5"/>
+                            <Label Text="Verificado"
+                                   IsVisible="{Binding EstaVerificado}"
+                                   FontSize="13"
+                                   TextColor="#4DA3E0"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                        <Label Text="{Binding TextoModalidad}" FontSize="13" TextColor="#8E8E93"/>
+                        <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa base: ${0:F2}/hr'}"
+                               FontSize="13"
+                               TextColor="#8E8E93"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Resumen de calificación -->
+                <Border BackgroundColor="#1C1C1E" StrokeThickness="0" Padding="18">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+                        <VerticalStackLayout Grid.Column="0" Spacing="0" HorizontalOptions="Center">
+                            <Label x:Name="lblPromedio"
+                                   Text="—"
+                                   FontSize="38"
+                                   FontAttributes="Bold"
+                                   TextColor="#E0A030"
+                                   HorizontalOptions="Center"/>
+                            <Label x:Name="lblEstrellasResumen"
+                                   Text="☆☆☆☆☆"
+                                   FontSize="14"
+                                   TextColor="#E0A030"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                            <Label x:Name="lblTotalResenas"
+                                   Text="Cargando reseñas..."
+                                   FontSize="15"
+                                   TextColor="#F2F2F7"/>
+                            <Label x:Name="lblNuevo"
+                                   Text="Técnico nuevo en PHANTEL"
+                                   IsVisible="False"
+                                   FontSize="12"
+                                   TextColor="#8E8E93"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Reseñas -->
+                <VerticalStackLayout Spacing="0">
+                    <Label Text="Reseñas de clientes"
+                           FontSize="17"
+                           FontAttributes="Bold"
+                           TextColor="#F2F2F7"/>
+
+                    <Label x:Name="lblSinResenas"
+                           Text="Todavía no tiene reseñas."
+                           IsVisible="False"
+                           FontSize="14"
+                           TextColor="#8E8E93"
+                           Margin="0,12,0,0"/>
+
+                    <VerticalStackLayout x:Name="listaResenas" Spacing="0" Margin="0,4,0,0">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout Spacing="4" Padding="0,14,0,0">
+                                    <Grid ColumnDefinitions="*, Auto">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding TextoEstrellas}"
+                                               FontSize="16"
+                                               TextColor="#E0A030"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding TextoFecha}"
+                                               FontSize="12"
+                                               TextColor="#8E8E93"/>
+                                    </Grid>
+                                    <Label Text="{Binding TextoAutor}"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="#B0B0B5"/>
+                                    <Label Text="{Binding TextoComentario}"
+                                           FontSize="14"
+                                           TextColor="#F2F2F7"/>
+                                    <BoxView HeightRequest="1" Color="#2C2C2E" Margin="0,12,0,0"/>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Botón para solicitar (solo cuando lo ve un cliente) -->
+        <Border x:Name="panelSolicitar"
+                Grid.Row="1"
+                BackgroundColor="#121212"
+                Stroke="#2C2C2E"
+                StrokeThickness="1"
+                Padding="20,12">
+            <Button Text="Solicitar servicio"
+                    Clicked="OnSolicitarClicked"
+                    BackgroundColor="#007ACC"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    CornerRadius="10"
+                    HeightRequest="50"/>
+        </Border>
+    </Grid>
+</ContentPage>

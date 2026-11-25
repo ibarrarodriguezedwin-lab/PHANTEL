@@ -2,7 +2,7 @@ namespace PHANTEL.Views
 {
     public partial class CalificacionPopup : ContentPage
     {
-        private int _estrellasSeleccionadas = 5;
+        private int _estrellasSeleccionadas = 0; // el usuario debe elegir una puntuación
         public int PuntuacionResultado => _estrellasSeleccionadas;
         public string ComentarioResultado => editorComentario.Text?.Trim() ?? string.Empty;
         public bool FueConfirmado { get; private set; } = false;
@@ -22,7 +22,8 @@ namespace PHANTEL.Views
                 lblSubtitulo.Text = "¿Qué tal te pareció el servicio realizado?";
             }
 
-            PintarEstrellas(5);
+            PintarEstrellas(0);
+            lblPuntuacionTexto.Text = "Elige una puntuación";
         }
 
         private void OnEstrella1Clicked(object sender, EventArgs e) => SeleccionarEstrellas(1);
@@ -35,6 +36,7 @@ namespace PHANTEL.Views
         {
             _estrellasSeleccionadas = cantidad;
             PintarEstrellas(cantidad);
+            lblPuntuacionTexto.TextColor = Color.FromArgb("#FFC107");
 
             lblPuntuacionTexto.Text = cantidad switch
             {
@@ -58,6 +60,13 @@ namespace PHANTEL.Views
 
         private async void OnGuardarClicked(object sender, EventArgs e)
         {
+            if (_estrellasSeleccionadas == 0)
+            {
+                lblPuntuacionTexto.Text = "Toca una estrella para poder enviar";
+                lblPuntuacionTexto.TextColor = Color.FromArgb("#FF6B6B");
+                return;
+            }
+
             FueConfirmado = true;
             await Navigation.PopModalAsync();
         }

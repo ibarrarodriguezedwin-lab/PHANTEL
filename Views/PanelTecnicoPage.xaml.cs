@@ -41,7 +41,7 @@ namespace PHANTEL.Views
                 lblBienvenida.Text = tecnicoActual.Nombre;
 
                 string cpTexto = string.IsNullOrWhiteSpace(tecnicoActual.CodigoPostal) ? "Sin CP" : $"CP {tecnicoActual.CodigoPostal}";
-                lblEspecialidad.Text = $"{tecnicoActual.Especialidad}, calificación {tecnicoActual.CalificacionPromedio:F1}, {cpTexto}";
+                lblEspecialidad.Text = $"{tecnicoActual.Especialidad}, {tecnicoActual.TextoCalificacion}, {cpTexto}";
 
                 ActualizarBotonVerificacionKyc();
                 ActualizarEstadoDisponibilidad();

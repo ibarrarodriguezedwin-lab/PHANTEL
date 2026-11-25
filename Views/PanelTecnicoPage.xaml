@@ -5,6 +5,7 @@
              xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.PanelTecnicoPage"
              BackgroundColor="#121212"
+             NavigationPage.HasNavigationBar="False"
              Title="PHANTEL - Panel de Atención Técnica">
 
     <ContentPage.Resources>
@@ -112,7 +113,7 @@
                                    FontAttributes="Bold"
                                    FontSize="16"/>
 
-                            <Label Text="{Binding DireccionCliente}"
+                            <Label Text="{Binding TextoUbicacion}"
                                    TextColor="#B0B0B5"
                                    FontSize="14"/>
 
@@ -121,6 +122,7 @@
                                    FontSize="13"/>
 
                             <Label Text="{Binding DistanciaKm, StringFormat='A {0:F1} km del cliente'}"
+                                   IsVisible="{Binding EsDomicilio}"
                                    TextColor="#8E8E93"
                                    FontSize="12"/>
                             <Label Text="{Binding FechaCreacion, StringFormat='Solicitada el {0:dd/MM/yyyy HH:mm}'}"
@@ -128,6 +130,7 @@
                                    FontSize="12"/>
 
                             <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}"
+                                   IsVisible="{Binding TieneImagen}"
                                    HeightRequest="220"
                                    MaximumWidthRequest="350"
                                    Aspect="AspectFit"
@@ -136,6 +139,7 @@
                                    Margin="0,8"/>
 
                             <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}"
+                                                  IsVisible="{Binding TieneVideo}"
                                                   HeightRequest="180"
                                                   ShouldAutoPlay="False"
                                                   ShouldShowPlaybackControls="True"
@@ -180,6 +184,7 @@
 
                                 <Button Grid.Column="1"
                                         Text="Ver ruta"
+                                        IsVisible="{Binding EsDomicilio}"
                                         Clicked="OnAbrirGoogleMapsWebClicked"
                                         CommandParameter="{Binding .}"
                                         BackgroundColor="Transparent"

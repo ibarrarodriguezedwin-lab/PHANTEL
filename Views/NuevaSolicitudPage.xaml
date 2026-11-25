@@ -17,12 +17,36 @@
             <Editor x:Name="editorDescripcion" Placeholder="Escribe a detalle la falla técnica..." HeightRequest="100" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
             <Label x:Name="lblErrorDescripcion" Text="Por favor describe la falla antes de enviar." TextColor="#FF6B6B" IsVisible="False" FontSize="12"/>
 
-            <!-- Selección de Dirección -->
-            <Label Text="Dirección / Domicilio del Servicio:" TextColor="LightGray" FontAttributes="Bold"/>
-            <Entry x:Name="entryDireccion" Placeholder="Ej. Av. Insurgentes Sur 123, Col. Centro" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
+            <!-- Dónde se atiende (solo si el técnico atiende en ambos lugares) -->
+            <VerticalStackLayout x:Name="layoutSelectorModalidad" IsVisible="False" Spacing="8">
+                <Label Text="¿Dónde quieres la atención?" TextColor="LightGray" FontAttributes="Bold"/>
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                    <Button x:Name="btnModDomicilio" Grid.Column="0" Text="En mi domicilio" Clicked="OnModalidadDomicilioClicked" CornerRadius="8" HeightRequest="44"/>
+                    <Button x:Name="btnModLocal" Grid.Column="1" Text="En su local" Clicked="OnModalidadLocalClicked" CornerRadius="8" HeightRequest="44"/>
+                </Grid>
+            </VerticalStackLayout>
+
+            <!-- Dirección del servicio a domicilio -->
+            <VerticalStackLayout x:Name="layoutDomicilioDireccion" Spacing="15">
+                <Label Text="Dirección / Domicilio del Servicio:" TextColor="LightGray" FontAttributes="Bold"/>
+                <Entry x:Name="entryDireccion" Placeholder="Ej. Av. Insurgentes Sur 123, Col. Centro" BackgroundColor="#252526" TextColor="White" PlaceholderColor="Gray"/>
+            </VerticalStackLayout>
+
+            <!-- Datos del local del técnico -->
+            <Border x:Name="layoutLocalInfo" IsVisible="False" Stroke="#3A3A3C" BackgroundColor="#252526" Padding="15">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Atención en el local del técnico" TextColor="White" FontAttributes="Bold"/>
+                    <Label x:Name="lblLocalDireccion" TextColor="LightGray" FontSize="14"/>
+                    <Label x:Name="lblLocalHorario" TextColor="Gray" FontSize="12"/>
+                    <Label Text="Sin costo de traslado." TextColor="#28A745" FontSize="12"/>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Programar Fecha y Hora -->
-            <Label Text="¿Cuándo necesitas la visita del técnico?" TextColor="LightGray" FontAttributes="Bold" Margin="0,5,0,0"/>
+            <Label x:Name="lblCuando" Text="¿Cuándo necesitas la visita del técnico?" TextColor="LightGray" FontAttributes="Bold" Margin="0,5,0,0"/>
             <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                 <VerticalStackLayout Grid.Column="0" Spacing="5">
                     <Label Text="Día:" TextColor="Gray" FontSize="12"/>
@@ -36,7 +60,7 @@
             </Grid>
 
             <!-- Tarjeta de Distancia y Tarifa -->
-            <Border Stroke="#28A745" BackgroundColor="#252526" Padding="15" Margin="0,5,0,0">
+            <Border x:Name="cardTarifa" Stroke="#28A745" BackgroundColor="#252526" Padding="15" Margin="0,5,0,0">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="8"/>
                 </Border.StrokeShape>

@@ -82,6 +82,10 @@ namespace PHANTEL.Views
                     {
                         SolicitudId = cita.Id,
                         TecnicoId = cita.TecnicoId,
+                        TecnicoEmail = cita.TecnicoEmail,
+                        NombreCliente = (LoginPage.UsuarioActual?.Nombre ?? "")
+                            .Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Cliente",
+                        Fecha = DateTime.Now,
                         Puntuacion = popup.PuntuacionResultado,
                         Comentario = $"[Cliente evaluó al Técnico]: {popup.ComentarioResultado}"
                     };

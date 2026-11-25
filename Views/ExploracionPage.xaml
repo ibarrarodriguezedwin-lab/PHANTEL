@@ -16,8 +16,8 @@
     </ContentPage.Resources>
 
     <Grid>
-        <!-- Fila 0: saludo | Fila 1: oficios | Fila 2: búsqueda y orden | Fila 3: técnicos -->
-        <Grid RowDefinitions="Auto, Auto, Auto, *" Padding="20,16,20,0" RowSpacing="14">
+        <!-- Fila 0: saludo | 1: oficios | 2: búsqueda | 3: filtros | 4: técnicos -->
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto, *" Padding="20,16,20,0" RowSpacing="12">
 
             <!-- 1. Encabezado -->
             <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="12">
@@ -53,92 +53,96 @@
                 </Border>
             </Grid>
 
-            <!-- 2. Oficios -->
-            <Grid Grid.Row="1" RowDefinitions="Auto, 1">
-                <CollectionView Grid.Row="0"
-                                x:Name="carruselCategorias"
-                                IsVisible="False"
-                                ItemsLayout="HorizontalList"
-                                SelectionMode="None"
-                                HeightRequest="46"
-                                HorizontalScrollBarVisibility="Never">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="models:CategoriaIcono">
-                            <VerticalStackLayout Margin="0,0,22,0"
-                                                 Spacing="6"
-                                                 VerticalOptions="End">
-                                <VerticalStackLayout.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnCategoriaTapped"/>
-                                </VerticalStackLayout.GestureRecognizers>
+            <!-- 2. Oficios (solo texto, sin iconos) -->
+            <CollectionView Grid.Row="1"
+                            x:Name="carruselCategorias"
+                            IsVisible="False"
+                            ItemsLayout="HorizontalList"
+                            SelectionMode="None"
+                            HeightRequest="40"
+                            HorizontalScrollBarVisibility="Never">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:CategoriaIcono">
+                        <Border BackgroundColor="{Binding ColorFondo}"
+                                StrokeThickness="0"
+                                Padding="16,0"
+                                Margin="0,0,8,0"
+                                HeightRequest="36"
+                                VerticalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="18"/>
+                            </Border.StrokeShape>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCategoriaTapped"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="{Binding NombreCorto}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{Binding ColorTexto}"
+                                   VerticalOptions="Center"/>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
-                                <HorizontalStackLayout Spacing="8" VerticalOptions="Center" Padding="2,4,2,0">
-                                    <Grid WidthRequest="26" HeightRequest="26" VerticalOptions="Center">
-                                        <Label Text="{Binding Emoji}"
-                                               FontSize="20"
-                                               HorizontalOptions="Center"
-                                               VerticalOptions="Center"
-                                               IsVisible="{Binding SoloEmoji}"/>
-                                        <Image Source="{Binding Imagen}"
-                                               WidthRequest="26"
-                                               HeightRequest="26"
-                                               Aspect="AspectFit"
-                                               IsVisible="{Binding TieneImagen}"/>
-                                    </Grid>
+            <!-- 3. Búsqueda -->
+            <Border Grid.Row="2"
+                    StrokeThickness="0"
+                    BackgroundColor="#1C1C1E"
+                    HeightRequest="48"
+                    Padding="14,0,4,0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10"/>
+                </Border.StrokeShape>
 
-                                    <Label Text="{Binding NombreCorto}"
-                                           FontSize="15"
-                                           FontAttributes="Bold"
-                                           TextColor="{Binding ColorTexto}"
-                                           VerticalOptions="Center"/>
-                                </HorizontalStackLayout>
+                <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                    <Entry Grid.Column="0"
+                           x:Name="entryBuscarTecnico"
+                           Placeholder="Buscar por nombre u oficio"
+                           PlaceholderColor="#8E8E93"
+                           TextColor="#F2F2F7"
+                           BackgroundColor="Transparent"
+                           FontSize="14"
+                           VerticalOptions="Center"
+                           TextChanged="OnSearchTextChanged"/>
 
-                                <BoxView HeightRequest="2"
-                                         Color="White"
-                                         IsVisible="{Binding EstaSeleccionada}"
-                                         HorizontalOptions="Fill"/>
-                            </VerticalStackLayout>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    <Button Grid.Column="1"
+                            x:Name="btnLimpiarRapido"
+                            Text="✕"
+                            IsVisible="False"
+                            Clicked="OnLimpiarFiltrosClicked"
+                            BackgroundColor="Transparent"
+                            TextColor="#8E8E93"
+                            FontSize="14"
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            Padding="0"
+                            VerticalOptions="Center"/>
+                </Grid>
+            </Border>
 
-                <BoxView Grid.Row="1" HeightRequest="1" Color="#2C2C2E" HorizontalOptions="Fill"/>
-            </Grid>
-
-            <!-- 3. Búsqueda y orden -->
-            <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+            <!-- 4. Filtros: tipo de atención y orden -->
+            <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="10">
                 <Border Grid.Column="0"
                         StrokeThickness="0"
                         BackgroundColor="#1C1C1E"
                         HeightRequest="48"
-                        Padding="14,0,4,0">
+                        Padding="14,0">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="10"/>
                     </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnModalidadPillTapped"/>
+                    </Border.GestureRecognizers>
 
-                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
-                        <Entry Grid.Column="0"
-                               x:Name="entryBuscarTecnico"
-                               Placeholder="Buscar por nombre u oficio"
-                               PlaceholderColor="#8E8E93"
-                               TextColor="#F2F2F7"
-                               BackgroundColor="Transparent"
-                               FontSize="14"
-                               VerticalOptions="Center"
-                               TextChanged="OnSearchTextChanged"/>
-
-                        <Button Grid.Column="1"
-                                x:Name="btnLimpiarRapido"
-                                Text="✕"
-                                IsVisible="False"
-                                Clicked="OnLimpiarFiltrosClicked"
-                                BackgroundColor="Transparent"
-                                TextColor="#8E8E93"
-                                FontSize="14"
-                                WidthRequest="40"
-                                HeightRequest="40"
-                                Padding="0"
-                                VerticalOptions="Center"/>
-                    </Grid>
+                    <VerticalStackLayout VerticalOptions="Center" Spacing="0">
+                        <Label Text="Atención" FontSize="10" TextColor="#8E8E93"/>
+                        <Label x:Name="lblModalidadActual"
+                               Text="Todas"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#F2F2F7"/>
+                    </VerticalStackLayout>
                 </Border>
 
                 <Border Grid.Column="1"
@@ -164,8 +168,8 @@
                 </Border>
             </Grid>
 
-            <!-- 4. Técnicos -->
-            <CollectionView Grid.Row="3"
+            <!-- 5. Técnicos -->
+            <CollectionView Grid.Row="4"
                             x:Name="listTecnicos"
                             SelectionMode="Single"
                             SelectionChanged="OnTecnicoSeleccionado">
@@ -217,27 +221,31 @@
                                     <Label Text="{Binding Especialidad}"
                                            TextColor="#B0B0B5"
                                            FontSize="14" />
+                                    <Label Text="{Binding TextoModalidad}"
+                                           TextColor="#8E8E93"
+                                           FontSize="12" />
                                     <Label Text="{Binding TarifaPorHora, StringFormat='Tarifa base: ${0:F2}/hr'}"
                                            TextColor="#8E8E93"
                                            FontSize="12" />
                                 </VerticalStackLayout>
 
-                                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="8">
-                                    <Label Text="{Binding CalificacionPromedio, StringFormat='{0:F1} ★'}"
+                                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
+                                    <!-- Con 3 reseñas o más: promedio real. Con menos: etiqueta "Nuevo" -->
+                                    <Label Text="{Binding TextoEstrellas}"
+                                           IsVisible="{Binding MostrarEstrellas}"
                                            FontAttributes="Bold"
                                            FontSize="14"
                                            TextColor="#E0A030"
                                            HorizontalOptions="End"/>
-                                    <Button Text="Solicitar"
-                                            Clicked="OnSolicitarClicked"
-                                            CommandParameter="{Binding .}"
-                                            BackgroundColor="#007ACC"
-                                            TextColor="White"
-                                            FontAttributes="Bold"
-                                            FontSize="13"
-                                            CornerRadius="8"
-                                            HeightRequest="34"
-                                            Padding="16,0"/>
+                                    <Label Text="{Binding TextoNuevo}"
+                                           IsVisible="{Binding MostrarNuevo}"
+                                           FontSize="12"
+                                           TextColor="#8E8E93"
+                                           HorizontalOptions="End"/>
+                                    <Label Text="›"
+                                           FontSize="26"
+                                           TextColor="#5A5A5F"
+                                           HorizontalOptions="End"/>
                                 </VerticalStackLayout>
                             </Grid>
                             <BoxView HeightRequest="1" Color="#2C2C2E"/>

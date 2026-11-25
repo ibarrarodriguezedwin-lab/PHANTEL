@@ -11,6 +11,7 @@ namespace PHANTEL.Views
         private readonly CloudDatabaseService _dbService = new();
         private double _distanciaCalculada;
         private decimal _tarifaCalculada;
+        private string _modalidad = "Domicilio"; // "Domicilio" o "Local"
 
         private string _fotoBase64Comprimida = string.Empty;
         private string? _rutaVideo = null;
@@ -26,8 +27,68 @@ namespace PHANTEL.Views
             if (entryDireccion != null)
                 entryDireccion.TextChanged += OnDireccionDestinoChanged;
 
-            CalcularGeolocalizacion();
+            ConfigurarModalidadInicial();
         }
+
+        // --- MODALIDAD: A DOMICILIO O EN EL LOCAL DEL TÉCNICO ---
+        private void ConfigurarModalidadInicial()
+        {
+            lblLocalDireccion.Text = string.IsNullOrWhiteSpace(_tecnico.DireccionLocal)
+                ? "Dirección por confirmar con el técnico (puedes usar el chat)."
+                : _tecnico.DireccionLocal;
+            lblLocalHorario.Text = string.IsNullOrWhiteSpace(_tecnico.HorarioLocal)
+                ? string.Empty
+                : $"Horario: {_tecnico.HorarioLocal}";
+            lblLocalHorario.IsVisible = !string.IsNullOrWhiteSpace(_tecnico.HorarioLocal);
+
+            if (_tecnico.Modalidad == "Local")
+            {
+                AplicarModalidad("Local");
+            }
+            else if (_tecnico.Modalidad == "Ambos")
+            {
+                layoutSelectorModalidad.IsVisible = true;
+                AplicarModalidad("Domicilio");
+            }
+            else
+            {
+                AplicarModalidad("Domicilio");
+            }
+        }
+
+        private void AplicarModalidad(string modalidad)
+        {
+            _modalidad = modalidad;
+            bool local = modalidad == "Local";
+
+            layoutDomicilioDireccion.IsVisible = !local;
+            cardTarifa.IsVisible = !local;
+            layoutLocalInfo.IsVisible = local;
+            lblCuando.Text = local
+                ? "¿Cuándo irás al local del técnico?"
+                : "¿Cuándo necesitas la visita del técnico?";
+
+            var activo = Color.FromArgb("#007ACC");
+            var inactivo = Color.FromArgb("#252526");
+            btnModDomicilio.BackgroundColor = local ? inactivo : activo;
+            btnModDomicilio.TextColor = local ? Color.FromArgb("#B0B0B5") : Colors.White;
+            btnModLocal.BackgroundColor = local ? activo : inactivo;
+            btnModLocal.TextColor = local ? Colors.White : Color.FromArgb("#B0B0B5");
+
+            if (local)
+            {
+                _distanciaCalculada = 0;
+                _tarifaCalculada = 0m;
+            }
+            else
+            {
+                CalcularGeolocalizacion();
+            }
+        }
+
+        private void OnModalidadDomicilioClicked(object sender, EventArgs e) => AplicarModalidad("Domicilio");
+
+        private void OnModalidadLocalClicked(object sender, EventArgs e) => AplicarModalidad("Local");
 
         private async void CalcularGeolocalizacion()
         {
@@ -191,7 +252,8 @@ namespace PHANTEL.Views
                 return;
             }
 
-            await RecalcularTarifaDesdeCpTecnicoAsync(entryDireccion.Text);
+            if (_modalidad == "Domicilio")
+                await RecalcularTarifaDesdeCpTecnicoAsync(entryDireccion.Text);
 
             DateTime fechaBase = pickerFecha.Date ?? DateTime.Today;
             TimeSpan horaSeleccionada = pickerHora.Time ?? new TimeSpan(10, 0, 0);
@@ -200,6 +262,15 @@ namespace PHANTEL.Views
             string direccionFinal = string.IsNullOrWhiteSpace(entryDireccion.Text)
                 ? (string.IsNullOrEmpty(LoginPage.UsuarioActual.Direccion) ? $"Zona CP {LoginPage.UsuarioActual.CodigoPostal}" : LoginPage.UsuarioActual.Direccion)
                 : entryDireccion.Text.Trim();
+
+            if (_modalidad == "Local")
+            {
+                direccionFinal = string.IsNullOrWhiteSpace(_tecnico.DireccionLocal)
+                    ? "Local del técnico (dirección por confirmar)"
+                    : _tecnico.DireccionLocal;
+                _distanciaCalculada = 0;
+                _tarifaCalculada = 0m;
+            }
 
             var nuevaCita = new SolicitudCita
             {
@@ -212,6 +283,7 @@ namespace PHANTEL.Views
                 DistanciaKm = _distanciaCalculada,
                 TarifaTraslado = _tarifaCalculada,
                 Estado = "Pendiente",
+                Modalidad = _modalidad,
                 FechaCreacion = DateTime.Now,
                 EvidenciaRutaImagen = _fotoBase64Comprimida,
                 EvidenciaRutaVideo = string.Empty,

@@ -133,12 +133,24 @@ namespace PHANTEL.Views
         {
             contenedor.Children.Add(CrearBloqueDisponibilidad(u));
 
-            Seccion(T("cfg.perfilpro"),
+            var filasPerfil = new List<View>
+            {
                 Fila(T("cfg.especialidad"), Vacio(u.Especialidad), null),
                 Fila(T("cfg.tarifa"), $"${u.TarifaPorHora:0.##}", () => EditarTarifaAsync(u)),
                 Fila(T("cfg.experiencia"), Vacio(u.Experiencia), () => EditarExperienciaAsync(u)),
-                Fila(T("cfg.cp.zona"), Vacio(u.CodigoPostal), () => EditarCpAsync(u)),
-                Fila(T("cfg.verificacion"), TextoVerificacion(u), () => Navigation.PushAsync(new VerificacionTecnicoPage())));
+                Fila(T("cfg.modalidad"), TextoModalidad(u), () => EditarModalidadAsync(u))
+            };
+
+            if (u.AtiendeLocal)
+            {
+                filasPerfil.Add(Fila(T("cfg.dirlocal"), Vacio(u.DireccionLocal), () => EditarDireccionLocalAsync(u)));
+                filasPerfil.Add(Fila(T("cfg.horario"), Vacio(u.HorarioLocal), () => EditarHorarioLocalAsync(u)));
+            }
+
+            filasPerfil.Add(Fila(T("cfg.cp.zona"), Vacio(u.CodigoPostal), () => EditarCpAsync(u)));
+            filasPerfil.Add(Fila(T("cfg.verificacion"), TextoVerificacion(u), () => Navigation.PushAsync(new VerificacionTecnicoPage())));
+
+            Seccion(T("cfg.perfilpro"), filasPerfil.ToArray());
 
             Seccion(T("cfg.pagos"),
                 Fila(T("cfg.saldo.custodia"), $"${u.SaldoEnCustodia:F2}", null),
@@ -154,6 +166,8 @@ namespace PHANTEL.Views
                 Fila(T("cfg.password"), null, () => CambiarPasswordAsync(u)));
 
             Seccion(T("cfg.actividad"),
+                Fila(T("cfg.resenas"), u.TotalCalificaciones > 0 ? $"{u.CalificacionPromedio:F1} ★" : null,
+                    () => Navigation.PushAsync(new PerfilTecnicoPage(u, soloLectura: true))),
                 Fila(T("cfg.historial"), null, () => VerHistorialTecnicoAsync(u)));
 
             AgregarSoporte();
@@ -591,6 +605,68 @@ namespace PHANTEL.Views
                 (x, v) => x.TarifaPorHora = decimal.Parse(v.Replace(',', '.'), CultureInfo.InvariantCulture),
                 8, Keyboard.Numeric);
 
+        private async Task EditarModalidadAsync(Usuario u)
+        {
+            string domicilio = T("mod.domicilio");
+            string local = T("mod.local");
+            string ambos = T("mod.ambos");
+
+            string? opcion = await DisplayActionSheetAsync(
+                T("cfg.modalidad"), T("cfg.cancelar"), null, domicilio, local, ambos);
+
+            string? elegida = opcion == domicilio ? "Domicilio"
+                            : opcion == local ? "Local"
+                            : opcion == ambos ? "Ambos"
+                            : null;
+
+            if (elegida == null || elegida == u.Modalidad) return;
+
+            string modalidad = elegida;
+            string direccionLocal = u.DireccionLocal;
+
+            // Para atender en local hace falta su dirección
+            if (modalidad != "Domicilio" && string.IsNullOrWhiteSpace(direccionLocal))
+            {
+                string? dir = await DisplayPromptAsync(
+                    T("cfg.dirlocal"), T("cfg.dirlocal.msg"),
+                    accept: T("cfg.guardar"), cancel: T("cfg.cancelar"), maxLength: 150);
+
+                if (string.IsNullOrWhiteSpace(dir) || dir.Trim().Length < 8)
+                {
+                    await DisplayAlertAsync(T("cfg.atencion"), T("cfg.dirlocal.invalido"), "OK");
+                    return;
+                }
+
+                direccionLocal = dir.Trim();
+            }
+
+            bool ok = await _svc.ActualizarUsuarioAsync(u.Email, x =>
+            {
+                x.Modalidad = modalidad;
+                x.DireccionLocal = direccionLocal;
+            });
+
+            if (!ok)
+            {
+                await DisplayAlertAsync(T("cfg.atencion"), T("cfg.error"), "OK");
+                return;
+            }
+
+            u.Modalidad = modalidad;
+            u.DireccionLocal = direccionLocal;
+            await ReconstruirAsync();
+        }
+
+        private Task EditarDireccionLocalAsync(Usuario u) =>
+            EditarCampoAsync(u, "cfg.dirlocal", "cfg.dirlocal.msg", u.DireccionLocal,
+                v => v.Length >= 8 ? null : T("cfg.dirlocal.invalido"),
+                (x, v) => x.DireccionLocal = v, 150);
+
+        private Task EditarHorarioLocalAsync(Usuario u) =>
+            EditarCampoAsync(u, "cfg.horario", "cfg.horario.msg", u.HorarioLocal,
+                v => null,
+                (x, v) => x.HorarioLocal = v, 100);
+
         private async Task EditarCpAsync(Usuario u)
         {
             string? cp = await DisplayPromptAsync(
@@ -912,6 +988,13 @@ namespace PHANTEL.Views
 
         private static string NombreIdioma() =>
             Idiomas.FirstOrDefault(i => i.Codigo == Textos.IdiomaActual).Nombre ?? "Español";
+
+        private static string TextoModalidad(Usuario u) => u.Modalidad switch
+        {
+            "Local" => T("mod.local"),
+            "Ambos" => T("mod.ambos"),
+            _ => T("mod.domicilio")
+        };
 
         private static string TextoVerificacion(Usuario u) => u.EstadoVerificacion switch
         {

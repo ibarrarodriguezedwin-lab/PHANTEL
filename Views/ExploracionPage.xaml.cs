@@ -10,6 +10,7 @@ namespace PHANTEL.Views
         private List<Usuario> _todosLosTecnicos = new();
 
         private string _especialidadSeleccionada = "Todos";
+        private string _modalidadFiltro = "Todas"; // "Todas", "Domicilio" o "Local"
         private int _indiceOrdenSeleccionado = 0; // 0 = Recomendados, 1 = Mejor calificados, 2 = Más cercanos
         private (double Lat, double Lon)? _ubicacionCliente;
 
@@ -113,7 +114,7 @@ namespace PHANTEL.Views
             string especialidad = _especialidadSeleccionada;
             string textoBusqueda = entryBuscarTecnico.Text?.Trim().ToLower() ?? "";
 
-            btnLimpiarRapido.IsVisible = !string.IsNullOrEmpty(textoBusqueda) || especialidad != "Todos";
+            btnLimpiarRapido.IsVisible = !string.IsNullOrEmpty(textoBusqueda) || especialidad != "Todos" || _modalidadFiltro != "Todas";
 
             var filtrados = _todosLosTecnicos.Where(t =>
             {
@@ -125,18 +126,25 @@ namespace PHANTEL.Views
                                    t.Especialidad.ToLower().Contains(textoBusqueda) ||
                                    (textoBusqueda.Contains("verificado") && t.EstaVerificado);
 
-                return cumpleEspecialidad && cumpleTexto;
+                bool cumpleModalidad = _modalidadFiltro switch
+                {
+                    "Domicilio" => t.AtiendeDomicilio,
+                    "Local" => t.AtiendeLocal,
+                    _ => true
+                };
+
+                return cumpleEspecialidad && cumpleTexto && cumpleModalidad;
             });
 
             IEnumerable<Usuario> ordenados = _indiceOrdenSeleccionado switch
             {
-                1 => filtrados.OrderByDescending(t => t.CalificacionPromedio)
+                1 => filtrados.OrderByDescending(t => t.PuntajeRecomendacion)
                               .ThenByDescending(t => t.EstaVerificado),
 
                 2 when _ubicacionCliente != null => filtrados.OrderBy(t => DistanciaKm(t)),
 
                 _ => filtrados.OrderByDescending(t => t.EstaVerificado)
-                              .ThenByDescending(t => t.CalificacionPromedio)
+                              .ThenByDescending(t => t.PuntajeRecomendacion)
             };
 
             listTecnicos.ItemsSource = ordenados.ToList();
@@ -244,6 +252,8 @@ namespace PHANTEL.Views
         private void OnLimpiarFiltrosClicked(object? sender, EventArgs e)
         {
             entryBuscarTecnico.Text = string.Empty;
+            _modalidadFiltro = "Todas";
+            lblModalidadActual.Text = "Todas";
             _especialidadSeleccionada = "Todos";
             _indiceOrdenSeleccionado = 0;
             lblOrdenActual.Text = "Recomendados";
@@ -304,6 +314,31 @@ namespace PHANTEL.Views
             }
         }
 
+        private async void OnModalidadPillTapped(object? sender, TappedEventArgs e)
+        {
+            string? opcion = await DisplayActionSheetAsync(
+                "Tipo de atención", "Cancelar", null,
+                "Todas", "A domicilio", "En local fijo");
+
+            switch (opcion)
+            {
+                case "Todas":
+                    _modalidadFiltro = "Todas";
+                    break;
+                case "A domicilio":
+                    _modalidadFiltro = "Domicilio";
+                    break;
+                case "En local fijo":
+                    _modalidadFiltro = "Local";
+                    break;
+                default:
+                    return;
+            }
+
+            lblModalidadActual.Text = opcion;
+            AplicarFiltros();
+        }
+
         private async void OnSolicitarClicked(object sender, EventArgs e)
         {
             var button = sender as Button;
@@ -318,7 +353,7 @@ namespace PHANTEL.Views
         {
             if (e.CurrentSelection.FirstOrDefault() is Usuario tecnico)
             {
-                await Navigation.PushAsync(new NuevaSolicitudPage(tecnico));
+                await Navigation.PushAsync(new PerfilTecnicoPage(tecnico));
                 listTecnicos.SelectedItem = null;
             }
         }

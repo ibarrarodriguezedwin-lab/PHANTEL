@@ -20,12 +20,19 @@ namespace PHANTEL.Models
 
         public double Latitud { get; set; }
         public double Longitud { get; set; }
-        public double CalificacionPromedio { get; set; } = 5.0;
+        public double CalificacionPromedio { get; set; } = 0.0;   // Se calcula con las reseñas reales
+        public int TotalCalificaciones { get; set; } = 0;        // Número de reseñas recibidas
+        public double AjusteReputacion { get; set; } = 0.0;      // Penalizaciones por disputas (valor negativo)
         public string FotoPerfil { get; set; } = string.Empty;
 
         // --- PREFERENCIAS Y DISPONIBILIDAD ---
         public bool Disponible { get; set; } = true;   // Técnico: false = pausado, no aparece a los clientes
-        public string Idioma { get; set; } = "es";     // "es" o "en"
+        public string Idioma { get; set; } = "es";     // código de idioma
+
+        // --- MODALIDAD DE ATENCIÓN (Técnico) ---
+        public string Modalidad { get; set; } = "Domicilio";   // "Domicilio", "Local" o "Ambos"
+        public string DireccionLocal { get; set; } = string.Empty;
+        public string HorarioLocal { get; set; } = string.Empty;
 
         // --- CONTROL FINANCIERO, COMISIONES Y REPUTACIÓN ---
         public string ClabeInterbancaria { get; set; } = string.Empty;
@@ -45,6 +52,62 @@ namespace PHANTEL.Models
         public string IneFrenteBase64 { get; set; } = string.Empty;
         public string IneReversoBase64 { get; set; } = string.Empty;
         public string MotivoRechazoVerificacion { get; set; } = string.Empty;
+
+        // --- PROPIEDADES CALCULADAS (no se guardan) ---
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool AtiendeDomicilio => Modalidad == "Domicilio" || Modalidad == "Ambos";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool AtiendeLocal => Modalidad == "Local" || Modalidad == "Ambos";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoModalidad => Modalidad switch
+        {
+            "Local" => "En local fijo",
+            "Ambos" => "Local y domicilio",
+            _ => "A domicilio"
+        };
+
+        // Las estrellas se muestran desde la primera reseña; con menos de 3 se añade la etiqueta "Nuevo"
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool MostrarEstrellas => TotalCalificaciones >= 1;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool MostrarNuevo => TotalCalificaciones < 3;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoEstrellas => $"{CalificacionPromedio:F1} ★ ({TotalCalificaciones})";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoNuevo => "Nuevo";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoCalificacion => TotalCalificaciones == 0
+            ? "Sin reseñas aún"
+            : $"{CalificacionPromedio:F1} ★ ({TotalCalificaciones} {(TotalCalificaciones == 1 ? "reseña" : "reseñas")})";
+
+        // Promedio ponderado: un solo 5 no supera a quien tiene muchas reseñas buenas
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public double PuntajeRecomendacion
+        {
+            get
+            {
+                const double pesoPrevio = 5.0;   // reseñas "virtuales" a favor del promedio base
+                const double promedioBase = 4.0;
+                double v = TotalCalificaciones;
+                double r = v > 0 ? CalificacionPromedio : promedioBase;
+                return (v / (v + pesoPrevio)) * r + (pesoPrevio / (v + pesoPrevio)) * promedioBase;
+            }
+        }
 
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
@@ -75,6 +138,9 @@ namespace PHANTEL.Models
         public string EvidenciaRutaVideo { get; set; } = string.Empty;
         public string EvidenciaRutaAudio { get; set; } = string.Empty;
 
+        // --- MODALIDAD DE LA CITA ---
+        public string Modalidad { get; set; } = "Domicilio";   // "Domicilio" o "Local"
+
         // --- CONTROL DE CALIFICACIONES ---
         public bool CalificadaPorCliente { get; set; } = false;
         public bool CalificadaPorTecnico { get; set; } = false;
@@ -100,6 +166,26 @@ namespace PHANTEL.Models
 
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
+        public bool EsEnLocal => Modalidad == "Local";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool EsDomicilio => Modalidad != "Local";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TieneImagen => !string.IsNullOrWhiteSpace(EvidenciaRutaImagen);
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TieneVideo => !string.IsNullOrWhiteSpace(EvidenciaRutaVideo);
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoUbicacion => EsEnLocal ? "Atención en tu local" : DireccionCliente;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
         public decimal MontoTotalConTraslado => TarifaTraslado + MontoPresupuesto;
 
         [Ignore]
@@ -119,5 +205,43 @@ namespace PHANTEL.Models
         public int TecnicoId { get; set; }
         public int Puntuacion { get; set; }
         public string Comentario { get; set; } = string.Empty;
+
+        // --- DATOS PARA MOSTRAR LA RESEÑA ---
+        public string TecnicoEmail { get; set; } = string.Empty;
+        public string NombreCliente { get; set; } = string.Empty;
+        public DateTime? Fecha { get; set; }
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoEstrellas
+        {
+            get
+            {
+                int n = Math.Clamp(Puntuacion, 0, 5);
+                return new string('★', n) + new string('☆', 5 - n);
+            }
+        }
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoAutor => string.IsNullOrWhiteSpace(NombreCliente) ? "Cliente" : NombreCliente;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoFecha => Fecha.HasValue ? Fecha.Value.ToString("dd/MM/yyyy") : string.Empty;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public string TextoComentario
+        {
+            get
+            {
+                string t = Comentario ?? string.Empty;
+                int i = t.IndexOf("]:", StringComparison.Ordinal);
+                if (t.StartsWith("[") && i >= 0) t = t.Substring(i + 2);
+                t = t.Trim();
+                return string.IsNullOrEmpty(t) ? "Sin comentario escrito." : t;
+            }
+        }
     }
 }

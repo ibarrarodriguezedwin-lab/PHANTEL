@@ -23,10 +23,12 @@ namespace PHANTEL.Models
                 _estaSeleccionada = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ColorTexto));
+                OnPropertyChanged(nameof(ColorFondo));
             }
         }
 
-        public Color ColorTexto => EstaSeleccionada ? Colors.White : Color.FromArgb("#9CA3AF");
+        public Color ColorTexto => EstaSeleccionada ? Color.FromArgb("#121212") : Color.FromArgb("#B0B0B5");
+        public Color ColorFondo => EstaSeleccionada ? Color.FromArgb("#F2F2F7") : Color.FromArgb("#1C1C1E");
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
