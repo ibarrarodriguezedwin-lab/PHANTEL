@@ -1,3 +1,4 @@
+using Firebase.Database.Query;
 using PHANTEL.Models;
 using PHANTEL.Services;
 
@@ -6,6 +7,7 @@ namespace PHANTEL.Views
     public partial class PanelTecnicoPage : ContentPage
     {
         private readonly CloudDatabaseService _dbService = new();
+        private const string WHATSAPP_ADMIN = "525582393553";
 
         public PanelTecnicoPage()
         {
@@ -24,7 +26,6 @@ namespace PHANTEL.Views
 
             if (tecnicoActual != null)
             {
-                // Refrescar estado del técnico desde Firebase para detectar si ya fue verificado o suspendido
                 var usuarioFresco = await _dbService.ObtenerUsuarioPorEmailAsync(tecnicoActual.Email);
                 if (usuarioFresco != null)
                 {
@@ -104,101 +105,11 @@ namespace PHANTEL.Views
             await Navigation.PushAsync(new VerificacionTecnicoPage());
         }
 
-        // --- MENÚ DESPLEGABLE Y GESTIÓN DE PERFIL DEL TÉCNICO ---
-
         private async void OnPerfilTecnicoClicked(object sender, EventArgs e)
         {
             if (LoginPage.UsuarioActual == null) return;
             await Navigation.PushAsync(new ConfiguracionPage());
         }
-
-        private async Task ActualizarCodigoPostalTecnicoAsync()
-        {
-            var u = LoginPage.UsuarioActual;
-            if (u == null) return;
-
-            string nuevoCp = await DisplayPromptAsync(
-                "Actualizar Código Postal",
-                "Ingresa tu Código Postal de residencia (5 dígitos):",
-                accept: "Guardar",
-                cancel: "Cancelar",
-                initialValue: u.CodigoPostal,
-                maxLength: 5,
-                keyboard: Keyboard.Numeric);
-
-            if (string.IsNullOrWhiteSpace(nuevoCp)) return;
-
-            nuevoCp = nuevoCp.Trim();
-            if (nuevoCp.Length != 5 || !nuevoCp.All(char.IsDigit))
-            {
-                await DisplayAlertAsync("CP Inválido", "Ingresa exactamente 5 dígitos numéricos.", "OK");
-                return;
-            }
-
-            var (lat, lon) = await DatabaseService.ObtenerCoordenadasPorDireccionOCpAsync(
-                $"{nuevoCp}, Ciudad de México",
-                nuevoCp);
-
-            bool actualizado = await _dbService.ActualizarCodigoPostalUsuarioAsync(
-                u.Id,
-                u.Email,
-                nuevoCp,
-                lat,
-                lon);
-
-            if (actualizado)
-            {
-                u.CodigoPostal = nuevoCp;
-                u.Latitud = lat;
-                u.Longitud = lon;
-                lblEspecialidad.Text = $"Especialidad: {u.Especialidad} | ⭐ {u.CalificacionPromedio:F1} | 📍 CP {nuevoCp}";
-                await DisplayAlertAsync("Actualizado", $"Tu Código Postal base ahora es {nuevoCp}.", "OK");
-            }
-            else
-            {
-                await DisplayAlertAsync("Error", "No se pudo actualizar el Código Postal en la nube.", "OK");
-            }
-        }
-
-        private async Task CambiarFotoPerfilTecnicoAsync()
-        {
-            try
-            {
-                var results = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions
-                {
-                    Title = "Selecciona tu nueva foto de perfil"
-                });
-
-                var photo = results?.FirstOrDefault();
-                if (photo != null && LoginPage.UsuarioActual != null)
-                {
-                    string base64 = await PHANTEL.Helpers.ImageHelper.ComprimirImagenABase64Async(photo, maxAncho: 400f, calidad: 0.65f);
-                    if (string.IsNullOrEmpty(base64))
-                    {
-                        await DisplayAlertAsync("Error", "No se pudo procesar la imagen seleccionada.", "OK");
-                        return;
-                    }
-
-                    bool guardado = await _dbService.ActualizarFotoPerfilAsync(LoginPage.UsuarioActual.Id, base64);
-                    if (guardado)
-                    {
-                        LoginPage.UsuarioActual.FotoPerfil = base64;
-                        btnPerfilTecnico.Source = ImageSource.FromStream(() => new MemoryStream(Convert.FromBase64String(base64)));
-                        await DisplayAlertAsync("Éxito", "Tu foto de perfil se actualizó correctamente.", "OK");
-                    }
-                    else
-                    {
-                        await DisplayAlertAsync("Error", "No se pudo guardar la foto en la nube.", "OK");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlertAsync("Error", $"No se pudo cambiar la foto: {ex.Message}", "OK");
-            }
-        }
-
-        // --- ESTADO DE DISPONIBILIDAD (se cambia en Configuración) ---
 
         private void ActualizarEstadoDisponibilidad()
         {
@@ -218,118 +129,225 @@ namespace PHANTEL.Views
             await Navigation.PushAsync(new ConfiguracionPage());
         }
 
-        // --- ACCIONES INDEPENDIENTES SOBRE CITA ---
-
-        // 1. ACEPTAR CITA
-        private async void OnAceptarCitaClicked(object sender, EventArgs e)
+        // --- 1. ACEPTAR CITA ---
+        private void OnAceptarCitaTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarAceptarCita(cita);
+        }
+
+        private void OnAceptarCitaClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarAceptarCita(cita);
+        }
+
+        private async void ProcesarAceptarCita(SolicitudCita cita)
+        {
+            await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Aceptada");
+            await DisplayAlertAsync("Cita Aceptada", "Ya puedes chatear con el cliente, ver la ruta y finalizar el servicio al terminar.", "OK");
+            CargarDatosTecnico();
+        }
+
+        // --- 2. RECHAZAR CITA ---
+        private void OnRechazarCitaTapped(object? sender, TappedEventArgs e)
+        {
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarRechazarCita(cita);
+        }
+
+        private void OnRechazarCitaClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarRechazarCita(cita);
+        }
+
+        private async void ProcesarRechazarCita(SolicitudCita cita)
+        {
+            bool confirmar = await DisplayAlertAsync("Rechazar Solicitud", "¿Deseas rechazar esta solicitud?", "Sí, rechazar", "Cancelar");
+            if (confirmar)
             {
-                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Aceptada");
-                await DisplayAlertAsync("Estado Actualizado", "La cita ha sido marcada como Aceptada.", "OK");
+                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Rechazada");
                 CargarDatosTecnico();
             }
         }
 
-        // 2. FINALIZAR TRABAJO (SIN CALIFICAR AL CLIENTE)
-        private async void OnFinalizarTrabajoClicked(object sender, EventArgs e)
+        // --- 3. FINALIZAR TRABAJO ---
+        private void OnFinalizarTrabajoTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarFinalizarTrabajo(cita);
+        }
+
+        private void OnFinalizarTrabajoClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarFinalizarTrabajo(cita);
+        }
+
+        private async void ProcesarFinalizarTrabajo(SolicitudCita cita)
+        {
+            if (cita.Estado != "Aceptada")
+                return;
+
+            bool confirmar = await DisplayAlertAsync("Finalizar Trabajo", "¿Confirmas que el servicio técnico ha concluido?", "Sí, finalizar", "Cancelar");
+            if (confirmar)
             {
-                if (cita.Estado == "Finalizada")
-                {
-                    await DisplayAlertAsync("Aviso", "Este servicio ya fue marcado como finalizado.", "OK");
-                    return;
-                }
-
-                if (cita.Estado != "Aceptada")
-                {
-                    await DisplayAlertAsync("Atención", "Debes aceptar la cita antes de finalizar el trabajo.", "OK");
-                    return;
-                }
-
-                bool confirmar = await DisplayAlertAsync("Finalizar Trabajo", "¿Confirmas que el servicio técnico ha concluido?", "Sí, finalizar", "Cancelar");
-                if (confirmar)
-                {
-                    cita.Estado = "Finalizada";
-                    await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
-                    await DisplayAlertAsync("Trabajo Finalizado", "El servicio ha sido marcado como finalizado.", "OK");
-                    CargarDatosTecnico();
-                }
+                cita.Estado = "Finalizada";
+                await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Finalizada");
+                await DisplayAlertAsync("Trabajo Finalizado", "El servicio quedó finalizado. Ahora puedes eliminar la tarjeta o enviar un reporte privado si hubo algún problema con el cliente.", "OK");
+                CargarDatosTecnico();
             }
         }
 
-        // 3. ELIMINAR CITA (Botón totalmente independiente)
-        private async void OnEliminarCitaClicked(object sender, EventArgs e)
+        // --- 4. REPORTAR PROBLEMA CON EL CLIENTE (PRIVADO ENTRE TÉCNICO Y ADMIN) ---
+        private async void OnReportarClientePrivadoTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (e.Parameter is not SolicitudCita cita || LoginPage.UsuarioActual == null) return;
+
+            string motivo = await DisplayActionSheetAsync(
+                "Reporte Privado a Administración (Conducta del Cliente)",
+                "Cancelar",
+                null,
+                "Falta de respeto o agresión verbal",
+                "Cliente se niega a liberar el pago tras trabajo concluido",
+                "Dirección falsa o cliente ausente sin aviso",
+                "Intento de fraude o solicitud fuera de la plataforma");
+
+            if (string.IsNullOrEmpty(motivo) || motivo == "Cancelar")
+                return;
+
+            string detalle = await DisplayPromptAsync(
+                "Detalle Confidencial para Admin",
+                "Explica brevemente lo ocurrido. Este reporte es 100% confidencial y solo lo verá Administración PHANTEL:",
+                accept: "Enviar Reporte Privado",
+                cancel: "Cancelar",
+                placeholder: "Describe los hechos...");
+
+            if (string.IsNullOrWhiteSpace(detalle))
+                return;
+
+            bool guardado = await _dbService.EnviarReportePrivadoClienteAsync(
+                solicitudId: cita.Id,
+                clienteId: cita.ClienteId,
+                tecnicoId: LoginPage.UsuarioActual.Id,
+                tecnicoNombre: LoginPage.UsuarioActual.Nombre,
+                tecnicoEmail: LoginPage.UsuarioActual.Email,
+                motivo: motivo,
+                detalle: detalle.Trim());
+
+            if (guardado)
             {
-                bool confirmar = await DisplayAlertAsync("⚠️ Eliminar Cita", "¿Estás seguro de eliminar permanentemente esta solicitud?", "Sí, eliminar", "Cancelar");
-                if (confirmar)
+                cita.ReportePrivadoTecnico = true;
+                cita.MotivoReporteTecnico = $"[REPORTE TÉCNICO -> CLIENTE ID #{cita.ClienteId}] {motivo}: {detalle.Trim()} ({DateTime.Now:dd/MM/yyyy HH:mm})";
+                CargarDatosTecnico();
+
+                bool abrirCanalPrivado = await DisplayAlertAsync(
+                    "Reporte Confidencial Registrado",
+                    "Tu reporte fue enviado únicamente a Administración PHANTEL. El cliente no tiene acceso a este mensaje.\n\n¿Deseas abrir el canal privado con Administración por WhatsApp para adjuntar evidencia?",
+                    "Abrir Canal Privado",
+                    "Cerrar");
+
+                if (abrirCanalPrivado)
                 {
-                    await _dbService.EliminarSolicitudAsync(cita.Id);
-                    await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada del sistema.", "OK");
-                    CargarDatosTecnico();
+                    string textoWhats =
+                        $"Hola Administración PHANTEL (Canal Privado Técnicos). Reporto conducta irregular de un cliente:\n\n" +
+                        $"• Folio Cita: #{cita.Id}\n" +
+                        $"• ID Cliente: #{cita.ClienteId}\n" +
+                        $"• Técnico: {LoginPage.UsuarioActual.Nombre} ({LoginPage.UsuarioActual.Email})\n" +
+                        $"• Motivo: {motivo}\n" +
+                        $"• Detalle: {detalle.Trim()}";
+
+                    string url = $"https://wa.me/{WHATSAPP_ADMIN}?text={Uri.EscapeDataString(textoWhats)}";
+                    try { await Launcher.Default.OpenAsync(new Uri(url)); } catch { }
                 }
+            }
+            else
+            {
+                await DisplayAlertAsync("Error", "No se pudo registrar el reporte privado en la nube. Verifica tu conexión.", "OK");
+            }
+        }
+        // --- 5. ELIMINAR CITA (SOLO CUANDO YA FINALIZÓ O FUE RECHAZADA) ---
+        private void OnEliminarCitaTapped(object? sender, TappedEventArgs e)
+        {
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarEliminarCita(cita);
+        }
+
+        private void OnEliminarCitaClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarEliminarCita(cita);
+        }
+
+        private async void ProcesarEliminarCita(SolicitudCita cita)
+        {
+            if (cita.Estado == "Aceptada")
+            {
+                await DisplayAlertAsync("Acción no permitida", "No puedes eliminar una cita en curso. Debes finalizar el trabajo primero.", "OK");
+                return;
+            }
+
+            bool confirmar = await DisplayAlertAsync("Eliminar Cita", "¿Deseas quitar esta solicitud finalizada de tu historial?", "Sí, eliminar", "Cancelar");
+            if (confirmar)
+            {
+                await _dbService.EliminarSolicitudAsync(cita.Id);
+                await DisplayAlertAsync("Eliminada", "La cita ha sido eliminada de tu panel.", "OK");
+                CargarDatosTecnico();
             }
         }
 
-        private async void OnRechazarCitaClicked(object sender, EventArgs e)
+        // --- 6. CHAT CON EL CLIENTE ---
+        private void OnAbrirChatTapped(object? sender, TappedEventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
-            {
-                bool confirmar = await DisplayAlertAsync("Confirmar", "¿Deseas rechazar esta solicitud?", "Sí", "No");
-                if (confirmar)
-                {
-                    await _dbService.ActualizarEstadoSolicitudAsync(cita.Id, "Rechazada");
-                    CargarDatosTecnico();
-                }
-            }
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarAbrirChat(cita);
         }
 
-        private async void OnAbrirChatClicked(object sender, EventArgs e)
+        private void OnAbrirChatClicked(object sender, EventArgs e)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
-            {
-                if (cita.Estado != "Aceptada" && cita.Estado != "Finalizada")
-                {
-                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar el chat.", "OK");
-                    return;
-                }
-
-                await Navigation.PushAsync(new ChatPage(cita));
-            }
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarAbrirChat(cita);
         }
 
-        private async void OnAbrirGoogleMapsWebClicked(object sender, EventArgs e)
+        private async void ProcesarAbrirChat(SolicitudCita cita)
         {
-            var button = sender as Button;
-            if (button?.CommandParameter is SolicitudCita cita)
+            if (cita.Estado != "Aceptada")
+                return;
+
+            await Navigation.PushAsync(new ChatPage(cita));
+        }
+
+        // --- 7. VER RUTA EN MAPS ---
+        private void OnAbrirGoogleMapsWebTapped(object? sender, TappedEventArgs e)
+        {
+            if (e.Parameter is SolicitudCita cita)
+                ProcesarAbrirGoogleMaps(cita);
+        }
+
+        private void OnAbrirGoogleMapsWebClicked(object sender, EventArgs e)
+        {
+            if ((sender as Button)?.CommandParameter is SolicitudCita cita)
+                ProcesarAbrirGoogleMaps(cita);
+        }
+
+        private async void ProcesarAbrirGoogleMaps(SolicitudCita cita)
+        {
+            if (cita.Estado != "Aceptada")
+                return;
+
+            try
             {
-                if (cita.Estado != "Aceptada")
-                {
-                    await DisplayAlertAsync("Atención", "Debes aceptar la cita primero para iniciar la ruta de navegación.", "OK");
-                    return;
-                }
+                string destino = !string.IsNullOrWhiteSpace(cita.DireccionCliente) && cita.DireccionCliente != "Ubicación por coordenadas GPS"
+                    ? Uri.EscapeDataString(cita.DireccionCliente)
+                    : "19.3452,-99.1384";
 
-                try
-                {
-                    string destino = !string.IsNullOrWhiteSpace(cita.DireccionCliente) && cita.DireccionCliente != "Ubicación por coordenadas GPS"
-                        ? Uri.EscapeDataString(cita.DireccionCliente)
-                        : "19.3452,-99.1384";
-
-                    string urlGoogleMaps = $"https://www.google.com/maps/dir/?api=1&destination={destino}&travelmode=driving";
-                    await Launcher.OpenAsync(new Uri(urlGoogleMaps));
-                }
-                catch (Exception ex)
-                {
-                    await DisplayAlertAsync("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
-                }
+                string urlGoogleMaps = $"https://www.google.com/maps/dir/?api=1&destination={destino}&travelmode=driving";
+                await Launcher.OpenAsync(new Uri(urlGoogleMaps));
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlertAsync("Error de Navegación", $"No se pudo abrir Google Maps: {ex.Message}", "OK");
             }
         }
     }

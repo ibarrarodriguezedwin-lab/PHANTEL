@@ -34,12 +34,15 @@ namespace PHANTEL.Views
             var u = LoginPage.UsuarioActual;
             if (u == null) return;
 
-            lblNombreTecnico.Text = $"Técnico: {u.Nombre} ({u.Email})";
+            bool esTecnico = u.TipoPerfil == "Técnico";
+            lblNombreUsuario.Text = $"{(esTecnico ? "Técnico" : "Cliente")}: {u.Nombre} ({u.Email})";
+            lblDescripcionSuspension.Text = esTecnico
+                ? "Tu perfil técnico ha sido inhabilitado para recibir o atender nuevos servicios dentro de PHANTEL debido a la siguiente resolución administrativa:"
+                : "Tu cuenta de cliente ha sido inhabilitada para solicitar servicios dentro de PHANTEL debido a la siguiente resolución administrativa:";
 
             string motivo = u.MotivoSuspension;
 
-            // Respaldo: si la suspensión se aplicó antes de agregar MotivoSuspension, leer el dictamen de su última cita cerrada
-            if (string.IsNullOrWhiteSpace(motivo))
+            if (string.IsNullOrWhiteSpace(motivo) && esTecnico)
             {
                 var citas = await _dbService.ObtenerSolicitudesPorUsuarioAsync(u.Id, esTecnico: true);
                 var ultimaResuelta = citas
@@ -54,19 +57,25 @@ namespace PHANTEL.Views
             }
 
             lblMotivoSuspension.Text = string.IsNullOrWhiteSpace(motivo)
-                ? "Incumplimiento de políticas de servicio PHANTEL detectado en auditoría."
+                ? "Incumplimiento de las políticas de seguridad y convivencia PHANTEL."
                 : motivo;
 
-            lblSaldoDisponible.Text = $"Saldo liberado disponible: ${u.SaldoLiberado:F2} MXN";
-            lblSaldoRetenido.Text = $"Saldo en custodia / retenido: ${u.SaldoEnCustodia:F2} MXN";
+            // Mostrar módulo financiero solo si es Técnico
+            cardFinanzasTecnico.IsVisible = esTecnico;
 
-            if (!string.IsNullOrWhiteSpace(u.ClabeInterbancaria))
-                entryClabeRetiro.Text = u.ClabeInterbancaria;
+            if (esTecnico)
+            {
+                lblSaldoDisponible.Text = $"Saldo liberado disponible: ${u.SaldoLiberado:F2} MXN";
+                lblSaldoRetenido.Text = $"Saldo en custodia / retenido: ${u.SaldoEnCustodia:F2} MXN";
 
-            btnRetirarSaldo.IsEnabled = u.SaldoLiberado > 0;
-            btnRetirarSaldo.Text = u.SaldoLiberado > 0
-                ? $"🏦 Retirar ${u.SaldoLiberado:F2} MXN vía SPEI"
-                : "✅ Sin saldo pendiente por retirar";
+                if (!string.IsNullOrWhiteSpace(u.ClabeInterbancaria))
+                    entryClabeRetiro.Text = u.ClabeInterbancaria;
+
+                btnRetirarSaldo.IsEnabled = u.SaldoLiberado > 0;
+                btnRetirarSaldo.Text = u.SaldoLiberado > 0
+                    ? $"Retirar ${u.SaldoLiberado:F2} MXN vía SPEI"
+                    : "Sin saldo pendiente por retirar";
+            }
         }
 
         private async void OnRetirarSaldoClicked(object sender, EventArgs e)
@@ -96,15 +105,23 @@ namespace PHANTEL.Views
             }
         }
 
+        private void OnContactarAdminTapped(object? sender, TappedEventArgs e)
+            => OnContactarAdminClicked(sender ?? this, EventArgs.Empty);
+
         private async void OnContactarAdminClicked(object sender, EventArgs e)
         {
             var u = LoginPage.UsuarioActual;
-            string msg = $"Hola Administración PHANTEL, soy el técnico {u?.Nombre} ({u?.Email}). Solicito aclaración sobre la suspensión de mi cuenta.";
+            string rol = u?.TipoPerfil == "Técnico" ? "el técnico" : "el cliente";
+            string msg = $"Hola Administración PHANTEL, soy {rol} {u?.Nombre} ({u?.Email}). Solicito aclaración sobre la suspensión de mi cuenta.";
             try { await Launcher.Default.OpenAsync(new Uri($"https://wa.me/525582393553?text={Uri.EscapeDataString(msg)}")); } catch { }
         }
 
+        private void OnCerrarSesionTapped(object? sender, TappedEventArgs e)
+            => OnCerrarSesionClicked(sender ?? this, EventArgs.Empty);
+
         private void OnCerrarSesionClicked(object sender, EventArgs e)
         {
+            NotificacionRealtimeService.DetenerEscucha();
             Preferences.Default.Remove("SesionEmail");
             LoginPage.UsuarioActual = null;
             Application.Current!.Windows[0].Page = new NavigationPage(new LoginPage());

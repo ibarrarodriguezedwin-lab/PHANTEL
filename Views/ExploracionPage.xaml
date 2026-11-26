@@ -40,11 +40,61 @@
             </Grid>
         </Grid>
 
-        <!-- Fila 0: saludo | 1: oficios | 2: búsqueda | 3: filtros | 4: técnicos -->
-        <Grid RowDefinitions="Auto, Auto, Auto, Auto, *" Padding="20,16,20,0" RowSpacing="12">
+        <!-- Fila 0: banner aviso conducta | 1: saludo | 2: oficios | 3: búsqueda | 4: filtros | 5: técnicos -->
+        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, *" Padding="20,16,20,0" RowSpacing="12">
+
+            <!-- 0. BANNER DE AVISO DE CONDUCTA (SOLO SI EL ADMIN ENVIÓ ADVERTENCIA) -->
+            <Border Grid.Row="0"
+                    x:Name="cardAvisoConducta"
+                    IsVisible="False"
+                    Stroke="#4A351C"
+                    StrokeThickness="1"
+                    BackgroundColor="#241C14"
+                    Padding="14,12">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10" VerticalOptions="Center">
+                        <Path Grid.Column="0"
+                              Data="M 1,21 L 23,21 L 12,2 L 1,21 Z M 13,18 L 11,18 L 11,16 L 13,16 L 13,18 Z M 13,14 L 11,14 L 11,10 L 13,10 L 13,14 Z"
+                              Fill="#F59E0B"
+                              Aspect="Uniform"
+                              WidthRequest="18"
+                              HeightRequest="18"
+                              VerticalOptions="Center"/>
+                        <Label Grid.Column="1"
+                               Text="Aviso de Conducta PHANTEL"
+                               FontAttributes="Bold"
+                               FontSize="13"
+                               TextColor="#F59E0B"
+                               VerticalOptions="Center"/>
+                        <Border Grid.Column="2"
+                                Stroke="#4A351C"
+                                StrokeThickness="1"
+                                BackgroundColor="#1C1C1E"
+                                Padding="10,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnMarcarAvisoLeidoTapped"/>
+                            </Border.GestureRecognizers>
+                            <Label Text="Entendido"
+                                   FontSize="11"
+                                   FontAttributes="Bold"
+                                   TextColor="#F2F2F7"/>
+                        </Border>
+                    </Grid>
+                    <Label x:Name="lblMensajeAvisoConducta"
+                           Text=""
+                           FontSize="12"
+                           TextColor="#E5E5EA"/>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- 1. Encabezado -->
-            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" ColumnSpacing="12">
+            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" ColumnSpacing="12">
                 <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
                     <Label Text="¿Qué necesitas arreglar hoy?"
                            TextColor="#8E8E93"
@@ -78,7 +128,7 @@
             </Grid>
 
             <!-- 2. Oficios (solo texto, sin iconos) -->
-            <CollectionView Grid.Row="1"
+            <CollectionView Grid.Row="2"
                             x:Name="carruselCategorias"
                             IsVisible="False"
                             ItemsLayout="HorizontalList"
@@ -110,7 +160,7 @@
             </CollectionView>
 
             <!-- 3. Búsqueda -->
-            <Border Grid.Row="2"
+            <Border Grid.Row="3"
                     StrokeThickness="0"
                     BackgroundColor="#1C1C1E"
                     HeightRequest="48"
@@ -146,7 +196,7 @@
             </Border>
 
             <!-- 4. Filtros: tipo de atención y orden -->
-            <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="10">
+            <Grid Grid.Row="4" ColumnDefinitions="*, *" ColumnSpacing="10">
                 <Border Grid.Column="0"
                         StrokeThickness="0"
                         BackgroundColor="#1C1C1E"
@@ -193,7 +243,7 @@
             </Grid>
 
             <!-- 5. Técnicos -->
-            <CollectionView Grid.Row="4"
+            <CollectionView Grid.Row="5"
                             x:Name="listTecnicos"
                             SelectionMode="Single"
                             SelectionChanged="OnTecnicoSeleccionado">
@@ -254,7 +304,6 @@
                                 </VerticalStackLayout>
 
                                 <VerticalStackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End" Spacing="4">
-                                    <!-- Con 3 reseñas o más: promedio real. Con menos: etiqueta "Nuevo" -->
                                     <Label Text="{Binding TextoEstrellas}"
                                            IsVisible="{Binding MostrarEstrellas}"
                                            FontAttributes="Bold"

@@ -425,7 +425,7 @@ namespace PHANTEL.Services
             }
         }
 
-        // --- 3. CHAT Y FOTO DE PERFIL ---
+        // --- 3. CHAT, LECTURA EN VIVO Y FOTO DE PERFIL ---
         public async Task<bool> EnviarMensajeChatAsync(MensajeChat mensaje)
         {
             try
@@ -449,6 +449,25 @@ namespace PHANTEL.Services
                 .Child("Chats")
                 .Child(solicitudId.ToString())
                 .AsObservable<MensajeChat>();
+        }
+
+        public async Task MarcarMensajeLeidoAsync(int solicitudId, string mensajeId)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(mensajeId)) return;
+
+                await _firebase
+                    .Child("Chats")
+                    .Child(solicitudId.ToString())
+                    .Child(mensajeId)
+                    .Child("Leido")
+                    .PutAsync("true");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR MARCAR LEIDO]: {ex.Message}");
+            }
         }
 
         public async Task<bool> ActualizarFotoPerfilAsync(int usuarioId, string nuevaFotoBase64)
@@ -795,7 +814,7 @@ namespace PHANTEL.Services
                     if (penalizarReputacion)
                     {
                         tecNode.Object.ReportesAcumulados += 1;
-                        tecNode.Object.AjusteReputacion -= 0.5;   // se descuenta del promedio calculado con las reseñas
+                        tecNode.Object.AjusteReputacion -= 0.5;
                     }
 
                     if (suspenderTecnico)
@@ -812,7 +831,7 @@ namespace PHANTEL.Services
                 {
                     SolicitudId = citaId,
                     EmisorId = 0,
-                    EmisorNombre = "⚖️ ADMINISTRACIÓN PHANTEL",
+                    EmisorNombre = "ADMINISTRACIÓN PHANTEL",
                     Texto = $"RESOLUCIÓN OFICIAL DE DISPUTA (CASO CERRADO):\n" +
                             $"• Monto bruto técnico: ${montoLiberadoTecnico:F2} MXN\n" +
                             $"• Comisión (3%) + Penalización disputa (5%): -${(comisionBase + multaDisputa5Porciento):F2} MXN\n" +
@@ -939,6 +958,152 @@ namespace PHANTEL.Services
             {
                 System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR DICTAMINAR KYC]: {ex.Message}");
                 return false;
+            }
+        }
+
+        // --- 8. REPORTES PRIVADOS TÉCNICO -> ADMIN, AVISOS DE CONDUCTA Y SUSPENSIÓN DE CLIENTES ---
+        public async Task<bool> EnviarReportePrivadoClienteAsync(
+            int solicitudId,
+            int clienteId,
+            int tecnicoId,
+            string tecnicoNombre,
+            string tecnicoEmail,
+            string motivo,
+            string detalle)
+        {
+            try
+            {
+                string reporteTexto = $"[REPORTE TÉCNICO -> CLIENTE ID #{clienteId}] {motivo}: {detalle.Trim()} ({DateTime.Now:dd/MM/yyyy HH:mm})";
+
+                var solicitudes = await _firebase.Child("Solicitudes").OnceAsync<SolicitudCita>();
+                var citaTarget = solicitudes.FirstOrDefault(s => s.Object.Id == solicitudId || Math.Abs(s.Key.GetHashCode()) == solicitudId);
+
+                if (citaTarget != null)
+                {
+                    citaTarget.Object.ReportePrivadoTecnico = true;
+                    citaTarget.Object.MotivoReporteTecnico = reporteTexto;
+                    await _firebase.Child("Solicitudes").Child(citaTarget.Key).PutAsync(citaTarget.Object);
+                    InvalidarCacheSolicitudes();
+                }
+
+                await _firebase.Child("ReportesClientes").Child($"cita_{solicitudId}").PutAsync(new ReporteClienteItem
+                {
+                    SolicitudId = solicitudId,
+                    ClienteId = clienteId,
+                    TecnicoId = tecnicoId,
+                    TecnicoNombre = tecnicoNombre,
+                    TecnicoEmail = tecnicoEmail,
+                    Motivo = motivo,
+                    Detalle = detalle.Trim(),
+                    Fecha = DateTime.Now,
+                    EstadoRevision = "Pendiente"
+                });
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR REPORTE PRIVADO]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<List<ReporteClienteItem>> ObtenerReportesPrivadosClientesAsync()
+        {
+            try
+            {
+                var items = await _firebase.Child("ReportesClientes").OnceAsync<ReporteClienteItem>();
+                return items
+                    .Where(x => x.Object != null)
+                    .Select(x =>
+                    {
+                        var r = x.Object;
+                        r.Key = x.Key;
+                        return r;
+                    })
+                    .Where(r => r.EstadoRevision != "Resuelto")
+                    .OrderByDescending(r => r.Fecha)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR LISTA REPORTES CLIENTES]: {ex.Message}");
+                return new List<ReporteClienteItem>();
+            }
+        }
+
+        public async Task<bool> EnviarAvisoConductaClienteAsync(int clienteId, string reporteKey, string mensajeAviso)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var nodo = usuarios.FirstOrDefault(u => u.Object != null && u.Object.Id == clienteId);
+
+                if (nodo == null) return false;
+
+                nodo.Object.TieneAvisoConducta = true;
+                nodo.Object.MensajeAvisoConducta = mensajeAviso.Trim();
+                nodo.Object.FechaAvisoConducta = DateTime.Now;
+
+                await _firebase.Child("Usuarios").Child(nodo.Key).PutAsync(nodo.Object);
+                InvalidarCacheUsuarios();
+
+                if (!string.IsNullOrEmpty(reporteKey))
+                    await _firebase.Child("ReportesClientes").Child(reporteKey).Child("EstadoRevision").PutAsync("\"Resuelto\"");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR AVISO CONDUCTA]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SuspenderClienteAsync(int clienteId, string reporteKey, string motivoSuspension)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var nodo = usuarios.FirstOrDefault(u => u.Object != null && u.Object.Id == clienteId);
+
+                if (nodo == null) return false;
+
+                nodo.Object.CuentaSuspendida = true;
+                nodo.Object.MotivoSuspension = $"{motivoSuspension.Trim()} ({DateTime.Now:dd/MM/yyyy HH:mm})";
+
+                await _firebase.Child("Usuarios").Child(nodo.Key).PutAsync(nodo.Object);
+                InvalidarCacheUsuarios();
+
+                if (!string.IsNullOrEmpty(reporteKey))
+                    await _firebase.Child("ReportesClientes").Child(reporteKey).Child("EstadoRevision").PutAsync("\"Resuelto\"");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR SUSPENDER CLIENTE]: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task MarcarAvisoConductaLeidoAsync(int clienteId)
+        {
+            try
+            {
+                var usuarios = await _firebase.Child("Usuarios").OnceAsync<Usuario>();
+                var nodo = usuarios.FirstOrDefault(u => u.Object != null && u.Object.Id == clienteId);
+
+                if (nodo != null)
+                {
+                    nodo.Object.TieneAvisoConducta = false;
+                    await _firebase.Child("Usuarios").Child(nodo.Key).PutAsync(nodo.Object);
+                    InvalidarCacheUsuarios();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FIREBASE ERROR MARCAR AVISO LEIDO]: {ex.Message}");
             }
         }
     }

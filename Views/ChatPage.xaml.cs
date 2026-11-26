@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Maui.Views;
-using Firebase.Database.Query;
 using PHANTEL.Helpers;
 using PHANTEL.Models;
 using PHANTEL.Services;
@@ -32,6 +31,7 @@ namespace PHANTEL.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+            await CargarPerfilContraparteAsync();
             ConectarChatEnVivo();
             await RefrescarEstadoPresupuestoAsync();
         }
@@ -40,6 +40,46 @@ namespace PHANTEL.Views
         {
             base.OnDisappearing();
             _subscripcionChat?.Dispose();
+        }
+
+        private async Task CargarPerfilContraparteAsync()
+        {
+            try
+            {
+                bool soyTecnico = LoginPage.UsuarioActual?.TipoPerfil == "Técnico";
+                int otroUsuarioId = soyTecnico ? _cita.ClienteId : _cita.TecnicoId;
+
+                Usuario? contraparte = null;
+
+                if (otroUsuarioId != 0)
+                    contraparte = await _dbService.ObtenerUsuarioPorIdAsync(otroUsuarioId);
+
+                if (contraparte == null && !soyTecnico && !string.IsNullOrWhiteSpace(_cita.TecnicoEmail))
+                    contraparte = await _dbService.ObtenerUsuarioPorEmailAsync(_cita.TecnicoEmail);
+
+                if (contraparte != null)
+                {
+                    lblTituloChat.Text = contraparte.Nombre;
+
+                    if (!string.IsNullOrWhiteSpace(contraparte.FotoPerfil))
+                    {
+                        string cleanBase64 = contraparte.FotoPerfil.Contains(",")
+                            ? contraparte.FotoPerfil.Split(',')[1]
+                            : contraparte.FotoPerfil;
+
+                        byte[] imageBytes = Convert.FromBase64String(cleanBase64.Trim());
+                        imgAvatarChat.Source = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                    }
+                }
+                else
+                {
+                    lblTituloChat.Text = soyTecnico ? $"Cliente #{_cita.ClienteId}" : "Técnico PHANTEL";
+                }
+            }
+            catch
+            {
+                imgAvatarChat.Source = "dotnet_bot.png";
+            }
         }
 
         private async Task RefrescarEstadoPresupuestoAsync()
@@ -618,7 +658,7 @@ namespace PHANTEL.Views
             }
         }
 
-        // --- CHAT EN VIVO Y CONFIRMACIÓN DE LECTURA ---
+        // --- CHAT EN VIVO Y CONFIRMACIÓN DE LECTURA EN TIEMPO REAL ---
         private void ConectarChatEnVivo()
         {
             _subscripcionChat = _dbService.EscucharChatEnVivo(_cita.Id).Subscribe(ev =>
@@ -638,13 +678,12 @@ namespace PHANTEL.Views
                         if (!esMio && !msg.Leido && !string.IsNullOrEmpty(msg.Id))
                         {
                             msg.Leido = true;
-                            _ = MarcarMensajeComoLeidoAsync(_cita.Id, msg.Id);
+                            _ = _dbService.MarcarMensajeLeidoAsync(_cita.Id, msg.Id);
                         }
 
                         var existente = _mensajes.FirstOrDefault(m => m.Id == msg.Id);
                         if (existente != null)
                         {
-                            // Actualizar estado de leído en tiempo real
                             if (existente.Leido != msg.Leido || existente.Entregado != msg.Entregado)
                             {
                                 existente.Entregado = msg.Entregado;
@@ -680,21 +719,6 @@ namespace PHANTEL.Views
                     });
                 }
             });
-        }
-
-        private async Task MarcarMensajeComoLeidoAsync(int solicitudId, string mensajeId)
-        {
-            try
-            {
-                var firebase = new Firebase.Database.FirebaseClient("https://phantel-app-default-rtdb.firebaseio.com/");
-                await firebase
-                    .Child("chats")
-                    .Child(solicitudId.ToString())
-                    .Child(mensajeId)
-                    .Child("Leido")
-                    .PutAsync(true);
-            }
-            catch { }
         }
 
         private void OnEnviarMensajeTapped(object? sender, TappedEventArgs e)

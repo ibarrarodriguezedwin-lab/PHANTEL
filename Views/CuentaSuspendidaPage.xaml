@@ -3,105 +3,192 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PHANTEL.Views.CuentaSuspendidaPage"
              BackgroundColor="#121212"
+             NavigationPage.HasNavigationBar="False"
              Title="Estado de Cuenta PHANTEL">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="16" VerticalOptions="Center">
+        <VerticalStackLayout Padding="20,24" Spacing="16" VerticalOptions="Center" MaximumWidthRequest="540" HorizontalOptions="Fill">
 
-            <!-- Aviso Principal de Suspensión -->
-            <Border Stroke="#DC3545" StrokeThickness="1.5" Padding="18" BackgroundColor="#23171B">
+            <!-- Aviso Principal de Suspensión (Liquid Glass Oscuro) -->
+            <Border Stroke="#3D2226"
+                    StrokeThickness="1.2"
+                    Padding="20"
+                    BackgroundColor="#1C1C1E">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14"/>
+                    <RoundRectangle CornerRadius="18"/>
                 </Border.StrokeShape>
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="🚫 CUENTA SUSPENDIDA"
-                           FontSize="22"
+                <VerticalStackLayout Spacing="12">
+
+                    <!-- Ícono Vectorial de Bloqueo -->
+                    <Border WidthRequest="52"
+                            HeightRequest="52"
+                            StrokeThickness="1"
+                            Stroke="#3D2226"
+                            BackgroundColor="#22181A"
+                            HorizontalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="26"/>
+                        </Border.StrokeShape>
+                        <Path Data="M 12,2 C 6.48,2 2,6.48 2,12 C 2,17.52 6.48,22 12,22 C 17.52,22 22,17.52 22,12 C 22,6.48 17.52,2 12,2 Z M 4,12 C 4,7.58 7.58,4 12,4 C 13.85,4 15.55,4.63 16.9,5.69 L 5.69,16.9 C 4.63,15.55 4,13.85 4,12 Z M 12,20 C 10.15,20 8.45,19.37 7.1,18.31 L 18.31,7.1 C 19.37,8.45 20,10.15 20,12 C 20,16.42 16.42,20 12,20 Z"
+                              Fill="#FF6B6B"
+                              Aspect="Uniform"
+                              WidthRequest="24"
+                              HeightRequest="24"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center"/>
+                    </Border>
+
+                    <Label Text="CUENTA SUSPENDIDA"
+                           FontSize="20"
                            FontAttributes="Bold"
+                           CharacterSpacing="1"
                            TextColor="#FF6B6B"
                            HorizontalOptions="Center"/>
 
-                    <Label x:Name="lblNombreTecnico"
-                           Text="Técnico: --"
-                           FontSize="15"
+                    <Label x:Name="lblNombreUsuario"
+                           Text="Usuario: --"
+                           FontSize="14"
                            FontAttributes="Bold"
-                           TextColor="White"
+                           TextColor="#F2F2F7"
                            HorizontalOptions="Center"/>
 
-                    <Label Text="Tu perfil ha sido inhabilitado para recibir o atender nuevos servicios dentro de PHANTEL debido a la siguiente resolución administrativa:"
+                    <Label x:Name="lblDescripcionSuspension"
+                           Text="Tu cuenta ha sido inhabilitada dentro de PHANTEL debido a la siguiente resolución administrativa:"
                            FontSize="13"
-                           TextColor="#D0D7DE"/>
+                           TextColor="#B0B0B5"
+                           HorizontalTextAlignment="Center"/>
 
-                    <Border Stroke="#40FF6B6B" Padding="12" BackgroundColor="#181214" StrokeShape="RoundRectangle 8">
-                        <Label x:Name="lblMotivoSuspension"
-                               Text="Motivo no especificado."
-                               FontSize="13"
-                               FontAttributes="Bold"
-                               TextColor="#FFC107"/>
+                    <Border Stroke="#3A321C"
+                            StrokeThickness="1"
+                            Padding="14"
+                            BackgroundColor="#221E14">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="MOTIVO OFICIAL"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   CharacterSpacing="0.8"
+                                   TextColor="#8E8E93"/>
+                            <Label x:Name="lblMotivoSuspension"
+                                   Text="Motivo no especificado."
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="#E0A030"/>
+                        </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Módulo de Liquidación y Retiro de Saldo Liberado -->
-            <Border Stroke="#28A745" StrokeThickness="1.2" Padding="18" BackgroundColor="#1B222A">
+            <!-- Módulo de Liquidación y Retiro de Saldo (Solo visible para Técnicos) -->
+            <Border x:Name="cardFinanzasTecnico"
+                    Stroke="#2C2C2E"
+                    StrokeThickness="1"
+                    Padding="18"
+                    BackgroundColor="#1C1C1E">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14"/>
+                    <RoundRectangle CornerRadius="18"/>
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="💰 Resumen Financiero y Retiro"
-                           FontSize="16"
+                    <Label Text="Resumen Financiero y Retiro"
+                           FontSize="15"
                            FontAttributes="Bold"
-                           TextColor="#00D2FF"/>
+                           TextColor="#4DA3E0"/>
 
                     <Label x:Name="lblSaldoDisponible"
                            Text="Saldo liberado disponible: $0.00 MXN"
                            FontSize="16"
                            FontAttributes="Bold"
-                           TextColor="#28A745"/>
+                           TextColor="#F2F2F7"/>
 
                     <Label x:Name="lblSaldoRetenido"
-                           Text="Saldo retenido / penalizado: $0.00 MXN"
+                           Text="Saldo en custodia / retenido: $0.00 MXN"
                            FontSize="13"
-                           TextColor="#B0C4DE"/>
+                           TextColor="#8E8E93"/>
 
                     <Label Text="Ingresa tu CLABE interbancaria (18 dígitos) para transferir tu saldo liberado:"
                            FontSize="12"
-                           TextColor="#E0E0E0"/>
+                           TextColor="#B0B0B5"/>
 
-                    <Entry x:Name="entryClabeRetiro"
-                           Placeholder="CLABE Interbancaria (18 dígitos)"
-                           Keyboard="Numeric"
-                           MaxLength="18"
-                           TextColor="White"
-                           PlaceholderColor="Gray"
-                           BackgroundColor="#252526"/>
+                    <Border Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            BackgroundColor="#252528"
+                            Padding="14,0"
+                            HeightRequest="46">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12"/>
+                        </Border.StrokeShape>
+                        <Entry x:Name="entryClabeRetiro"
+                               Placeholder="CLABE Interbancaria (18 dígitos)"
+                               Keyboard="Numeric"
+                               MaxLength="18"
+                               TextColor="#F2F2F7"
+                               PlaceholderColor="#8E8E93"
+                               BackgroundColor="Transparent"
+                               VerticalOptions="Center"/>
+                    </Border>
 
                     <Button x:Name="btnRetirarSaldo"
-                            Text="🏦 Solicitar Transferencia SPEI de Saldo"
+                            Text="Solicitar Transferencia SPEI de Saldo"
                             Clicked="OnRetirarSaldoClicked"
-                            BackgroundColor="#28A745"
-                            TextColor="White"
+                            BackgroundColor="#F2F2F7"
+                            TextColor="#121212"
                             FontAttributes="Bold"
                             HeightRequest="44"
-                            CornerRadius="10"/>
+                            CornerRadius="12"/>
                 </VerticalStackLayout>
             </Border>
 
             <!-- Soporte y Cerrar Sesión -->
-            <Button Text="💬 Aclaraciones con Administración (WhatsApp)"
-                    Clicked="OnContactarAdminClicked"
-                    BackgroundColor="#007ACC"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    HeightRequest="42"
-                    CornerRadius="10"/>
+            <Border StrokeThickness="0"
+                    BackgroundColor="#0088FF"
+                    HeightRequest="46">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnContactarAdminTapped"/>
+                </Border.GestureRecognizers>
+                <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                    <Path Data="M 20,2 L 4,2 C 2.9,2 2,2.9 2,4 L 2,22 L 6,18 L 20,18 C 21.1,18 22,17.1 22,16 L 22,4 C 22,2.9 21.1,2 20,2 Z"
+                          Fill="White"
+                          Aspect="Uniform"
+                          WidthRequest="16"
+                          HeightRequest="16"
+                          VerticalOptions="Center"/>
+                    <Label Text="Aclaraciones con Administración"
+                           TextColor="White"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </Border>
 
-            <Button Text="🚪 Cerrar Sesión"
-                    Clicked="OnCerrarSesionClicked"
-                    BackgroundColor="#343A40"
-                    TextColor="#FF6B6B"
-                    FontAttributes="Bold"
-                    HeightRequest="42"
-                    CornerRadius="10"/>
+            <Border Stroke="#3D2226"
+                    StrokeThickness="1"
+                    BackgroundColor="#22181A"
+                    HeightRequest="46">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnCerrarSesionTapped"/>
+                </Border.GestureRecognizers>
+                <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                    <Path Data="M 17,7 L 15.59,8.41 L 18.17,11 L 8,11 L 8,13 L 18.17,13 L 15.59,15.58 L 17,17 L 22,12 L 17,7 Z M 4,5 L 12,5 L 12,3 L 4,3 C 2.9,3 2,3.9 2,5 L 2,19 C 2,20.1 2.9,21 4,21 L 12,21 L 12,19 L 4,19 L 4,5 Z"
+                          Fill="#FF6B6B"
+                          Aspect="Uniform"
+                          WidthRequest="16"
+                          HeightRequest="16"
+                          VerticalOptions="Center"/>
+                    <Label Text="Cerrar Sesión"
+                           TextColor="#FF6B6B"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </Border>
 
         </VerticalStackLayout>
     </ScrollView>

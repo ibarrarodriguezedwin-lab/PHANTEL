@@ -31,7 +31,6 @@
                            Text="Especialidad:"
                            TextColor="#8E8E93"
                            FontSize="13"/>
-                    <!-- Estado de disponibilidad: al tocarlo abre Configuración -->
                     <Label x:Name="lblDisponibilidad"
                            Text=""
                            FontAttributes="Bold"
@@ -70,7 +69,7 @@
                     FontSize="13"
                     FontAttributes="Bold"
                     HeightRequest="42"
-                    CornerRadius="8"/>
+                    CornerRadius="12"/>
         </VerticalStackLayout>
 
         <Label Grid.Row="1"
@@ -82,6 +81,10 @@
 
         <!-- Solicitudes -->
         <CollectionView Grid.Row="2" x:Name="listCitasTecnico" SelectionMode="None">
+            <CollectionView.Footer>
+                <BoxView HeightRequest="30" Color="Transparent"/>
+            </CollectionView.Footer>
+
             <CollectionView.EmptyView>
                 <Label Text="No tienes solicitudes por el momento."
                        HorizontalOptions="Center"
@@ -91,21 +94,38 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border BackgroundColor="#1C1C1E" StrokeThickness="0" Margin="0,6" Padding="16">
+                    <Border BackgroundColor="#1C1C1E"
+                            Stroke="#2C2C2E"
+                            StrokeThickness="1"
+                            Margin="0,6"
+                            Padding="16">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12"/>
+                            <RoundRectangle CornerRadius="16"/>
                         </Border.StrokeShape>
 
-                        <VerticalStackLayout Spacing="8">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
-                                       FontAttributes="Bold"
-                                       FontSize="13"
-                                       TextColor="#34C759"/>
+                        <VerticalStackLayout Spacing="10">
+                            <!-- Estado y Traslado en Blanco Elegante -->
+                            <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <Border Grid.Column="0"
+                                        HorizontalOptions="Start"
+                                        StrokeThickness="0"
+                                        BackgroundColor="#252528"
+                                        Padding="10,4">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="8"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="{Binding Estado}"
+                                           FontAttributes="Bold"
+                                           FontSize="12"
+                                           TextColor="#4DA3E0"/>
+                                </Border>
+
                                 <Label Grid.Column="1"
-                                       Text="{Binding TarifaTraslado, StringFormat='Traslado ${0:F2}'}"
-                                       FontSize="13"
-                                       TextColor="#B0B0B5"/>
+                                       Text="{Binding TarifaTraslado, StringFormat='Traslado ${0:F2} MXN'}"
+                                       FontAttributes="Bold"
+                                       FontSize="14"
+                                       TextColor="#F2F2F7"
+                                       VerticalOptions="Center"/>
                             </Grid>
 
                             <Label Text="{Binding DescripcionFalla}"
@@ -117,26 +137,28 @@
                                    TextColor="#B0B0B5"
                                    FontSize="14"/>
 
-                            <Label Text="{Binding FechaHoraProgramada, StringFormat='Cita: {0:dd/MM/yyyy HH:mm} h'}"
-                                   TextColor="#F2F2F7"
+                            <Label Text="{Binding FechaHoraProgramada, StringFormat='Cita: {0:dd/MM/yyyy · HH:mm} hrs'}"
+                                   TextColor="#D1D1D6"
                                    FontSize="13"/>
 
-                            <Label Text="{Binding DistanciaKm, StringFormat='A {0:F1} km del cliente'}"
-                                   IsVisible="{Binding EsDomicilio}"
-                                   TextColor="#8E8E93"
-                                   FontSize="12"/>
-                            <Label Text="{Binding FechaCreacion, StringFormat='Solicitada el {0:dd/MM/yyyy HH:mm}'}"
-                                   TextColor="#8E8E93"
-                                   FontSize="12"/>
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="{Binding DistanciaKm, StringFormat='A {0:F1} km'}"
+                                       IsVisible="{Binding EsDomicilio}"
+                                       TextColor="#8E8E93"
+                                       FontSize="12"/>
+                                <Label Text="{Binding FechaCreacion, StringFormat='Solicitada: {0:dd/MM/yyyy HH:mm}'}"
+                                       TextColor="#8E8E93"
+                                       FontSize="12"/>
+                            </HorizontalStackLayout>
 
                             <Image Source="{Binding EvidenciaRutaImagen, Converter={StaticResource Base64ToImageConverter}}"
                                    IsVisible="{Binding TieneImagen}"
-                                   HeightRequest="220"
+                                   HeightRequest="210"
                                    MaximumWidthRequest="350"
                                    Aspect="AspectFit"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center"
-                                   Margin="0,8"/>
+                                   Margin="0,4"/>
 
                             <toolkit:MediaElement Source="{Binding EvidenciaRutaVideo}"
                                                   IsVisible="{Binding TieneVideo}"
@@ -145,64 +167,220 @@
                                                   ShouldShowPlaybackControls="True"
                                                   Volume="1.0" />
 
-                            <!-- Acciones principales -->
-                            <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,6,0,0">
-                                <Button Grid.Column="0"
-                                        Text="Aceptar cita"
-                                        Clicked="OnAceptarCitaClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="#007ACC"
-                                        TextColor="White"
-                                        FontAttributes="Bold"
-                                        CornerRadius="8"
-                                        HeightRequest="44"/>
+                            <!-- FASE 1: PENDIENTE -> Aceptar o Rechazar -->
+                            <Grid IsVisible="{Binding TecnicoMostrarAceptar}"
+                                  ColumnDefinitions="*, *"
+                                  ColumnSpacing="10"
+                                  Margin="0,4,0,0">
+                                <Border Grid.Column="0"
+                                        StrokeThickness="0"
+                                        BackgroundColor="#0088FF"
+                                        HeightRequest="44">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnAceptarCitaTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                        <Path Data="M 9,16.17 L 4.83,12 L 3.41,13.41 L 9,19 L 21,7 L 19.59,5.59 Z"
+                                              Fill="White"
+                                              Aspect="Uniform"
+                                              WidthRequest="16"
+                                              HeightRequest="16"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="Aceptar cita"
+                                               TextColor="White"
+                                               FontAttributes="Bold"
+                                               FontSize="14"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
 
-                                <Button Grid.Column="1"
-                                        Text="Finalizar trabajo"
-                                        Clicked="OnFinalizarTrabajoClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="Transparent"
-                                        BorderColor="#3A3A3C"
-                                        BorderWidth="1"
-                                        TextColor="#F2F2F7"
-                                        FontAttributes="Bold"
-                                        CornerRadius="8"
-                                        HeightRequest="44"/>
+                                <Border Grid.Column="1"
+                                        Stroke="#3D2226"
+                                        StrokeThickness="1"
+                                        BackgroundColor="#22181A"
+                                        HeightRequest="44">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnRechazarCitaTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                        <Path Data="M 19,6.41 L 17.59,5 L 12,10.59 L 6.41,5 L 5,6.41 L 10.59,12 L 5,17.59 L 6.41,19 L 12,13.41 L 17.59,19 L 19,17.59 L 13.41,12 Z"
+                                              Fill="#FF6B6B"
+                                              Aspect="Uniform"
+                                              WidthRequest="15"
+                                              HeightRequest="15"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="Rechazar"
+                                               TextColor="#FF6B6B"
+                                               FontAttributes="Bold"
+                                               FontSize="14"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
                             </Grid>
 
-                            <!-- Acciones secundarias -->
-                            <Grid ColumnDefinitions="*, *, *">
-                                <Button Grid.Column="0"
-                                        Text="Chat con el cliente"
-                                        Clicked="OnAbrirChatClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="#4DA3E0"
-                                        FontSize="13"
-                                        Padding="0"
-                                        HeightRequest="36"/>
+                            <!-- FASE 2: ACEPTADA -> Finalizar, Chat y Ver Ruta (Sin Eliminar ni Aceptar) -->
+                            <VerticalStackLayout IsVisible="{Binding TecnicoMostrarFinalizar}" Spacing="8" Margin="0,4,0,0">
+                                <!-- Finalizar Trabajo -->
+                                <Border StrokeThickness="0"
+                                        BackgroundColor="#F2F2F7"
+                                        HeightRequest="44">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnFinalizarTrabajoTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                        <Path Data="M 9,16.17 L 4.83,12 L 3.41,13.41 L 9,19 L 21,7 L 19.59,5.59 Z"
+                                              Fill="#121212"
+                                              Aspect="Uniform"
+                                              WidthRequest="16"
+                                              HeightRequest="16"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="Finalizar trabajo"
+                                               TextColor="#121212"
+                                               FontAttributes="Bold"
+                                               FontSize="14"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
 
-                                <Button Grid.Column="1"
-                                        Text="Ver ruta"
-                                        IsVisible="{Binding EsDomicilio}"
-                                        Clicked="OnAbrirGoogleMapsWebClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="#4DA3E0"
-                                        FontSize="13"
-                                        Padding="0"
-                                        HeightRequest="36"/>
+                                <!-- Chat y Ver Ruta -->
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                                    <Border Grid.Column="0"
+                                            StrokeThickness="0"
+                                            BackgroundColor="#0088FF"
+                                            HeightRequest="42">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAbrirChatTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="7">
+                                            <Path Data="M 20,2 L 4,2 C 2.9,2 2,2.9 2,4 L 2,22 L 6,18 L 20,18 C 21.1,18 22,17.1 22,16 L 22,4 C 22,2.9 21.1,2 20,2 Z"
+                                                  Fill="White"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="15"
+                                                  HeightRequest="15"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Chat cliente"
+                                                   TextColor="White"
+                                                   FontAttributes="Bold"
+                                                   FontSize="13"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
 
-                                <Button Grid.Column="2"
-                                        Text="Eliminar"
-                                        Clicked="OnEliminarCitaClicked"
-                                        CommandParameter="{Binding .}"
-                                        BackgroundColor="Transparent"
-                                        TextColor="#E5534B"
-                                        FontSize="13"
-                                        Padding="0"
-                                        HeightRequest="36"/>
-                            </Grid>
+                                    <Border Grid.Column="1"
+                                            IsVisible="{Binding TecnicoMostrarRuta}"
+                                            Stroke="#38383C"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#252528"
+                                            HeightRequest="42">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnAbrirGoogleMapsWebTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="7">
+                                            <Path Data="M 12,2 C 8.13,2 5,5.13 5,9 C 5,14.25 12,22 12,22 C 12,22 19,14.25 19,9 C 19,5.13 15.87,2 12,2 Z M 12,11.5 C 10.62,11.5 9.5,10.38 9.5,9 C 9.5,7.62 10.62,6.5 12,6.5 C 13.38,6.5 14.5,7.62 14.5,9 C 14.5,10.38 13.38,11.5 12,11.5 Z"
+                                                  Fill="#4DA3E0"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="15"
+                                                  HeightRequest="15"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Ver ruta"
+                                                   TextColor="#F2F2F7"
+                                                   FontAttributes="Bold"
+                                                   FontSize="13"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+
+                            <!-- FASE 3: FINALIZADA -> Reportar problema con el cliente (Privado Admin) y Eliminar -->
+                            <VerticalStackLayout IsVisible="{Binding TecnicoMostrarEliminar}" Spacing="8" Margin="0,4,0,0">
+                                <!-- Badge si ya fue reportado en privado a Administración -->
+                                <Border IsVisible="{Binding TecnicoMostrarBadgeReportado}"
+                                        Stroke="#3A321C"
+                                        StrokeThickness="1"
+                                        BackgroundColor="#221E14"
+                                        Padding="10,8">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Label Text="Reporte privado enviado a Administración PHANTEL (en revisión)."
+                                           FontSize="12"
+                                           TextColor="#E0A030"/>
+                                </Border>
+
+                                <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                                    <!-- Reportar problema con el cliente (solo visible si está Finalizada y no reportada aún) -->
+                                    <Border Grid.Column="0"
+                                            IsVisible="{Binding TecnicoMostrarReportarCliente}"
+                                            Stroke="#4A351C"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#241C14"
+                                            HeightRequest="42">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnReportarClientePrivadoTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                                            <Path Data="M 1,21 L 23,21 L 12,2 L 1,21 Z M 13,18 L 11,18 L 11,16 L 13,16 L 13,18 Z M 13,14 L 11,14 L 11,10 L 13,10 L 13,14 Z"
+                                                  Fill="#F59E0B"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="14"
+                                                  HeightRequest="14"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Reportar cliente"
+                                                   TextColor="#F59E0B"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+
+                                    <!-- Eliminar cita -->
+                                    <Border Grid.Column="1"
+                                            Stroke="#3D2226"
+                                            StrokeThickness="1"
+                                            BackgroundColor="#22181A"
+                                            HeightRequest="42">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12"/>
+                                        </Border.StrokeShape>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnEliminarCitaTapped" CommandParameter="{Binding .}"/>
+                                        </Border.GestureRecognizers>
+                                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                                            <Path Data="M 6,19 C 6,20.1 6.9,21 8,21 L 16,21 C 17.1,21 18,20.1 18,19 L 18,7 L 6,7 L 6,19 Z M 19,4 L 15.5,4 L 14.5,3 L 9.5,3 L 8.5,4 L 5,4 L 5,6 L 19,6 L 19,4 Z"
+                                                  Fill="#FF6B6B"
+                                                  Aspect="Uniform"
+                                                  WidthRequest="14"
+                                                  HeightRequest="14"
+                                                  VerticalOptions="Center"/>
+                                            <Label Text="Eliminar"
+                                                   TextColor="#FF6B6B"
+                                                   FontAttributes="Bold"
+                                                   FontSize="12"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

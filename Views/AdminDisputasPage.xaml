@@ -3,103 +3,331 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="PHANTEL.Views.AdminDisputasPage"
              BackgroundColor="#121212"
-             Title="⚖️ Centro de Arbitraje PHANTEL">
+             Title="Centro de Arbitraje PHANTEL">
 
-    <Grid RowDefinitions="Auto, *, Auto" Padding="15" RowSpacing="12">
+    <Grid RowDefinitions="Auto, *, Auto" Padding="18,14,18,14" RowSpacing="12">
 
-        <!-- Encabezado Admin -->
-        <Border Grid.Row="0" Stroke="#FFC107" StrokeThickness="1.5" Padding="14" BackgroundColor="#1F242D">
+        <!-- Encabezado Admin Minimalista -->
+        <Border Grid.Row="0"
+                Stroke="#2C2C2E"
+                StrokeThickness="1"
+                Padding="16"
+                BackgroundColor="#1C1C1E">
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="12"/>
+                <RoundRectangle CornerRadius="16"/>
             </Border.StrokeShape>
-            <VerticalStackLayout Spacing="10">
-                <Grid ColumnDefinitions="*, Auto">
-                    <VerticalStackLayout Spacing="4">
+            <VerticalStackLayout Spacing="12">
+                <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10" VerticalOptions="Center">
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                        <Label Text="CENTRO DE ARBITRAJE"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               CharacterSpacing="1"
+                               TextColor="#4DA3E0"/>
                         <Label x:Name="lblAdminBienvenida"
-                               Text="⚖️ Panel de Administración"
+                               Text="Panel de Administración"
                                FontSize="18"
                                FontAttributes="Bold"
-                               TextColor="#FFC107"/>
-                        <Label Text="Auditoría de disputas, pruebas y pagos en custodia"
+                               TextColor="#F2F2F7"/>
+                        <Label Text="Auditoría de disputas, reportes privados y verificación KYC"
                                FontSize="12"
-                               TextColor="#B0C4DE"/>
+                               TextColor="#8E8E93"/>
                     </VerticalStackLayout>
-                    <Button Grid.Column="1"
-                            Text="🚪 Salir"
-                            Clicked="OnCerrarSesionAdminClicked"
-                            BackgroundColor="#DC3545"
-                            TextColor="White"
-                            FontAttributes="Bold"
+
+                    <!-- Botón Salir discreto con ícono vectorial -->
+                    <Border Grid.Column="1"
+                            Stroke="#3D2226"
+                            StrokeThickness="1"
+                            BackgroundColor="#22181A"
+                            Padding="12,0"
                             HeightRequest="38"
-                            CornerRadius="8"/>
+                            VerticalOptions="Center">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnCerrarSesionAdminTapped"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout InputTransparent="True" Spacing="6" VerticalOptions="Center">
+                            <Path Data="M 17,7 L 15.59,8.41 L 18.17,11 L 8,11 L 8,13 L 18.17,13 L 15.59,15.58 L 17,17 L 22,12 L 17,7 Z M 4,5 L 12,5 L 12,3 L 4,3 C 2.9,3 2,3.9 2,5 L 2,19 C 2,20.1 2.9,21 4,21 L 12,21 L 12,19 L 4,19 L 4,5 Z"
+                                  Fill="#FF6B6B"
+                                  Aspect="Uniform"
+                                  WidthRequest="14"
+                                  HeightRequest="14"
+                                  VerticalOptions="Center"/>
+                            <Label Text="Salir"
+                                   TextColor="#FF6B6B"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </Border>
                 </Grid>
 
                 <!-- Acceso directo a Validación de Identidad (KYC) -->
-                <Button x:Name="btnValidarTecnicosKyc"
-                        Text="🪪 Validar Identidad de Técnicos (KYC)"
-                        Clicked="OnAbrirValidacionesKycClicked"
-                        BackgroundColor="#007ACC"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        HeightRequest="40"
-                        CornerRadius="8"/>
+                <Border StrokeThickness="0"
+                        BackgroundColor="#0088FF"
+                        HeightRequest="42">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnAbrirValidacionesKycTapped"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout InputTransparent="True" HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                        <Path Data="M 12,1 L 3,5 L 3,11 C 3,16.55 6.84,21.74 12,23 C 17.16,21.74 21,16.55 21,11 L 21,5 L 12,1 Z M 10,17 L 6,13 L 7.41,11.59 L 10,14.17 L 16.59,7.58 L 18,9 L 10,17 Z"
+                              Fill="White"
+                              Aspect="Uniform"
+                              WidthRequest="16"
+                              HeightRequest="16"
+                              VerticalOptions="Center"/>
+                        <Label x:Name="lblValidarTecnicosKyc"
+                               Text="Validar Identidad de Técnicos (KYC)"
+                               TextColor="White"
+                               FontAttributes="Bold"
+                               FontSize="13"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
             </VerticalStackLayout>
         </Border>
 
-        <!-- Lista de Disputas Activas -->
-        <CollectionView Grid.Row="1" x:Name="listDisputas" SelectionMode="None">
-            <CollectionView.EmptyView>
-                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
-                    <Label Text="✅ Sin disputas pendientes" FontSize="18" FontAttributes="Bold" TextColor="#28A745" HorizontalOptions="Center"/>
-                    <Label Text="Todos los servicios y pagos en custodia operan con normalidad." FontSize="13" TextColor="Gray" HorizontalOptions="Center"/>
+        <!-- Contenido Desplazable: Disputas de Pagos + Reportes Privados a Clientes -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16">
+
+                <!-- SECCIÓN 1: DISPUTAS DE PAGOS EN CUSTODIA -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Disputas de pagos en custodia"
+                           FontAttributes="Bold"
+                           FontSize="15"
+                           TextColor="#F2F2F7"/>
+
+                    <CollectionView x:Name="listDisputas" SelectionMode="None">
+                        <CollectionView.EmptyView>
+                            <Border Stroke="#2C2C2E"
+                                    StrokeThickness="1"
+                                    BackgroundColor="#1C1C1E"
+                                    Padding="18">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14"/>
+                                </Border.StrokeShape>
+                                <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                    <Label Text="Sin disputas de pago pendientes"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="#F2F2F7"
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="Todos los servicios y pagos en custodia operan con normalidad."
+                                           FontSize="12"
+                                           TextColor="#8E8E93"
+                                           HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </CollectionView.EmptyView>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Stroke="#3D2226"
+                                        StrokeThickness="1"
+                                        Padding="16"
+                                        Margin="0,5"
+                                        BackgroundColor="#1C1C1E">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="16"/>
+                                    </Border.StrokeShape>
+                                    <VerticalStackLayout Spacing="8">
+                                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                            <Border Grid.Column="0"
+                                                    HorizontalOptions="Start"
+                                                    StrokeThickness="0"
+                                                    BackgroundColor="#22181A"
+                                                    Padding="10,4">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="8"/>
+                                                </Border.StrokeShape>
+                                                <Label Text="{Binding Id, StringFormat='FOLIO CITA #{0}'}"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#FF6B6B"
+                                                       FontSize="11"/>
+                                            </Border>
+
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#F2F2F7"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center"/>
+                                        </Grid>
+
+                                        <Label Text="{Binding DescripcionFalla}"
+                                               TextColor="#F2F2F7"
+                                               FontAttributes="Bold"
+                                               FontSize="14"/>
+                                        <Label Text="{Binding TecnicoEmail, StringFormat='Técnico: {0}'}"
+                                               TextColor="#4DA3E0"
+                                               FontSize="12"/>
+                                        <Label Text="{Binding EstadoPago, StringFormat='Estado Pago: {0}'}"
+                                               TextColor="#E0A030"
+                                               FontSize="12"/>
+                                        <Label Text="{Binding MotivoReporte, StringFormat='Reporte: {0}'}"
+                                               TextColor="#B0B0B5"
+                                               FontSize="12"/>
+
+                                        <Border StrokeThickness="0"
+                                                BackgroundColor="#F2F2F7"
+                                                HeightRequest="42"
+                                                Margin="0,4,0,0">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="12"/>
+                                            </Border.StrokeShape>
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnAuditarDisputaTapped" CommandParameter="{Binding .}"/>
+                                            </Border.GestureRecognizers>
+                                            <HorizontalStackLayout InputTransparent="True" HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                                                <Path Data="M 15.5,14 L 14.71,14 L 14.43,13.73 C 15.41,12.59 16,11.11 16,9.5 C 16,5.91 13.09,3 9.5,3 C 5.91,3 3,5.91 3,9.5 C 3,13.09 5.91,16 9.5,16 C 11.11,16 12.59,15.41 13.73,14.43 L 14,14.71 L 14,15.5 L 19,20.49 L 20.49,19 L 15.5,14 Z M 9.5,14 C 7.01,14 5,11.99 5,9.5 C 5,7.01 7.01,5 9.5,5 C 11.99,5 14,7.01 14,9.5 C 14,11.99 11.99,14 9.5,14 Z"
+                                                      Fill="#121212"
+                                                      Aspect="Uniform"
+                                                      WidthRequest="15"
+                                                      HeightRequest="15"
+                                                      VerticalOptions="Center"/>
+                                                <Label Text="Auditar Caso y Resolver"
+                                                       TextColor="#121212"
+                                                       FontAttributes="Bold"
+                                                       FontSize="13"
+                                                       VerticalOptions="Center"/>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
-            </CollectionView.EmptyView>
 
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border Stroke="#DC3545" StrokeThickness="1.2" Padding="14" Margin="0,6" BackgroundColor="#1E222A">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12"/>
-                        </Border.StrokeShape>
-                        <VerticalStackLayout Spacing="6">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Id, StringFormat='🚨 FOLIO CITA #{0}'}"
-                                       FontAttributes="Bold"
-                                       TextColor="#FF6B6B"
-                                       FontSize="15"/>
-                                <Label Grid.Column="1"
-                                       Text="{Binding MontoTotalConTraslado, StringFormat='${0:F2} MXN'}"
-                                       FontAttributes="Bold"
-                                       TextColor="#FFC107"
-                                       FontSize="15"/>
-                            </Grid>
+                <!-- SECCIÓN 2: REPORTES PRIVADOS DE TÉCNICOS SOBRE CLIENTES -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Reportes privados de conducta (Clientes)"
+                           FontAttributes="Bold"
+                           FontSize="15"
+                           TextColor="#F2F2F7"/>
 
-                            <Label Text="{Binding DescripcionFalla, StringFormat='Falla: {0}'}" TextColor="White" FontSize="13"/>
-                            <Label Text="{Binding TecnicoEmail, StringFormat='Técnico: {0}'}" TextColor="#00D2FF" FontSize="12"/>
-                            <Label Text="{Binding EstadoPago, StringFormat='Estado Pago: {0}'}" TextColor="#FFC107" FontSize="12"/>
-                            <Label Text="{Binding MotivoReporte, StringFormat='Reporte: {0}'}" TextColor="#E0E0E0" FontSize="12"/>
+                    <CollectionView x:Name="listReportesClientes" SelectionMode="None">
+                        <CollectionView.EmptyView>
+                            <Border Stroke="#2C2C2E"
+                                    StrokeThickness="1"
+                                    BackgroundColor="#1C1C1E"
+                                    Padding="16">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="14"/>
+                                </Border.StrokeShape>
+                                <Label Text="Sin reportes confidenciales de técnicos sobre clientes."
+                                       FontSize="12"
+                                       TextColor="#8E8E93"
+                                       HorizontalOptions="Center"/>
+                            </Border>
+                        </CollectionView.EmptyView>
 
-                            <Button Text="🔍 Auditar Caso, Chatear y Resolver"
-                                    Clicked="OnAuditarDisputaClicked"
-                                    CommandParameter="{Binding .}"
-                                    BackgroundColor="#007ACC"
-                                    TextColor="White"
-                                    FontAttributes="Bold"
-                                    CornerRadius="8"
-                                    Margin="0,6,0,0"/>
-                        </VerticalStackLayout>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Stroke="#3A321C"
+                                        StrokeThickness="1"
+                                        Padding="16"
+                                        Margin="0,5"
+                                        BackgroundColor="#1C1C1E">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="16"/>
+                                    </Border.StrokeShape>
+                                    <VerticalStackLayout Spacing="8">
+                                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                            <Label Text="{Binding ClienteId, StringFormat='CLIENTE ID #{0}'}"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#E0A030"
+                                                   FontSize="12"/>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding SolicitudId, StringFormat='Cita #{0}'}"
+                                                   TextColor="#8E8E93"
+                                                   FontSize="12"/>
+                                        </Grid>
 
-        <Button Grid.Row="2"
-                Text="🔄 Actualizar Bandeja de Disputas"
-                Clicked="OnRefrescarClicked"
-                BackgroundColor="#252526"
-                TextColor="#00D2FF"
-                BorderColor="#007ACC"
-                BorderWidth="1"
-                CornerRadius="8"/>
+                                        <Label Text="{Binding Motivo}"
+                                               FontAttributes="Bold"
+                                               TextColor="#F2F2F7"
+                                               FontSize="14"/>
+                                        <Label Text="{Binding Detalle}"
+                                               TextColor="#D1D1D6"
+                                               FontSize="13"/>
+                                        <Label Text="{Binding TecnicoNombre, StringFormat='Reportado por técnico: {0}'}"
+                                               TextColor="#8E8E93"
+                                               FontSize="11"/>
+
+                                        <!-- Acciones Admin sobre el Cliente -->
+                                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,4,0,0">
+                                            <!-- Enviar Aviso de Mal Comportamiento -->
+                                            <Button Grid.Column="0"
+                                                    Text="Enviar Aviso"
+                                                    CommandParameter="{Binding .}"
+                                                    Clicked="OnEnviarAvisoClienteClicked"
+                                                    BorderColor="#4A351C"
+                                                    BorderWidth="1"
+                                                    BackgroundColor="#241C14"
+                                                    TextColor="#F59E0B"
+                                                    FontAttributes="Bold"
+                                                    FontSize="12"
+                                                    CornerRadius="10"
+                                                    HeightRequest="40"
+                                                    Padding="0"/>
+
+                                            <!-- Suspender Cuenta del Cliente -->
+                                            <Button Grid.Column="1"
+                                                    Text="Suspender Cuenta"
+                                                    CommandParameter="{Binding .}"
+                                                    Clicked="OnSuspenderClienteClicked"
+                                                    BorderColor="#3D2226"
+                                                    BorderWidth="1"
+                                                    BackgroundColor="#22181A"
+                                                    TextColor="#FF6B6B"
+                                                    FontAttributes="Bold"
+                                                    FontSize="12"
+                                                    CornerRadius="10"
+                                                    HeightRequest="40"
+                                                    Padding="0"/>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Botón Inferior Minimalista de Refrescar -->
+        <Border Grid.Row="2"
+                Stroke="#2C2C2E"
+                StrokeThickness="1"
+                BackgroundColor="#1C1C1E"
+                HeightRequest="44">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12"/>
+            </Border.StrokeShape>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnRefrescarTapped"/>
+            </Border.GestureRecognizers>
+            <HorizontalStackLayout InputTransparent="True" HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                <Path Data="M 17.65,6.35 C 16.2,4.9 14.21,4 12,4 C 7.58,4 4.01,7.58 4.01,12 C 4.01,16.42 7.58,20 12,20 C 15.73,20 18.84,17.45 19.73,14 L 17.65,14 C 16.83,16.33 14.61,18 12,18 C 8.69,18 6,15.31 6,12 C 6,8.69 8.69,6 12,6 C 13.66,6 15.14,6.69 16.22,7.78 L 13,11 L 20,11 L 20,4 L 17.65,6.35 Z"
+                      Fill="#4DA3E0"
+                      Aspect="Uniform"
+                      WidthRequest="16"
+                      HeightRequest="16"
+                      VerticalOptions="Center"/>
+                <Label Text="Actualizar Bandeja"
+                       TextColor="#F2F2F7"
+                       FontAttributes="Bold"
+                       FontSize="13"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+        </Border>
     </Grid>
 </ContentPage>

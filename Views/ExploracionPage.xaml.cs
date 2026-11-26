@@ -58,9 +58,53 @@ namespace PHANTEL.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
+
+            // Invalidar caché para detectar al instante avisos de conducta o suspensión dictados por Admin
+            if (LoginPage.UsuarioActual != null && !string.IsNullOrWhiteSpace(LoginPage.UsuarioActual.Email))
+            {
+                CloudDatabaseService.InvalidarCacheUsuarios();
+                var usuarioFresco = await _dbService.ObtenerUsuarioPorEmailAsync(LoginPage.UsuarioActual.Email);
+                if (usuarioFresco != null)
+                {
+                    LoginPage.UsuarioActual = usuarioFresco;
+
+                    if (usuarioFresco.CuentaSuspendida)
+                    {
+                        Application.Current!.Windows[0].Page = new NavigationPage(new CuentaSuspendidaPage());
+                        return;
+                    }
+                }
+            }
+
             ConfigurarCarruselSegunRol();
             CargarPerfilCliente();
+            ActualizarAvisoConductaCliente();
             await CargarTecnicosAsync();
+        }
+
+        private void ActualizarAvisoConductaCliente()
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u != null && u.TieneAvisoConducta && !string.IsNullOrWhiteSpace(u.MensajeAvisoConducta))
+            {
+                lblMensajeAvisoConducta.Text = u.MensajeAvisoConducta;
+                cardAvisoConducta.IsVisible = true;
+            }
+            else
+            {
+                cardAvisoConducta.IsVisible = false;
+            }
+        }
+
+        private async void OnMarcarAvisoLeidoTapped(object? sender, TappedEventArgs e)
+        {
+            var u = LoginPage.UsuarioActual;
+            if (u == null) return;
+
+            cardAvisoConducta.IsVisible = false;
+            u.TieneAvisoConducta = false;
+
+            await _dbService.MarcarAvisoConductaLeidoAsync(u.Id);
         }
 
         private void ConfigurarCarruselSegunRol()
@@ -210,23 +254,23 @@ namespace PHANTEL.Views
                 "Ordenar técnicos por:",
                 "Cancelar",
                 null,
-                "⭐ Recomendados",
-                "🏆 Mejor calificados",
-                "📍 Más cercanos");
+                "Recomendados",
+                "Mejor calificados",
+                "Más cercanos");
 
             switch (opcion)
             {
-                case "⭐ Recomendados":
+                case "Recomendados":
                     _indiceOrdenSeleccionado = 0;
                     lblOrdenActual.Text = "Recomendados";
                     break;
 
-                case "🏆 Mejor calificados":
+                case "Mejor calificados":
                     _indiceOrdenSeleccionado = 1;
                     lblOrdenActual.Text = "Mejor calificados";
                     break;
 
-                case "📍 Más cercanos":
+                case "Más cercanos":
                     if (_ubicacionCliente == null)
                     {
                         _ubicacionCliente = await ObtenerUbicacionClienteAsync();

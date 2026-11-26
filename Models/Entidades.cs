@@ -20,21 +20,21 @@ namespace PHANTEL.Models
 
         public double Latitud { get; set; }
         public double Longitud { get; set; }
-        public double CalificacionPromedio { get; set; } = 0.0;   // Se calcula con las reseñas reales
-        public int TotalCalificaciones { get; set; } = 0;        // Número de reseñas recibidas
-        public double AjusteReputacion { get; set; } = 0.0;      // Penalizaciones por disputas (valor negativo)
+        public double CalificacionPromedio { get; set; } = 0.0;
+        public int TotalCalificaciones { get; set; } = 0;
+        public double AjusteReputacion { get; set; } = 0.0;
         public string FotoPerfil { get; set; } = string.Empty;
 
         // --- PREFERENCIAS Y DISPONIBILIDAD ---
-        public bool Disponible { get; set; } = true;   // Técnico: false = pausado, no aparece a los clientes
-        public string Idioma { get; set; } = "es";     // código de idioma
+        public bool Disponible { get; set; } = true;
+        public string Idioma { get; set; } = "es";
 
         // --- MODALIDAD DE ATENCIÓN (Técnico) ---
-        public string Modalidad { get; set; } = "Domicilio";   // "Domicilio", "Local" o "Ambos"
+        public string Modalidad { get; set; } = "Domicilio";
         public string DireccionLocal { get; set; } = string.Empty;
         public string HorarioLocal { get; set; } = string.Empty;
 
-        // --- CONTROL FINANCIERO, COMISIONES Y REPUTACIÓN ---
+        // --- CONTROL FINANCIERO, COMISIONES, AVISOS Y SUSPENSIÓN ---
         public string ClabeInterbancaria { get; set; } = string.Empty;
         public decimal SaldoEnCustodia { get; set; } = 0m;
         public decimal SaldoLiberado { get; set; } = 0m;
@@ -42,18 +42,22 @@ namespace PHANTEL.Models
         public bool CuentaSuspendida { get; set; } = false;
         public string MotivoSuspension { get; set; } = string.Empty;
 
-        // --- ACEPTACIÓN DE TÉRMINOS DE COMISIÓN (3% TRABAJO / 5% DISPUTA) ---
+        // --- AVISO DE CONDUCTA (VISIBLE EN PANTALLA PRINCIPAL DEL CLIENTE) ---
+        public bool TieneAvisoConducta { get; set; } = false;
+        public string MensajeAvisoConducta { get; set; } = string.Empty;
+        public DateTime? FechaAvisoConducta { get; set; }
+
+        // --- ACEPTACIÓN DE TÉRMINOS DE COMISIÓN ---
         public bool AceptoTerminosComision { get; set; } = false;
         public DateTime? FechaAceptacionTerminos { get; set; }
 
-        // --- VERIFICACIÓN DE IDENTIDAD (KYC / TÉCNICO VERIFICADO) ---
+        // --- VERIFICACIÓN DE IDENTIDAD (KYC) ---
         public string EstadoVerificacion { get; set; } = "No Verificado";
-        // Valores: "No Verificado", "En Revisión", "Verificado", "Rechazado"
         public string IneFrenteBase64 { get; set; } = string.Empty;
         public string IneReversoBase64 { get; set; } = string.Empty;
         public string MotivoRechazoVerificacion { get; set; } = string.Empty;
 
-        // --- PROPIEDADES CALCULADAS (no se guardan) ---
+        // --- PROPIEDADES CALCULADAS ---
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public bool AtiendeDomicilio => Modalidad == "Domicilio" || Modalidad == "Ambos";
@@ -71,7 +75,6 @@ namespace PHANTEL.Models
             _ => "A domicilio"
         };
 
-        // Las estrellas se muestran desde la primera reseña; con menos de 3 se añade la etiqueta "Nuevo"
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public bool MostrarEstrellas => TotalCalificaciones >= 1;
@@ -94,14 +97,13 @@ namespace PHANTEL.Models
             ? "Sin reseñas aún"
             : $"{CalificacionPromedio:F1} ★ ({TotalCalificaciones} {(TotalCalificaciones == 1 ? "reseña" : "reseñas")})";
 
-        // Promedio ponderado: un solo 5 no supera a quien tiene muchas reseñas buenas
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public double PuntajeRecomendacion
         {
             get
             {
-                const double pesoPrevio = 5.0;   // reseñas "virtuales" a favor del promedio base
+                const double pesoPrevio = 5.0;
                 const double promedioBase = 4.0;
                 double v = TotalCalificaciones;
                 double r = v > 0 ? CalificacionPromedio : promedioBase;
@@ -116,8 +118,8 @@ namespace PHANTEL.Models
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public string InsigniaVerificacionTexto => EstadoVerificacion == "Verificado"
-            ? "✔️ Técnico Verificado PHANTEL"
-            : "⚠️ Perfil sin verificar";
+            ? "Técnico Verificado PHANTEL"
+            : "Perfil sin verificar";
     }
 
     public class SolicitudCita
@@ -126,7 +128,7 @@ namespace PHANTEL.Models
         public int Id { get; set; }
         public int ClienteId { get; set; }
         public int TecnicoId { get; set; }
-        public string TecnicoEmail { get; set; } = string.Empty; // <--- Identificador único del técnico en la nube
+        public string TecnicoEmail { get; set; } = string.Empty;
         public string DescripcionFalla { get; set; } = string.Empty;
         public string DireccionCliente { get; set; } = string.Empty;
         public DateTime FechaHoraProgramada { get; set; } = DateTime.Now;
@@ -138,14 +140,11 @@ namespace PHANTEL.Models
         public string EvidenciaRutaVideo { get; set; } = string.Empty;
         public string EvidenciaRutaAudio { get; set; } = string.Empty;
 
-        // --- MODALIDAD DE LA CITA ---
-        public string Modalidad { get; set; } = "Domicilio";   // "Domicilio" o "Local"
+        public string Modalidad { get; set; } = "Domicilio";
 
-        // --- CONTROL DE CALIFICACIONES ---
         public bool CalificadaPorCliente { get; set; } = false;
         public bool CalificadaPorTecnico { get; set; } = false;
 
-        // --- PRESUPUESTO, COMISIONES PHANTEL Y PAGO PROTEGIDO ---
         public string ConceptoPresupuesto { get; set; } = string.Empty;
         public decimal MontoPresupuesto { get; set; } = 0m;
         public decimal PorcentajeComisionAplicado { get; set; } = 0.03m;
@@ -153,16 +152,19 @@ namespace PHANTEL.Models
         public decimal MontoNetoTecnico { get; set; } = 0m;
 
         public string EstadoPago { get; set; } = "Sin Cotizar";
-        // Valores: "Sin Cotizar", "Cotizado", "En Custodia (Retenido)", "Liberado al Técnico", "Retenido por Disputa", "Fondos Liquidados (Cerrado)", "Reembolsado al Cliente (Cerrado)"
         public string ReferenciaTransferencia { get; set; } = string.Empty;
         public string ComprobantePagoBase64 { get; set; } = string.Empty;
         public decimal PenalizacionAplicada { get; set; } = 0m;
 
-        // --- PROPIEDADES PARA DISPUTAS Y REEMBOLSOS ---
+        // --- PROPIEDADES PARA DISPUTAS Y REPORTE PRIVADO ---
         public bool EnDisputa { get; set; } = false;
         public bool ResueltaPorAdmin { get; set; } = false;
         public string MotivoReporte { get; set; } = string.Empty;
         public string DictamenAdmin { get; set; } = string.Empty;
+
+        // Reporte privado enviado por el Técnico sobre el Cliente (solo visible Admin <-> Técnico)
+        public bool ReportePrivadoTecnico { get; set; } = false;
+        public string MotivoReporteTecnico { get; set; } = string.Empty;
 
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
@@ -188,6 +190,7 @@ namespace PHANTEL.Models
         [Newtonsoft.Json.JsonIgnore]
         public decimal MontoTotalConTraslado => TarifaTraslado + MontoPresupuesto;
 
+        // --- VISIBILIDAD DE BOTONES DEL CLIENTE ---
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public bool MostrarBotonCalificar => Estado == "Finalizada" && !CalificadaPorCliente && !ResueltaPorAdmin && !EnDisputa;
@@ -195,6 +198,38 @@ namespace PHANTEL.Models
         [Ignore]
         [Newtonsoft.Json.JsonIgnore]
         public bool MostrarBotonReportar => (Estado == "Finalizada" || EstadoPago == "En Custodia (Retenido)") && !ResueltaPorAdmin && !EnDisputa;
+
+        // --- VISIBILIDAD DE BOTONES DEL TÉCNICO ---
+        // 1. Pendiente: solo Aceptar o Rechazar
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarAceptar => Estado == "Pendiente";
+
+        // 2. Aceptada: Finalizar trabajo, Chat con cliente y Ver ruta (si es a domicilio). Sin Eliminar.
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarFinalizar => Estado == "Aceptada";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarChat => Estado == "Aceptada";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarRuta => Estado == "Aceptada" && EsDomicilio;
+
+        // 3. Finalizada (o Rechazada): Eliminar y Reportar problema con el cliente (privado a Admin)
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarEliminar => Estado == "Finalizada" || Estado == "Rechazada";
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarReportarCliente => Estado == "Finalizada" && !ReportePrivadoTecnico;
+
+        [Ignore]
+        [Newtonsoft.Json.JsonIgnore]
+        public bool TecnicoMostrarBadgeReportado => Estado == "Finalizada" && ReportePrivadoTecnico;
     }
 
     public class Calificacion
@@ -206,7 +241,6 @@ namespace PHANTEL.Models
         public int Puntuacion { get; set; }
         public string Comentario { get; set; } = string.Empty;
 
-        // --- DATOS PARA MOSTRAR LA RESEÑA ---
         public string TecnicoEmail { get; set; } = string.Empty;
         public string NombreCliente { get; set; } = string.Empty;
         public DateTime? Fecha { get; set; }
@@ -243,5 +277,20 @@ namespace PHANTEL.Models
                 return string.IsNullOrEmpty(t) ? "Sin comentario escrito." : t;
             }
         }
+    }
+
+    public class ReporteClienteItem
+    {
+        [Newtonsoft.Json.JsonIgnore]
+        public string Key { get; set; } = string.Empty;
+        public int SolicitudId { get; set; }
+        public int ClienteId { get; set; }
+        public int TecnicoId { get; set; }
+        public string TecnicoNombre { get; set; } = string.Empty;
+        public string TecnicoEmail { get; set; } = string.Empty;
+        public string Motivo { get; set; } = string.Empty;
+        public string Detalle { get; set; } = string.Empty;
+        public DateTime Fecha { get; set; }
+        public string EstadoRevision { get; set; } = "Pendiente";
     }
 }
