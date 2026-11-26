@@ -3,128 +3,303 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:helpers="clr-namespace:PHANTEL.Helpers"
              x:Class="PHANTEL.Views.ChatPage"
-             BackgroundColor="#1E1E1E"
+             BackgroundColor="#121212"
              Title="Chat y Presupuesto Protegido">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <helpers:ChatAlignmentConverter x:Key="ChatAlignmentConverter" />
-            <helpers:ChatColorConverter x:Key="ChatColorConverter" />
+            <helpers:Base64ToImageConverter x:Key="Base64ToImageConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="15" RowSpacing="10">
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16,12,16,12" RowSpacing="10">
 
-        <!-- 0. Encabezado del Chat -->
-        <Border Grid.Row="0" Stroke="#007ACC" Padding="10" BackgroundColor="#252526">
+        <!-- 0. Encabezado Minimalista -->
+        <Border Grid.Row="0"
+                Stroke="#2C2C2E"
+                StrokeThickness="1"
+                Padding="14,12"
+                BackgroundColor="#1C1C1E">
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="8"/>
+                <RoundRectangle CornerRadius="14"/>
             </Border.StrokeShape>
-            <VerticalStackLayout Spacing="3">
-                <Label x:Name="lblTituloChat" Text="💬 Chat de Servicio" FontAttributes="Bold" TextColor="White" FontSize="16"/>
-                <Label x:Name="lblDetalleCita" Text="Cita # --" TextColor="Gray" FontSize="12"/>
-            </VerticalStackLayout>
+            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                <Border Grid.Column="0"
+                        WidthRequest="38"
+                        HeightRequest="38"
+                        StrokeThickness="0"
+                        BackgroundColor="#252528">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="19"/>
+                    </Border.StrokeShape>
+                    <Path Data="M 20,2 L 4,2 C 2.9,2 2,2.9 2,4 L 2,22 L 6,18 L 20,18 C 21.1,18 22,17.1 22,16 L 22,4 C 22,2.9 21.1,2 20,2 Z"
+                          Fill="#4DA3E0"
+                          Aspect="Uniform"
+                          WidthRequest="18"
+                          HeightRequest="18"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"/>
+                </Border>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                    <Label x:Name="lblTituloChat"
+                           Text="Chat de Servicio"
+                           FontAttributes="Bold"
+                           TextColor="#F2F2F7"
+                           FontSize="16"/>
+                    <Label x:Name="lblDetalleCita"
+                           Text="Cita # --"
+                           TextColor="#8E8E93"
+                           FontSize="12"
+                           MaxLines="1"
+                           LineBreakMode="TailTruncation"/>
+                </VerticalStackLayout>
+            </Grid>
         </Border>
 
-        <!-- 1. Tarjeta de Presupuesto y Pago en Custodia (Estilo Mercado Libre) -->
+        <!-- 1. Tarjeta de Presupuesto y Pago en Custodia (Escrow) -->
         <Border Grid.Row="1"
                 x:Name="cardPresupuesto"
-                Stroke="#28A745"
+                Stroke="#2C2C2E"
                 StrokeThickness="1.2"
-                Padding="12"
-                BackgroundColor="#1A2634">
+                Padding="14"
+                BackgroundColor="#1C1C1E">
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="10"/>
+                <RoundRectangle CornerRadius="14"/>
             </Border.StrokeShape>
 
             <VerticalStackLayout Spacing="8">
-                <Grid ColumnDefinitions="*, Auto">
-                    <Label x:Name="lblEstadoPago"
-                           Text="🛡️ Protección PHANTEL: Sin cotizar"
-                           FontAttributes="Bold"
-                           TextColor="#00D2FF"
-                           FontSize="13"/>
+                <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                    <HorizontalStackLayout Grid.Column="0" Spacing="6" VerticalOptions="Center">
+                        <Path Data="M 12,1 L 3,5 L 3,11 C 3,16.55 6.84,21.74 12,23 C 17.16,21.74 21,16.55 21,11 L 21,5 L 12,1 Z"
+                              Fill="#4DA3E0"
+                              Aspect="Uniform"
+                              WidthRequest="14"
+                              HeightRequest="14"
+                              VerticalOptions="Center"/>
+                        <Label x:Name="lblEstadoPago"
+                               Text="Protección PHANTEL: Sin cotizar"
+                               FontAttributes="Bold"
+                               TextColor="#4DA3E0"
+                               FontSize="13"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+
                     <Label x:Name="lblMontoTotal"
                            Grid.Column="1"
                            Text="$0.00 MXN"
                            FontAttributes="Bold"
-                           TextColor="#28A745"
-                           FontSize="14"/>
+                           TextColor="#F2F2F7"
+                           FontSize="16"
+                           VerticalOptions="Center"/>
                 </Grid>
 
                 <Label x:Name="lblConceptoPresupuesto"
                        Text="El técnico aún no ha enviado el presupuesto de reparación."
-                       TextColor="#D0D7DE"
+                       TextColor="#D1D1D6"
                        FontSize="12"/>
 
-                <!-- Aviso de seguridad sobre retención / penalizaciones -->
                 <Label x:Name="lblAdvertenciaSeguridad"
-                       Text="🔒 Tu dinero se resguarda en PHANTEL y solo se libera al técnico si el servicio concluye sin reportes."
-                       TextColor="#FFC107"
+                       Text="Tu dinero se resguarda en PHANTEL y solo se libera al técnico si el servicio concluye sin reportes."
+                       TextColor="#8E8E93"
                        FontSize="11"/>
 
                 <!-- Botón exclusivo Técnico: Cotizar -->
-                <Button x:Name="btnEnviarPresupuesto"
-                        Text="💰 Enviar / Actualizar Presupuesto"
-                        Clicked="OnEnviarPresupuestoClicked"
+                <Border x:Name="btnEnviarPresupuesto"
                         IsVisible="False"
-                        BackgroundColor="#007ACC"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        HeightRequest="38"
-                        CornerRadius="8"/>
+                        StrokeThickness="0"
+                        BackgroundColor="#0088FF"
+                        HeightRequest="40">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10"/>
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnEnviarPresupuestoTapped"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                        <Path Data="M 11.8,10.9 C 9.53,10.31 8.8,9.7 8.8,8.75 C 8.8,7.66 9.81,6.9 11.5,6.9 C 13.28,6.9 13.94,7.75 14,9 L 16.21,9 C 16.14,7.28 15.09,5.7 13,5.19 L 13,3 L 10,3 L 10,5.16 C 8.06,5.58 6.5,6.84 6.5,8.77 C 6.5,11.08 8.41,12.23 11.2,12.9 C 13.7,13.5 14.2,14.38 14.2,15.31 C 14.2,16 13.71,17.1 11.5,17.1 C 9.44,17.1 8.63,16.18 8.5,15 L 6.32,15 C 6.44,17.19 8.08,18.42 10,18.83 L 10,21 L 13,21 L 13,18.85 C 14.95,18.48 16.5,17.35 16.5,15.3 C 16.5,12.46 14.07,11.49 11.8,10.9 Z"
+                              Fill="White"
+                              Aspect="Uniform"
+                              WidthRequest="16"
+                              HeightRequest="16"
+                              VerticalOptions="Center"/>
+                        <Label Text="Enviar / Actualizar Presupuesto"
+                               TextColor="White"
+                               FontAttributes="Bold"
+                               FontSize="13"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
 
                 <!-- Botón exclusivo Cliente: Pagar por transferencia -->
-                <Button x:Name="btnPagarCustodia"
-                        Text="💳 Pagar por Transferencia (En Custodia)"
-                        Clicked="OnPagarCustodiaClicked"
+                <Border x:Name="btnPagarCustodia"
                         IsVisible="False"
-                        BackgroundColor="#28A745"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        HeightRequest="38"
-                        CornerRadius="8"/>
+                        StrokeThickness="0"
+                        BackgroundColor="#F2F2F7"
+                        HeightRequest="40">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10"/>
+                    </Border.StrokeShape>
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnPagarCustodiaTapped"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="8">
+                        <Path Data="M 12,1 L 3,5 L 3,11 C 3,16.55 6.84,21.74 12,23 C 17.16,21.74 21,16.55 21,11 L 21,5 L 12,1 Z M 10,17 L 6,13 L 7.41,11.59 L 10,14.17 L 16.59,7.58 L 18,9 L 10,17 Z"
+                              Fill="#121212"
+                              Aspect="Uniform"
+                              WidthRequest="16"
+                              HeightRequest="16"
+                              VerticalOptions="Center"/>
+                        <Label Text="Pagar por Transferencia (En Custodia)"
+                               TextColor="#121212"
+                               FontAttributes="Bold"
+                               FontSize="13"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
 
                 <!-- Botones exclusivos Cliente cuando el dinero ya está retenido -->
                 <Grid x:Name="gridAccionesCustodiaCliente"
                       ColumnDefinitions="*, *"
                       ColumnSpacing="8"
                       IsVisible="False">
-                    <Button Text="✅ Liberar Pago"
-                            Clicked="OnLiberarPagoClicked"
-                            BackgroundColor="#198754"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            FontSize="12"
-                            HeightRequest="38"
-                            CornerRadius="8"/>
-                    <Button Grid.Column="1"
-                            Text="⚠️ Reportar / Retener"
-                            Clicked="OnReportarDisputaChatClicked"
-                            BackgroundColor="#DC3545"
-                            TextColor="White"
-                            FontAttributes="Bold"
-                            FontSize="12"
-                            HeightRequest="38"
-                            CornerRadius="8"/>
+                    <Border Grid.Column="0"
+                            StrokeThickness="0"
+                            BackgroundColor="#F2F2F7"
+                            HeightRequest="38">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnLiberarPagoTapped"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                            <Path Data="M 9,16.17 L 4.83,12 L 3.41,13.41 L 9,19 L 21,7 L 19.59,5.59 Z"
+                                  Fill="#121212"
+                                  Aspect="Uniform"
+                                  WidthRequest="15"
+                                  HeightRequest="15"
+                                  VerticalOptions="Center"/>
+                            <Label Text="Liberar Pago"
+                                   TextColor="#121212"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            Stroke="#3D2226"
+                            StrokeThickness="1"
+                            BackgroundColor="#22181A"
+                            HeightRequest="38">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10"/>
+                        </Border.StrokeShape>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnReportarDisputaChatTapped"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="6">
+                            <Path Data="M 1,21 L 23,21 L 12,2 L 1,21 Z M 13,18 L 11,18 L 11,16 L 13,16 L 13,18 Z M 13,14 L 11,14 L 11,10 L 13,10 L 13,14 Z"
+                                  Fill="#FF6B6B"
+                                  Aspect="Uniform"
+                                  WidthRequest="14"
+                                  HeightRequest="14"
+                                  VerticalOptions="Center"/>
+                            <Label Text="Reportar / Retener"
+                                   TextColor="#FF6B6B"
+                                   FontAttributes="Bold"
+                                   FontSize="12"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </Border>
                 </Grid>
             </VerticalStackLayout>
         </Border>
 
-        <!-- 2. Lista de Mensajes -->
+        <!-- 2. Lista de Mensajes (Enviado: Negro/Blanco | Recibido: Blanco/Negro) -->
         <CollectionView Grid.Row="2" x:Name="listMensajes" SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Padding="5">
-                        <Border StrokeShape="RoundRectangle 12" 
-                                Padding="10" 
-                                Margin="5"
+                    <Grid Padding="2,4">
+                        <Border StrokeShape="RoundRectangle 16"
+                                Stroke="{Binding ColorBorde}"
+                                StrokeThickness="1"
+                                Padding="12,10"
+                                Margin="4,2"
                                 HorizontalOptions="{Binding EsMio, Converter={StaticResource ChatAlignmentConverter}}"
-                                BackgroundColor="{Binding EsMio, Converter={StaticResource ChatColorConverter}}">
-                            <VerticalStackLayout Spacing="3" MaximumWidthRequest="280">
-                                <Label Text="{Binding EmisorNombre}" FontAttributes="Bold" FontSize="11" TextColor="#FFC107"/>
-                                <Label Text="{Binding Texto}" TextColor="White" FontSize="14"/>
-                                <Label Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}" TextColor="LightGray" FontSize="9" HorizontalOptions="End"/>
+                                BackgroundColor="{Binding ColorFondo}">
+                            <VerticalStackLayout Spacing="6" MaximumWidthRequest="285">
+                                <!-- Nombre del emisor (oculto en mis mensajes para limpieza visual) -->
+                                <Label Text="{Binding EmisorNombre}"
+                                       IsVisible="{Binding MostrarNombreEmisor}"
+                                       FontAttributes="Bold"
+                                       FontSize="11"
+                                       TextColor="{Binding ColorNombre}"/>
+
+                                <!-- Foto Adjunta -->
+                                <Border IsVisible="{Binding TieneImagen}"
+                                        StrokeThickness="0"
+                                        Padding="0"
+                                        MaximumHeightRequest="210">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnVerFotoAdjuntaTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Image Source="{Binding ImagenBase64, Converter={StaticResource Base64ToImageConverter}}"
+                                           Aspect="AspectFill"
+                                           HeightRequest="180"
+                                           WidthRequest="250"/>
+                                </Border>
+
+                                <!-- Video Adjunto -->
+                                <Border IsVisible="{Binding TieneVideo}"
+                                        Stroke="#3A3A3C"
+                                        StrokeThickness="1"
+                                        BackgroundColor="#18181B"
+                                        Padding="10,8">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnReproducirVideoAdjuntoTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                        <Path Data="M 8,5 L 8,19 L 19,12 Z"
+                                              Fill="#4DA3E0"
+                                              Aspect="Uniform"
+                                              WidthRequest="16"
+                                              HeightRequest="16"
+                                              VerticalOptions="Center"/>
+                                        <Label Text="{Binding EtiquetaVideo}"
+                                               TextColor="#F2F2F7"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+
+                                <!-- Texto del mensaje -->
+                                <Label Text="{Binding Texto}"
+                                       IsVisible="{Binding TieneTexto}"
+                                       TextColor="{Binding ColorTexto}"
+                                       FontSize="14"/>
+
+                                <!-- Hora + Confirmación de Entregado / Leído -->
+                                <HorizontalStackLayout Spacing="4" HorizontalOptions="End" VerticalOptions="Center">
+                                    <Label Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}"
+                                           TextColor="{Binding ColorHora}"
+                                           FontSize="10"
+                                           VerticalOptions="Center"/>
+                                    <Label Text="{Binding TextoCheck}"
+                                           IsVisible="{Binding EsMio}"
+                                           TextColor="{Binding ColorCheck}"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center"/>
+                                </HorizontalStackLayout>
                             </VerticalStackLayout>
                         </Border>
                     </Grid>
@@ -132,18 +307,70 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- 3. Entrada de Texto -->
-        <Grid Grid.Row="3" ColumnDefinitions="*, Auto" ColumnSpacing="10">
-            <Entry x:Name="entryMensaje" 
-                   Placeholder="Escribe un mensaje..." 
-                   TextColor="White" 
-                   PlaceholderColor="Gray" 
-                   BackgroundColor="#252526"/>
-            <Button Grid.Column="1" 
-                    Text="Enviar 📤" 
-                    Clicked="OnEnviarMensajeClicked" 
-                    BackgroundColor="#007ACC" 
-                    TextColor="White"/>
+        <!-- 3. Barra Inferior Minimalista (Adjuntar Foto/Video + Mensaje + Enviar) -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="8" VerticalOptions="Center">
+            <!-- Botón Adjuntar Multimedia -->
+            <Border Grid.Column="0"
+                    Stroke="#2C2C2E"
+                    StrokeThickness="1"
+                    BackgroundColor="#1C1C1E"
+                    WidthRequest="46"
+                    HeightRequest="46">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="23"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnAdjuntarMultimediaTapped"/>
+                </Border.GestureRecognizers>
+                <Path Data="M 16.5,6 L 16.5,17.5 C 16.5,19.71 14.71,21.5 12.5,21.5 C 10.29,21.5 8.5,19.71 8.5,17.5 L 8.5,5 C 8.5,3.62 9.62,2.5 11,2.5 C 12.38,2.5 13.5,3.62 13.5,5 L 13.5,15.5 C 13.5,16.05 13.05,16.5 12.5,16.5 C 11.95,16.5 11.5,16.05 11.5,15.5 L 11.5,6 L 10,6 L 10,15.5 C 10,16.88 11.12,18 12.5,18 C 13.88,18 15,16.88 15,15.5 L 15,5 C 15,2.79 13.21,1 11,1 C 8.79,1 7,2.79 7,5 L 7,17.5 C 7,20.54 9.46,23 12.5,23 C 15.54,23 18,20.54 18,17.5 L 18,6 L 16.5,6 Z"
+                      Fill="#F2F2F7"
+                      Aspect="Uniform"
+                      WidthRequest="20"
+                      HeightRequest="20"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"/>
+            </Border>
+
+            <!-- Campo de Texto -->
+            <Border Grid.Column="1"
+                    Stroke="#2C2C2E"
+                    StrokeThickness="1"
+                    BackgroundColor="#1C1C1E"
+                    Padding="14,0"
+                    HeightRequest="46">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="23"/>
+                </Border.StrokeShape>
+                <Entry x:Name="entryMensaje"
+                       Placeholder="Escribe un mensaje..."
+                       TextColor="#F2F2F7"
+                       PlaceholderColor="#8E8E93"
+                       BackgroundColor="Transparent"
+                       FontSize="14"
+                       VerticalOptions="Center"
+                       Completed="OnEnviarMensajeClicked"/>
+            </Border>
+
+            <!-- Botón Enviar (Blanco minimalista con flecha negra) -->
+            <Border Grid.Column="2"
+                    StrokeThickness="0"
+                    BackgroundColor="#F2F2F7"
+                    WidthRequest="46"
+                    HeightRequest="46">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="23"/>
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnEnviarMensajeTapped"/>
+                </Border.GestureRecognizers>
+                <Path Data="M 2.01,21 L 23,12 L 2.01,3 L 2,10 L 17,12 L 2,14 Z"
+                      Fill="#121212"
+                      Aspect="Uniform"
+                      WidthRequest="19"
+                      HeightRequest="19"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"/>
+            </Border>
         </Grid>
     </Grid>
 </ContentPage>
