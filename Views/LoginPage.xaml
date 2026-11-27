@@ -123,11 +123,8 @@
                                 FontSize="13"
                                 Margin="0,0,0,0"/>
 
-                        <!-- Cuentas de Prueba -->
                         <VerticalStackLayout Spacing="3" Margin="0,10,0,0">
-                            <Label Text="Cuentas de prueba:" TextColor="#A0AAB5" FontSize="11" HorizontalOptions="Center"/>
-                            <Label Text="• Cliente: cliente@phantel.com / 123" TextColor="#D0D7DE" FontSize="11" HorizontalOptions="Center"/>
-                            <Label Text="• Técnico: tecnico@phantel.com / 123" TextColor="#D0D7DE" FontSize="11" HorizontalOptions="Center"/>
+  
                         </VerticalStackLayout>
 
                     </VerticalStackLayout>
